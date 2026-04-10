@@ -1,0 +1,11 @@
+﻿node_id,node_name,node_type,purpose,input,output,key_config
+N1,用户问题输入,Start,接收用户问题与历史上下文,chat_input,raw_query,开启历史会话传递
+N2,问题优化,QuestionOptimize,指代消解与问题扩展,raw_query+history,optimized_query,补全主谓宾，保留术语
+N3,参数提取,LLMExtract,提取asset_type/fault_type/slot_keys,optimized_query,query_slots_json,JSON Schema强约束
+N4,知识库搜索-事件特征,DatasetSearch,检索2.x相关槽位事实,optimized_query+query_slots_json,facts_event,"模式=语义检索; 过滤slot_key in [fault_consequence,fault_level,fault_object,precursor,safety_risk]; 引用上限=1800; 最低相关度=0.62"
+N5,知识库搜索-应急措施,DatasetSearch,检索4.2措施块,optimized_query+query_slots_json,facts_actions,模式=语义检索; 过滤slot_key=action_steps; 引用上限=1400; 最低相关度=0.60
+N6,知识库搜索-组织职责,DatasetSearch,检索3.x组织职责,optimized_query+query_slots_json,facts_org,模式=语义检索; 过滤chunk_type=org_clause/template_clause; 引用上限=1200; 最低相关度=0.58
+N7,搜索结果合并,DatasetMerge,聚合多个检索节点引用,facts_event+facts_actions+facts_org,merged_refs,按priority与相关度排序
+N8,缺槽位检查,LLMCheck,校验模板必填槽位覆盖率,merged_refs+query_slots_json,slot_check_result,缺失返回MISSING_SLOT，不允许臆造
+N9,预案生成,AIGenerate,按template_sections生成完整预案,merged_refs+slot_check_result,plan_markdown,严格按1-5章模板输出
+N10,答案输出,Answer,返回预案文本与缺失提示,plan_markdown,chat_output,附带引用来源

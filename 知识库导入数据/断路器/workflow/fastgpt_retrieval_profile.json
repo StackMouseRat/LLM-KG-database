@@ -1,0 +1,52 @@
+{
+  "mode": "semantic",
+  "global": {
+    "question_optimize": true,
+    "rerank": false,
+    "reference_token_limit": 1800,
+    "min_relevance": 0.62
+  },
+  "per_search_node": {
+    "N4": {
+      "filter": {
+        "asset_type": "断路器",
+        "slot_key": [
+          "fault_consequence",
+          "fault_level",
+          "fault_object",
+          "precursor",
+          "safety_risk",
+          "knowledge_fact"
+        ]
+      },
+      "reference_token_limit": 1800,
+      "min_relevance": 0.62
+    },
+    "N5": {
+      "filter": {
+        "asset_type": "断路器",
+        "slot_key": [
+          "action_steps"
+        ]
+      },
+      "reference_token_limit": 1400,
+      "min_relevance": 0.6
+    },
+    "N6": {
+      "filter": {
+        "asset_type": "断路器",
+        "chunk_type": [
+          "org_clause",
+          "template_clause"
+        ]
+      },
+      "reference_token_limit": 1200,
+      "min_relevance": 0.58
+    }
+  },
+  "fallback": [
+    "asset_type+fault_type+slot_key",
+    "asset_type+slot_key",
+    "slot_key(通用)"
+  ]
+}

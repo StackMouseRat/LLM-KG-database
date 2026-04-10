@@ -1,0 +1,7 @@
+﻿[输电线可用源目录候选]
+D:\Graduate_test\dataset\xls\成品\输电线路\输电线路_第一至第七层级图谱数据
+D:\Graduate_test\dataset\xls\输电线路
+D:\Graduate_test\dataset\xls\输电线路\输电线路_改进图谱数据
+D:\Graduate_test\dataset\xls\输电线路\输电线路_改色版
+D:\Graduate_test\dataset\xls\输电线路\输电线路_圈子版
+D:\Graduate_test\dataset\xls\输电线路\输电线路_样式完整版

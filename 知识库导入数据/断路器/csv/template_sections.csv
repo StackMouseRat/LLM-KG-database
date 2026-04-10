@@ -1,0 +1,11 @@
+﻿section_id,title,text_template,required_slots,is_fixed
+1.1,编制目的,为高效有序地处理{fault_type}，避免或最大限度地减轻{fault_type}及造成的经济损失，保障员工生命和企业财产安全，维护社会稳定，特编制本应急处置方案。,fault_type,0
+1.2,编制依据,《生产安全事故报告和调查处理条例》（国务院令第493号）；《生产经营单位安全生产事故应急预案编制导则》（GB/T 29639—2013）；《电力安全事故应急处置和调查处理条例》（国务院令第599号）；《电力企业应急预案管理办法》（国能安全〔2014〕508号）；《电力企业现场处置方案编制导则（试行）》；《电力安全工作规程》（发电厂和变电站电气部分）（GB 26860—2011）。,,1
+1.3,适用范围,本方案适用于{fault_type}的应急处置和应急救援工作。,fault_type,0
+2.1.1,危险性分析,{fault_type}可能导致{fault_consequence}。,fault_type|fault_consequence,0
+2.1.2,事件类型,{fault_type}为{fault_level}。,fault_type|fault_level,0
+2.2,事件可能发生的区域、地点和装置名称,{fault_object}。,fault_object,0
+2.3,事故可能造成的危害,{fault_type}可能造成{fault_consequence}。,fault_type|fault_consequence,0
+2.4,事前征兆,{precursor},precursor,0
+4.2,现场应急处置措施,{action_steps},action_steps,0
+5.1,注意事项,{safety_risk},safety_risk,0

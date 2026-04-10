@@ -1,0 +1,304 @@
+﻿chunk_id,doc_id,chunk_type,asset_type,fault_type,slot_key,content,keywords,source_ref,priority,version
+C000001,BRK_PLAN_20260410,template_clause,断路器,通用,template,为高效有序地处理{fault_type}，避免或最大限度地减轻{fault_type}及造成的经济损失，保障员工生命和企业财产安全，维护社会稳定，特编制本应急处置方案。,模板|1.1|编制目的,template_sections.csv,3,20260410
+C000002,BRK_PLAN_20260410,template_clause,断路器,通用,template,《生产安全事故报告和调查处理条例》（国务院令第493号）；《生产经营单位安全生产事故应急预案编制导则》（GB/T 29639—2013）；《电力安全事故应急处置和调查处理条例》（国务院令第599号）；《电力企业应急预案管理办法》（国能安全〔2014〕508号）；《电力企业现场处置方案编制导则（试行）》；《电力安全工作规程》（发电厂和变电站电气部分）（GB 26860—2011）。,模板|1.2|编制依据,template_sections.csv,3,20260410
+C000003,BRK_PLAN_20260410,template_clause,断路器,通用,template,本方案适用于{fault_type}的应急处置和应急救援工作。,模板|1.3|适用范围,template_sections.csv,3,20260410
+C000004,BRK_PLAN_20260410,template_clause,断路器,通用,template,{fault_type}可能导致{fault_consequence}。,模板|2.1.1|危险性分析,template_sections.csv,3,20260410
+C000005,BRK_PLAN_20260410,template_clause,断路器,通用,template,{fault_type}为{fault_level}。,模板|2.1.2|事件类型,template_sections.csv,3,20260410
+C000006,BRK_PLAN_20260410,template_clause,断路器,通用,template,{fault_object}。,模板|2.2|事件可能发生的区域、地点和装置名称,template_sections.csv,3,20260410
+C000007,BRK_PLAN_20260410,template_clause,断路器,通用,template,{fault_type}可能造成{fault_consequence}。,模板|2.3|事故可能造成的危害,template_sections.csv,3,20260410
+C000008,BRK_PLAN_20260410,template_clause,断路器,通用,template,{precursor},模板|2.4|事前征兆,template_sections.csv,3,20260410
+C000009,BRK_PLAN_20260410,template_clause,断路器,通用,template,{action_steps},模板|4.2|现场应急处置措施,template_sections.csv,3,20260410
+C000010,BRK_PLAN_20260410,template_clause,断路器,通用,template,{safety_risk},模板|5.1|注意事项,template_sections.csv,3,20260410
+C000011,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,fault_object,灭弧与介质状态故障,断路器|灭弧与介质状态故障|fault_object,关系_links.xlsx,3,20260410
+C000012,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,fault_object,导电回路与开断故障,断路器|导电回路与开断故障|fault_object,关系_links.xlsx,3,20260410
+C000013,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,fault_object,合分闸操作故障,断路器|合分闸操作故障|fault_object,关系_links.xlsx,3,20260410
+C000014,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_object,操动机构与机械传动故障,断路器|操动机构与机械传动故障|fault_object,关系_links.xlsx,3,20260410
+C000015,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_object,操作能源与控制回路故障,断路器|操作能源与控制回路故障|fault_object,关系_links.xlsx,3,20260410
+C000016,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_object,继电保护与测量二次回路故障,断路器|继电保护与测量二次回路故障|fault_object,关系_links.xlsx,3,20260410
+C000017,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_object,本体绝缘与支撑结构故障,断路器|本体绝缘与支撑结构故障|fault_object,关系_links.xlsx,3,20260410
+C000018,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧与介质状态故障包含油断路器缺油故障,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000019,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,油断路器缺油故障起因于油断路器缺油故障-故障原因,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000020,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,precursor,油断路器缺油故障-故障原因表现油断路器缺油故障-故障现象,断路器|灭弧与介质状态故障|precursor,关系_links.xlsx,4,20260410
+C000021,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,油断路器缺油故障处置油断路器缺油故障-应对措施,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000022,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,fault_consequence,油断路器缺油故障-故障后果,断路器|灭弧与介质状态故障|fault_consequence,关系_links.xlsx,5,20260410
+C000023,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,油断路器缺油故障-应对措施存在油断路器缺油故障-安全风险,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000024,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,油断路器缺油故障-应对措施需要油断路器缺油故障-应急资源,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000025,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧与介质状态故障包含空气断路器气压降低故障,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000026,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,空气断路器气压降低故障起因于空气断路器气压降低故障-故障原因,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000027,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,precursor,空气断路器气压降低故障-故障原因表现空气断路器气压降低故障-故障现象,断路器|灭弧与介质状态故障|precursor,关系_links.xlsx,4,20260410
+C000028,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,空气断路器气压降低故障处置空气断路器气压降低故障-应对措施,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000029,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,fault_consequence,空气断路器气压降低故障-故障后果,断路器|灭弧与介质状态故障|fault_consequence,关系_links.xlsx,5,20260410
+C000030,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,空气断路器气压降低故障-应对措施存在空气断路器气压降低故障-安全风险,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000031,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,空气断路器气压降低故障-应对措施需要空气断路器气压降低故障-应急资源,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000032,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧与介质状态故障包含六氟化硫介质泄漏故障,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000033,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,六氟化硫介质泄漏故障起因于六氟化硫介质泄漏故障-故障原因,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000034,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,precursor,六氟化硫介质泄漏故障-故障原因表现六氟化硫介质泄漏故障-故障现象,断路器|灭弧与介质状态故障|precursor,关系_links.xlsx,4,20260410
+C000035,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,六氟化硫介质泄漏故障处置六氟化硫介质泄漏故障-应对措施,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000036,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,fault_consequence,六氟化硫介质泄漏故障-故障后果,断路器|灭弧与介质状态故障|fault_consequence,关系_links.xlsx,5,20260410
+C000037,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,六氟化硫介质泄漏故障-应对措施存在六氟化硫介质泄漏故障-安全风险,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000038,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,六氟化硫介质泄漏故障-应对措施需要六氟化硫介质泄漏故障-应急资源,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000039,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧与介质状态故障包含灭弧室烧损爆炸故障,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000040,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧室烧损爆炸故障起因于灭弧室烧损爆炸故障-故障原因,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000041,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,precursor,灭弧室烧损爆炸故障-故障原因表现灭弧室烧损爆炸故障-故障现象,断路器|灭弧与介质状态故障|precursor,关系_links.xlsx,4,20260410
+C000042,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧室烧损爆炸故障处置灭弧室烧损爆炸故障-应对措施,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000043,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,fault_consequence,灭弧室烧损爆炸故障-故障后果,断路器|灭弧与介质状态故障|fault_consequence,关系_links.xlsx,5,20260410
+C000044,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧室烧损爆炸故障-应对措施存在灭弧室烧损爆炸故障-安全风险,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000045,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,knowledge_fact,灭弧室烧损爆炸故障-应对措施需要灭弧室烧损爆炸故障-应急资源,断路器|灭弧与介质状态故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000046,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路与开断故障包含断路故障,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000047,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,断路故障起因于断路故障-故障原因,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000048,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,precursor,断路故障-故障原因表现断路故障-故障现象,断路器|导电回路与开断故障|precursor,关系_links.xlsx,4,20260410
+C000049,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,断路故障处置断路故障-应对措施,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000050,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,fault_consequence,断路故障-故障后果,断路器|导电回路与开断故障|fault_consequence,关系_links.xlsx,5,20260410
+C000051,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,断路故障-应对措施存在断路故障-安全风险,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000052,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,断路故障-应对措施需要断路故障-应急资源,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000053,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路与开断故障包含导电回路直阻超标故障,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000054,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路直阻超标故障起因于导电回路直阻超标故障-故障原因,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000055,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,precursor,导电回路直阻超标故障-故障原因表现导电回路直阻超标故障-故障现象,断路器|导电回路与开断故障|precursor,关系_links.xlsx,4,20260410
+C000056,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路直阻超标故障处置导电回路直阻超标故障-应对措施,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000057,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,fault_consequence,导电回路直阻超标故障-故障后果,断路器|导电回路与开断故障|fault_consequence,关系_links.xlsx,5,20260410
+C000058,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路直阻超标故障-应对措施存在导电回路直阻超标故障-安全风险,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000059,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路直阻超标故障-应对措施需要导电回路直阻超标故障-应急资源,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000060,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,导电回路与开断故障包含触头及导电连接异常故障,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000061,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,触头及导电连接异常故障起因于触头及导电连接异常故障-故障原因,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000062,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,precursor,触头及导电连接异常故障-故障原因表现触头及导电连接异常故障-故障现象,断路器|导电回路与开断故障|precursor,关系_links.xlsx,4,20260410
+C000063,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,触头及导电连接异常故障处置触头及导电连接异常故障-应对措施,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000064,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,fault_consequence,触头及导电连接异常故障-故障后果,断路器|导电回路与开断故障|fault_consequence,关系_links.xlsx,5,20260410
+C000065,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,触头及导电连接异常故障-应对措施存在触头及导电连接异常故障-安全风险,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000066,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,knowledge_fact,触头及导电连接异常故障-应对措施需要触头及导电连接异常故障-应急资源,断路器|导电回路与开断故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000067,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,合分闸操作故障包含误动故障,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000068,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,误动故障起因于误动故障-故障原因,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000069,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,precursor,误动故障-故障原因表现误动故障-故障现象,断路器|合分闸操作故障|precursor,关系_links.xlsx,4,20260410
+C000070,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,误动故障处置误动故障-应对措施,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000071,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,fault_consequence,误动故障-故障后果,断路器|合分闸操作故障|fault_consequence,关系_links.xlsx,5,20260410
+C000072,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,误动故障-应对措施存在误动故障-安全风险,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000073,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,误动故障-应对措施需要误动故障-应急资源,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000074,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,合分闸操作故障包含拒动故障,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000075,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,拒动故障起因于拒动故障-故障原因,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000076,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,precursor,拒动故障-故障原因表现拒动故障-故障现象,断路器|合分闸操作故障|precursor,关系_links.xlsx,4,20260410
+C000077,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,拒动故障处置拒动故障-应对措施,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000078,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,fault_consequence,拒动故障-故障后果,断路器|合分闸操作故障|fault_consequence,关系_links.xlsx,5,20260410
+C000079,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,拒动故障-应对措施存在拒动故障-安全风险,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000080,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,knowledge_fact,拒动故障-应对措施需要拒动故障-应急资源,断路器|合分闸操作故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000081,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含机构卡阻卡涩故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000082,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,机构卡阻卡涩故障起因于机构卡阻卡涩故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000083,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,机构卡阻卡涩故障-故障原因表现机构卡阻卡涩故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000084,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,机构卡阻卡涩故障处置机构卡阻卡涩故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000085,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,机构卡阻卡涩故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000086,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,机构卡阻卡涩故障-应对措施存在机构卡阻卡涩故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000087,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,机构卡阻卡涩故障-应对措施需要机构卡阻卡涩故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000088,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含操作机构死点故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000089,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操作机构死点故障起因于操作机构死点故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000090,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,操作机构死点故障-故障原因表现操作机构死点故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000091,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操作机构死点故障处置操作机构死点故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000092,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,操作机构死点故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000093,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操作机构死点故障-应对措施存在操作机构死点故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000094,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操作机构死点故障-应对措施需要操作机构死点故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000095,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含跳闸挂扣滑脱故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000096,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,跳闸挂扣滑脱故障起因于跳闸挂扣滑脱故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000097,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,跳闸挂扣滑脱故障-故障原因表现跳闸挂扣滑脱故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000098,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,跳闸挂扣滑脱故障处置跳闸挂扣滑脱故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000099,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,跳闸挂扣滑脱故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000100,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,跳闸挂扣滑脱故障-应对措施存在跳闸挂扣滑脱故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000101,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,跳闸挂扣滑脱故障-应对措施需要跳闸挂扣滑脱故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000102,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含合分闸铁心动作失灵故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000103,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,合分闸铁心动作失灵故障起因于合分闸铁心动作失灵故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000104,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,合分闸铁心动作失灵故障-故障原因表现合分闸铁心动作失灵故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000105,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,合分闸铁心动作失灵故障处置合分闸铁心动作失灵故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000106,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,合分闸铁心动作失灵故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000107,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,合分闸铁心动作失灵故障-应对措施存在合分闸铁心动作失灵故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000108,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,合分闸铁心动作失灵故障-应对措施需要合分闸铁心动作失灵故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000109,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含储能机构不能储能故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000110,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,储能机构不能储能故障起因于储能机构不能储能故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000111,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,储能机构不能储能故障-故障原因表现储能机构不能储能故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000112,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,储能机构不能储能故障处置储能机构不能储能故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000113,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,储能机构不能储能故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000114,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,储能机构不能储能故障-应对措施存在储能机构不能储能故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000115,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,储能机构不能储能故障-应对措施需要储能机构不能储能故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000116,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含分合闸后均储能故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000117,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,分合闸后均储能故障起因于分合闸后均储能故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000118,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,分合闸后均储能故障-故障原因表现分合闸后均储能故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000119,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,分合闸后均储能故障处置分合闸后均储能故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000120,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,分合闸后均储能故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000121,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,分合闸后均储能故障-应对措施存在分合闸后均储能故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000122,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,分合闸后均储能故障-应对措施需要分合闸后均储能故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000123,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构与机械传动故障包含操动机构传动件变形断裂故障,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000124,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构传动件变形断裂故障起因于操动机构传动件变形断裂故障-故障原因,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000125,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,precursor,操动机构传动件变形断裂故障-故障原因表现操动机构传动件变形断裂故障-故障现象,断路器|操动机构与机械传动故障|precursor,关系_links.xlsx,4,20260410
+C000126,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构传动件变形断裂故障处置操动机构传动件变形断裂故障-应对措施,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000127,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_consequence,操动机构传动件变形断裂故障-故障后果,断路器|操动机构与机械传动故障|fault_consequence,关系_links.xlsx,5,20260410
+C000128,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构传动件变形断裂故障-应对措施存在操动机构传动件变形断裂故障-安全风险,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000129,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,knowledge_fact,操动机构传动件变形断裂故障-应对措施需要操动机构传动件变形断裂故障-应急资源,断路器|操动机构与机械传动故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000130,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含直流操作电源异常故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000131,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,直流操作电源异常故障起因于直流操作电源异常故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000132,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,直流操作电源异常故障-故障原因表现直流操作电源异常故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000133,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,直流操作电源异常故障处置直流操作电源异常故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000134,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,直流操作电源异常故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000135,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,直流操作电源异常故障-应对措施存在直流操作电源异常故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000136,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,直流操作电源异常故障-应对措施需要直流操作电源异常故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000137,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含液压机构失压故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000138,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,液压机构失压故障起因于液压机构失压故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000139,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,液压机构失压故障-故障原因表现液压机构失压故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000140,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,液压机构失压故障处置液压机构失压故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000141,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,液压机构失压故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000142,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,液压机构失压故障-应对措施存在液压机构失压故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000143,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,液压机构失压故障-应对措施需要液压机构失压故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000144,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含操作油风管路异常故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000145,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作油风管路异常故障起因于操作油风管路异常故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000146,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,操作油风管路异常故障-故障原因表现操作油风管路异常故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000147,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作油风管路异常故障处置操作油风管路异常故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000148,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,操作油风管路异常故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000149,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作油风管路异常故障-应对措施存在操作油风管路异常故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000150,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作油风管路异常故障-应对措施需要操作油风管路异常故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000151,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含控制回路短路故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000152,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路短路故障起因于控制回路短路故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000153,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,控制回路短路故障-故障原因表现控制回路短路故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000154,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路短路故障处置控制回路短路故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000155,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,控制回路短路故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000156,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路短路故障-应对措施存在控制回路短路故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000157,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路短路故障-应对措施需要控制回路短路故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000158,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含控制回路接地故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000159,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路接地故障起因于控制回路接地故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000160,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,控制回路接地故障-故障原因表现控制回路接地故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000161,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路接地故障处置控制回路接地故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000162,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,控制回路接地故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000163,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路接地故障-应对措施存在控制回路接地故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000164,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,控制回路接地故障-应对措施需要控制回路接地故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000165,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含合分闸控制回路故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000166,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸控制回路故障起因于合分闸控制回路故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000167,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,合分闸控制回路故障-故障原因表现合分闸控制回路故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000168,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸控制回路故障处置合分闸控制回路故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000169,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,合分闸控制回路故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000170,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸控制回路故障-应对措施存在合分闸控制回路故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000171,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸控制回路故障-应对措施需要合分闸控制回路故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000172,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含合分闸线圈故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000173,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸线圈故障起因于合分闸线圈故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000174,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,合分闸线圈故障-故障原因表现合分闸线圈故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000175,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸线圈故障处置合分闸线圈故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000176,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,合分闸线圈故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000177,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸线圈故障-应对措施存在合分闸线圈故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000178,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,合分闸线圈故障-应对措施需要合分闸线圈故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000179,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,操作能源与控制回路故障包含辅助开关及转换接点异常故障,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000180,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,辅助开关及转换接点异常故障起因于辅助开关及转换接点异常故障-故障原因,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000181,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,precursor,辅助开关及转换接点异常故障-故障原因表现辅助开关及转换接点异常故障-故障现象,断路器|操作能源与控制回路故障|precursor,关系_links.xlsx,4,20260410
+C000182,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,辅助开关及转换接点异常故障处置辅助开关及转换接点异常故障-应对措施,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000183,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_consequence,辅助开关及转换接点异常故障-故障后果,断路器|操作能源与控制回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000184,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,辅助开关及转换接点异常故障-应对措施存在辅助开关及转换接点异常故障-安全风险,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000185,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,knowledge_fact,辅助开关及转换接点异常故障-应对措施需要辅助开关及转换接点异常故障-应急资源,断路器|操作能源与控制回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000186,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护与测量二次回路故障包含继电保护误动作故障,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000187,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护误动作故障起因于继电保护误动作故障-故障原因,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000188,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,precursor,继电保护误动作故障-故障原因表现继电保护误动作故障-故障现象,断路器|继电保护与测量二次回路故障|precursor,关系_links.xlsx,4,20260410
+C000189,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护误动作故障处置继电保护误动作故障-应对措施,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000190,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_consequence,继电保护误动作故障-故障后果,断路器|继电保护与测量二次回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000191,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护误动作故障-应对措施存在继电保护误动作故障-安全风险,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000192,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护误动作故障-应对措施需要继电保护误动作故障-应急资源,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000193,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护与测量二次回路故障包含保护整定不当故障,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000194,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护整定不当故障起因于保护整定不当故障-故障原因,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000195,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,precursor,保护整定不当故障-故障原因表现保护整定不当故障-故障现象,断路器|继电保护与测量二次回路故障|precursor,关系_links.xlsx,4,20260410
+C000196,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护整定不当故障处置保护整定不当故障-应对措施,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000197,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_consequence,保护整定不当故障-故障后果,断路器|继电保护与测量二次回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000198,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护整定不当故障-应对措施存在保护整定不当故障-安全风险,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000199,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护整定不当故障-应对措施需要保护整定不当故障-应急资源,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000200,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护与测量二次回路故障包含互感器回路故障,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000201,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,互感器回路故障起因于互感器回路故障-故障原因,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000202,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,precursor,互感器回路故障-故障原因表现互感器回路故障-故障现象,断路器|继电保护与测量二次回路故障|precursor,关系_links.xlsx,4,20260410
+C000203,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,互感器回路故障处置互感器回路故障-应对措施,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000204,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_consequence,互感器回路故障-故障后果,断路器|继电保护与测量二次回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000205,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,互感器回路故障-应对措施存在互感器回路故障-安全风险,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000206,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,互感器回路故障-应对措施需要互感器回路故障-应急资源,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000207,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护与测量二次回路故障包含保护出口回路接地故障,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000208,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护出口回路接地故障起因于保护出口回路接地故障-故障原因,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000209,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,precursor,保护出口回路接地故障-故障原因表现保护出口回路接地故障-故障现象,断路器|继电保护与测量二次回路故障|precursor,关系_links.xlsx,4,20260410
+C000210,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护出口回路接地故障处置保护出口回路接地故障-应对措施,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000211,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_consequence,保护出口回路接地故障-故障后果,断路器|继电保护与测量二次回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000212,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护出口回路接地故障-应对措施存在保护出口回路接地故障-安全风险,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000213,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,保护出口回路接地故障-应对措施需要保护出口回路接地故障-应急资源,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000214,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,继电保护与测量二次回路故障包含寄生回路故障,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000215,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,寄生回路故障起因于寄生回路故障-故障原因,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000216,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,precursor,寄生回路故障-故障原因表现寄生回路故障-故障现象,断路器|继电保护与测量二次回路故障|precursor,关系_links.xlsx,4,20260410
+C000217,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,寄生回路故障处置寄生回路故障-应对措施,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000218,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_consequence,寄生回路故障-故障后果,断路器|继电保护与测量二次回路故障|fault_consequence,关系_links.xlsx,5,20260410
+C000219,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,寄生回路故障-应对措施存在寄生回路故障-安全风险,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000220,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,knowledge_fact,寄生回路故障-应对措施需要寄生回路故障-应急资源,断路器|继电保护与测量二次回路故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000221,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体绝缘与支撑结构故障包含绝缘不良故障,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000222,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘不良故障起因于绝缘不良故障-故障原因,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000223,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,precursor,绝缘不良故障-故障原因表现绝缘不良故障-故障现象,断路器|本体绝缘与支撑结构故障|precursor,关系_links.xlsx,4,20260410
+C000224,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘不良故障处置绝缘不良故障-应对措施,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000225,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_consequence,绝缘不良故障-故障后果,断路器|本体绝缘与支撑结构故障|fault_consequence,关系_links.xlsx,5,20260410
+C000226,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘不良故障-应对措施存在绝缘不良故障-安全风险,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000227,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘不良故障-应对措施需要绝缘不良故障-应急资源,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000228,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体绝缘与支撑结构故障包含瓷件损伤故障,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000229,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,瓷件损伤故障起因于瓷件损伤故障-故障原因,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000230,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,precursor,瓷件损伤故障-故障原因表现瓷件损伤故障-故障现象,断路器|本体绝缘与支撑结构故障|precursor,关系_links.xlsx,4,20260410
+C000231,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,瓷件损伤故障处置瓷件损伤故障-应对措施,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000232,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_consequence,瓷件损伤故障-故障后果,断路器|本体绝缘与支撑结构故障|fault_consequence,关系_links.xlsx,5,20260410
+C000233,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,瓷件损伤故障-应对措施存在瓷件损伤故障-安全风险,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000234,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,瓷件损伤故障-应对措施需要瓷件损伤故障-应急资源,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000235,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体绝缘与支撑结构故障包含本体连接件松动断裂故障,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000236,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体连接件松动断裂故障起因于本体连接件松动断裂故障-故障原因,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000237,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,precursor,本体连接件松动断裂故障-故障原因表现本体连接件松动断裂故障-故障现象,断路器|本体绝缘与支撑结构故障|precursor,关系_links.xlsx,4,20260410
+C000238,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体连接件松动断裂故障处置本体连接件松动断裂故障-应对措施,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000239,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_consequence,本体连接件松动断裂故障-故障后果,断路器|本体绝缘与支撑结构故障|fault_consequence,关系_links.xlsx,5,20260410
+C000240,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体连接件松动断裂故障-应对措施存在本体连接件松动断裂故障-安全风险,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000241,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体连接件松动断裂故障-应对措施需要本体连接件松动断裂故障-应急资源,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000242,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体绝缘与支撑结构故障包含绝缘拉杆拉脱故障,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000243,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘拉杆拉脱故障起因于绝缘拉杆拉脱故障-故障原因,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000244,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,precursor,绝缘拉杆拉脱故障-故障原因表现绝缘拉杆拉脱故障-故障现象,断路器|本体绝缘与支撑结构故障|precursor,关系_links.xlsx,4,20260410
+C000245,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘拉杆拉脱故障处置绝缘拉杆拉脱故障-应对措施,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000246,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_consequence,绝缘拉杆拉脱故障-故障后果,断路器|本体绝缘与支撑结构故障|fault_consequence,关系_links.xlsx,5,20260410
+C000247,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘拉杆拉脱故障-应对措施存在绝缘拉杆拉脱故障-安全风险,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000248,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,绝缘拉杆拉脱故障-应对措施需要绝缘拉杆拉脱故障-应急资源,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000249,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,本体绝缘与支撑结构故障包含基础支架失稳故障,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000250,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,基础支架失稳故障起因于基础支架失稳故障-故障原因,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000251,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,precursor,基础支架失稳故障-故障原因表现基础支架失稳故障-故障现象,断路器|本体绝缘与支撑结构故障|precursor,关系_links.xlsx,4,20260410
+C000252,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,基础支架失稳故障处置基础支架失稳故障-应对措施,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000253,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_consequence,基础支架失稳故障-故障后果,断路器|本体绝缘与支撑结构故障|fault_consequence,关系_links.xlsx,5,20260410
+C000254,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,基础支架失稳故障-应对措施存在基础支架失稳故障-安全风险,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000255,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,knowledge_fact,基础支架失稳故障-应对措施需要基础支架失稳故障-应急资源,断路器|本体绝缘与支撑结构故障|knowledge_fact,关系_links.xlsx,2,20260410
+C000256,BRK_PLAN_20260410,slot_fact,断路器,合分闸操作故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|合分闸操作故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000257,BRK_PLAN_20260410,slot_fact,断路器,导电回路与开断故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|导电回路与开断故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000258,BRK_PLAN_20260410,slot_fact,断路器,操作能源与控制回路故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|操作能源与控制回路故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000259,BRK_PLAN_20260410,slot_fact,断路器,操动机构与机械传动故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|操动机构与机械传动故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000260,BRK_PLAN_20260410,slot_fact,断路器,本体绝缘与支撑结构故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|本体绝缘与支撑结构故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000261,BRK_PLAN_20260410,slot_fact,断路器,灭弧与介质状态故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|灭弧与介质状态故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000262,BRK_PLAN_20260410,slot_fact,断路器,继电保护与测量二次回路故障,fault_object,高压断路器本体及其相关灭弧室、绝缘结构、操动机构,断路器|继电保护与测量二次回路故障|fault_object,节点_nodes.xlsx|圈子_groups.xlsx,4,20260410
+C000263,BRK_PLAN_20260410,action_step,断路器,合分闸操作故障,action_steps,[1] 立即确认合分闸操作故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|合分闸操作故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000264,BRK_PLAN_20260410,action_step,断路器,合分闸操作故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止合分闸操作故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|合分闸操作故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000265,BRK_PLAN_20260410,action_step,断路器,合分闸操作故障,action_steps,[3] 组织抢修组处理合分闸操作故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|合分闸操作故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000266,BRK_PLAN_20260410,action_step,断路器,合分闸操作故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证合分闸操作故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|合分闸操作故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000267,BRK_PLAN_20260410,action_step,断路器,合分闸操作故障,action_steps,[5] 完成合分闸操作故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|合分闸操作故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000268,BRK_PLAN_20260410,action_step,断路器,导电回路与开断故障,action_steps,[1] 立即确认导电回路与开断故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|导电回路与开断故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000269,BRK_PLAN_20260410,action_step,断路器,导电回路与开断故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止导电回路与开断故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|导电回路与开断故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000270,BRK_PLAN_20260410,action_step,断路器,导电回路与开断故障,action_steps,[3] 组织抢修组处理导电回路与开断故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|导电回路与开断故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000271,BRK_PLAN_20260410,action_step,断路器,导电回路与开断故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证导电回路与开断故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|导电回路与开断故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000272,BRK_PLAN_20260410,action_step,断路器,导电回路与开断故障,action_steps,[5] 完成导电回路与开断故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|导电回路与开断故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000273,BRK_PLAN_20260410,action_step,断路器,操作能源与控制回路故障,action_steps,[1] 立即确认操作能源与控制回路故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|操作能源与控制回路故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000274,BRK_PLAN_20260410,action_step,断路器,操作能源与控制回路故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止操作能源与控制回路故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|操作能源与控制回路故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000275,BRK_PLAN_20260410,action_step,断路器,操作能源与控制回路故障,action_steps,[3] 组织抢修组处理操作能源与控制回路故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|操作能源与控制回路故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000276,BRK_PLAN_20260410,action_step,断路器,操作能源与控制回路故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证操作能源与控制回路故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|操作能源与控制回路故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000277,BRK_PLAN_20260410,action_step,断路器,操作能源与控制回路故障,action_steps,[5] 完成操作能源与控制回路故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|操作能源与控制回路故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000278,BRK_PLAN_20260410,action_step,断路器,操动机构与机械传动故障,action_steps,[1] 立即确认操动机构与机械传动故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|操动机构与机械传动故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000279,BRK_PLAN_20260410,action_step,断路器,操动机构与机械传动故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止操动机构与机械传动故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|操动机构与机械传动故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000280,BRK_PLAN_20260410,action_step,断路器,操动机构与机械传动故障,action_steps,[3] 组织抢修组处理操动机构与机械传动故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|操动机构与机械传动故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000281,BRK_PLAN_20260410,action_step,断路器,操动机构与机械传动故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证操动机构与机械传动故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|操动机构与机械传动故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000282,BRK_PLAN_20260410,action_step,断路器,操动机构与机械传动故障,action_steps,[5] 完成操动机构与机械传动故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|操动机构与机械传动故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000283,BRK_PLAN_20260410,action_step,断路器,本体绝缘与支撑结构故障,action_steps,[1] 立即确认本体绝缘与支撑结构故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|本体绝缘与支撑结构故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000284,BRK_PLAN_20260410,action_step,断路器,本体绝缘与支撑结构故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止本体绝缘与支撑结构故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|本体绝缘与支撑结构故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000285,BRK_PLAN_20260410,action_step,断路器,本体绝缘与支撑结构故障,action_steps,[3] 组织抢修组处理本体绝缘与支撑结构故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|本体绝缘与支撑结构故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000286,BRK_PLAN_20260410,action_step,断路器,本体绝缘与支撑结构故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证本体绝缘与支撑结构故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|本体绝缘与支撑结构故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000287,BRK_PLAN_20260410,action_step,断路器,本体绝缘与支撑结构故障,action_steps,[5] 完成本体绝缘与支撑结构故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|本体绝缘与支撑结构故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000288,BRK_PLAN_20260410,action_step,断路器,灭弧与介质状态故障,action_steps,[1] 立即确认灭弧与介质状态故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|灭弧与介质状态故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000289,BRK_PLAN_20260410,action_step,断路器,灭弧与介质状态故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止灭弧与介质状态故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|灭弧与介质状态故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000290,BRK_PLAN_20260410,action_step,断路器,灭弧与介质状态故障,action_steps,[3] 组织抢修组处理灭弧与介质状态故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|灭弧与介质状态故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000291,BRK_PLAN_20260410,action_step,断路器,灭弧与介质状态故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证灭弧与介质状态故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|灭弧与介质状态故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000292,BRK_PLAN_20260410,action_step,断路器,灭弧与介质状态故障,action_steps,[5] 完成灭弧与介质状态故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|灭弧与介质状态故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000293,BRK_PLAN_20260410,action_step,断路器,继电保护与测量二次回路故障,action_steps,[1] 立即确认继电保护与测量二次回路故障影响范围，隔离故障点并设置现场警戒。（安全提示：执行停电与验电流程，严禁带电误操作。）,断路器|继电保护与测量二次回路故障|应急处置|先期控制,plan_actions.csv,5,20260410
+C000294,BRK_PLAN_20260410,action_step,断路器,继电保护与测量二次回路故障,action_steps,[2] 按倒闸操作票执行设备隔离，防止继电保护与测量二次回路故障进一步扩展。（安全提示：双人复核关键开关状态并记录。）,断路器|继电保护与测量二次回路故障|应急处置|隔离处置,plan_actions.csv,5,20260410
+C000295,BRK_PLAN_20260410,action_step,断路器,继电保护与测量二次回路故障,action_steps,[3] 组织抢修组处理继电保护与测量二次回路故障直接缺陷，恢复关键设备最小可运行能力。（安全提示：优先处理可能引发人身风险的缺陷。）,断路器|继电保护与测量二次回路故障|应急处置|抢修恢复,plan_actions.csv,5,20260410
+C000296,BRK_PLAN_20260410,action_step,断路器,继电保护与测量二次回路故障,action_steps,[4] 恢复后连续监测温升、绝缘、动作信号，验证继电保护与测量二次回路故障是否消除。（安全提示：监测期间保留应急队伍待命。）,断路器|继电保护与测量二次回路故障|应急处置|监测验证,plan_actions.csv,5,20260410
+C000297,BRK_PLAN_20260410,action_step,断路器,继电保护与测量二次回路故障,action_steps,[5] 完成继电保护与测量二次回路故障处置复盘，更新作业指导书和应急物资清单。（安全提示：形成闭环台账并跟踪整改期限。）,断路器|继电保护与测量二次回路故障|应急处置|复盘改进,plan_actions.csv,5,20260410
+C000298,BRK_PLAN_20260410,org_clause,断路器,通用,org_duty,应急处置领导小组：组长总经理，副组长副总经理，成员覆盖综合管理、财务、项目、工程、电力运营、安全生产、现场与医疗安监人员。,组织|职责|3.1.1,org_clauses.csv,4,20260410
+C000299,BRK_PLAN_20260410,org_clause,断路器,通用,org_duty,应急处置办公室设在安全生产部，负责{fault_type}应急管理日常工作。,组织|职责|3.1.2,org_clauses.csv,4,20260410
+C000300,BRK_PLAN_20260410,org_clause,断路器,通用,org_duty,应急处置工作组包括：抢险救援、安全保卫、交通医疗后勤、新闻发布、技术保障物资、善后处理六类工作组。,组织|职责|3.1.3,org_clauses.csv,4,20260410
+C000301,BRK_PLAN_20260410,org_clause,断路器,通用,org_duty,领导小组负责启动/解除应急命令、统一指挥{fault_type}处置、上报与外部支援请求。,组织|职责|3.2.1,org_clauses.csv,4,20260410
+C000302,BRK_PLAN_20260410,org_clause,断路器,通用,org_duty,办公室负责事故报告、措施督办、演练检查、复盘考核与善后协调。,组织|职责|3.2.2,org_clauses.csv,4,20260410
+C000303,BRK_PLAN_20260410,org_clause,断路器,通用,org_duty,各工作组按职责执行技术指导、秩序管控、医疗后勤、信息发布、物资供给及善后恢复。,组织|职责|3.2.3,org_clauses.csv,4,20260410

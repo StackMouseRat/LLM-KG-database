@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "properties": {
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "变压器",
+        "电缆",
+        "输电线路",
+        "光缆",
+        "断路器",
+        "环网柜",
+        "避雷器",
+        "杆塔"
+      ]
+    },
+    "fault_type": {
+      "type": "string"
+    },
+    "slot_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "fault_consequence",
+          "fault_level",
+          "fault_object",
+          "precursor",
+          "safety_risk",
+          "action_steps",
+          "org_duty"
+        ]
+      }
+    }
+  },
+  "required": [
+    "asset_type",
+    "fault_type",
+    "slot_keys"
+  ],
+  "additionalProperties": false
+}

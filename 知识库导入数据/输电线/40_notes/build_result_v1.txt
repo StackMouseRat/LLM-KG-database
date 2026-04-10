@@ -1,0 +1,6 @@
+source_dir=D:\Graduate_test\dataset\xls\成品\输电线路\输电线路_第一至第七层级图谱数据
+nodes=190 links=215 groups=7 group_members=189
+top_faults=7
+final_chunks=260
+csv=D:\Graduate_test\dataset\知识库导入数据\输电线\10_csv_structured\kb_chunks_transmission_v1.csv
+txt=D:\Graduate_test\dataset\知识库导入数据\输电线\20_upload_chunks\kb_chunks_transmission_retrieval_only_v1.txt
