@@ -7,6 +7,8 @@
 - `xls/`：图谱源 Excel 与成品数据
 - `scripts/`：数据构建与转换脚本
 - `知识库导入数据/`：可直接导入 FastGPT 的结构化数据与上传包
+- `nebula-docker-compose/`：Nebula 图数据库导入、索引、校验脚本
+- `fastGPT_json/`：FastGPT 工作流导出 JSON
 
 ## 知识库导入资产（2026-04-11）
 
@@ -32,3 +34,26 @@
 - 问题优化：开启
 - 最低相关度：`0.72`（可在 `0.70~0.75` 调整）
 - 引用上限：`1800` tokens
+
+## Nebula + HTTP 网关（2026-04-14）
+- 网关脚本：`scripts/nebula_http_gateway.py`
+- Compose 文件：`nebula-docker-compose/docker-compose-lite.yaml`
+- 主要导入脚本：
+  - `nebula-docker-compose/import_breaker_full_step1_ddl.ngql`
+  - `nebula-docker-compose/import_breaker_full_step2_dml.ngql`
+  - `nebula-docker-compose/import_breaker_full_step3_index.ngql`
+- 主要校验脚本：
+  - `nebula-docker-compose/check_schema_ready.ngql`
+  - `nebula-docker-compose/verify_breaker_full_import.ngql`
+  - `nebula-docker-compose/verify_desc_import.ngql`
+
+## FastGPT 工作流（当前版本）
+- 工作流 JSON：`fastGPT_json/测试 Copy.json`
+- 核心链路：
+  1. 首次运行先查询并缓存“一二级故障目录”。
+  2. 计划器基于用户问题 + 目录缓存生成分步查询计划。
+  3. 循环节点逐步执行：查询体生成 -> HTTP 请求 Nebula -> 查询后处理 -> 结果累积。
+  4. 循环结束输出整合后的自然语言答复。
+
+## 今日变更记录
+- 总结文档：`docs/2026-04-14-work-summary.md`
