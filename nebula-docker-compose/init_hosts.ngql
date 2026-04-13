@@ -1,0 +1,2 @@
+ADD HOSTS "storaged0":9779;
+SHOW HOSTS;

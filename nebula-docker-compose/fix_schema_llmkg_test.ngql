@@ -1,0 +1,4 @@
+USE llmkg_test;
+CREATE EDGE IF NOT EXISTS has_fault(fault_time string, severity int);
+CREATE EDGE IF NOT EXISTS causes(cause_desc string);
+SHOW EDGES;

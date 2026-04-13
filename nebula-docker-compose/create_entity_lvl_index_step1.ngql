@@ -1,0 +1,3 @@
+USE llmkg_test;
+CREATE TAG INDEX IF NOT EXISTS entity_lvl_idx ON entity(lvl);
+SHOW TAG INDEXES;
