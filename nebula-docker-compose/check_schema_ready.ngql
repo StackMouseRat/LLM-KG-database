@@ -1,0 +1,3 @@
+USE llmkg_test;
+SHOW TAGS;
+SHOW EDGES;

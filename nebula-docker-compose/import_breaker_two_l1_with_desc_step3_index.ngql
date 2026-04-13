@@ -1,0 +1,3 @@
+USE llmkg_test;
+REBUILD TAG INDEX entity_lvl_idx;
+SHOW TAG INDEX STATUS;

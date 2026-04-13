@@ -1,0 +1,6 @@
+DROP SPACE IF EXISTS llmkg_test;
+CREATE SPACE IF NOT EXISTS llmkg_test(partition_num=10, replica_factor=1, vid_type=FIXED_STRING(128));
+USE llmkg_test;
+CREATE TAG IF NOT EXISTS entity(name string, node_desc string, lvl int, source_id int, degree int, weight int, stroke string);
+CREATE EDGE IF NOT EXISTS rel(relation string);
+CREATE TAG INDEX IF NOT EXISTS entity_lvl_idx ON entity(lvl);
