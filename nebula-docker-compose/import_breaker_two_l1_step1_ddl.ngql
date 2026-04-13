@@ -1,0 +1,5 @@
+DROP SPACE IF EXISTS llmkg_test;
+CREATE SPACE IF NOT EXISTS llmkg_test(partition_num=10, replica_factor=1, vid_type=FIXED_STRING(128));
+USE llmkg_test;
+CREATE TAG IF NOT EXISTS entity(name string, lvl int, source_id int);
+CREATE EDGE IF NOT EXISTS rel(relation string);

@@ -1,0 +1,7 @@
+USE llmkg_test;
+CREATE TAG IF NOT EXISTS device(name string, voltage string);
+CREATE TAG IF NOT EXISTS fault(name string, level string);
+CREATE EDGE IF NOT EXISTS has_fault(time string, severity int);
+CREATE EDGE IF NOT EXISTS causes(desc string);
+SHOW TAGS;
+SHOW EDGES;

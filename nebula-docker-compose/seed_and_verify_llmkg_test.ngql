@@ -1,0 +1,8 @@
+USE llmkg_test;
+INSERT VERTEX device(name, voltage) VALUES "dev_cb_001":("HV Circuit Breaker","220kV"), "dev_line_001":("Transmission Line A","220kV");
+INSERT VERTEX fault(name, level) VALUES "fault_tripping":("Tripping","L2"), "fault_flashover":("Flashover","L1");
+INSERT EDGE has_fault(fault_time, severity) VALUES "dev_cb_001"->"fault_tripping":("2026-04-13",2), "dev_line_001"->"fault_flashover":("2026-04-13",1);
+INSERT EDGE causes(cause_desc) VALUES "fault_flashover"->"fault_tripping":("upstream flashover triggers protection");
+FETCH PROP ON device "dev_cb_001";
+GO FROM "dev_cb_001" OVER has_fault YIELD dst(edge) AS fault_id, has_fault.fault_time AS fault_time, has_fault.severity AS severity;
+GO FROM "fault_flashover" OVER causes YIELD dst(edge) AS impact_fault, causes.cause_desc AS cause_desc;

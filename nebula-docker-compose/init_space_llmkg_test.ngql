@@ -1,0 +1,2 @@
+CREATE SPACE IF NOT EXISTS llmkg_test(partition_num=10, replica_factor=1, vid_type=FIXED_STRING(64));
+SHOW SPACES;

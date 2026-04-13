@@ -1,0 +1,3 @@
+USE llmkg_test;
+FETCH PROP ON device "dev_cb_001" YIELD properties(vertex).name AS name, properties(vertex).voltage AS voltage;
+GO FROM "dev_line_001" OVER has_fault YIELD dst(edge) AS fault_id, has_fault.fault_time AS fault_time, has_fault.severity AS severity;
