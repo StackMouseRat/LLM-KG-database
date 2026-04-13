@@ -1,0 +1,3 @@
+USE llmkg_test;
+SHOW TAG INDEX STATUS;
+MATCH (v:entity) WHERE v.entity.lvl == 1 RETURN v.entity.source_id AS source_id, v.entity.name AS name, substr(v.entity.node_desc,0,80) AS desc_preview ORDER BY source_id;

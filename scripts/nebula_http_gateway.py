@@ -71,7 +71,6 @@ class NebulaGateway:
             proc = subprocess.run(
                 cmd,
                 capture_output=True,
-                text=True,
                 timeout=self.timeout_sec,
             )
         except subprocess.TimeoutExpired:
@@ -92,8 +91,8 @@ class NebulaGateway:
             }
 
         duration_ms = int((time.time() - started) * 1000)
-        stdout = proc.stdout or ""
-        stderr = proc.stderr or ""
+        stdout = self._decode_output(proc.stdout or b"")
+        stderr = self._decode_output(proc.stderr or b"")
         errors = [m.group(1).strip() for m in ERROR_PATTERN.finditer(stdout)]
         ok = proc.returncode == 0 and not errors
 
@@ -110,6 +109,17 @@ class NebulaGateway:
                 "nebula_port": self.nebula_port,
             },
         }
+
+    @staticmethod
+    def _decode_output(data: bytes) -> str:
+        if not data:
+            return ""
+        for enc in ("utf-8", "gb18030"):
+            try:
+                return data.decode(enc)
+            except UnicodeDecodeError:
+                continue
+        return data.decode("utf-8", errors="replace")
 
 
 class GatewayHandler(BaseHTTPRequestHandler):
@@ -168,39 +178,50 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self._json(404, {"ok": False, "message": "not found"})
 
     def do_POST(self) -> None:
-        path = urlparse(self.path).path
-        if path != "/graph/query":
-            self._json(404, {"ok": False, "message": "not found"})
-            return
-
-        payload, error = self._read_json_body()
-        if error:
-            self._json(400, {"ok": False, "message": error})
-            return
-        assert payload is not None
-
-        ngql = payload.get("ngql")
-        if not isinstance(ngql, str):
-            self._json(400, {"ok": False, "message": "field 'ngql' must be string"})
-            return
-
-        space = payload.get("space")
-        if space is not None:
-            if not isinstance(space, str):
-                self._json(400, {"ok": False, "message": "field 'space' must be string"})
-                return
-            if not SPACE_PATTERN.fullmatch(space):
-                self._json(400, {"ok": False, "message": "invalid space name"})
+        try:
+            path = urlparse(self.path).path
+            if path != "/graph/query":
+                self._json(404, {"ok": False, "message": "not found"})
                 return
 
-        result = self.gateway.run_ngql(ngql=ngql, space=space)
-        if result.get("ok"):
-            self._json(200, result)
-            return
-        if result.get("error_type") == "validation":
-            self._json(400, result)
-            return
-        self._json(502, result)
+            payload, error = self._read_json_body()
+            if error:
+                self._json(400, {"ok": False, "message": error})
+                return
+            if not isinstance(payload, dict):
+                self._json(400, {"ok": False, "message": "JSON body must be an object"})
+                return
+
+            ngql = payload.get("ngql")
+            if not isinstance(ngql, str):
+                self._json(400, {"ok": False, "message": "field 'ngql' must be string"})
+                return
+
+            space = payload.get("space")
+            if space is not None:
+                if not isinstance(space, str):
+                    self._json(400, {"ok": False, "message": "field 'space' must be string"})
+                    return
+                if not SPACE_PATTERN.fullmatch(space):
+                    self._json(400, {"ok": False, "message": "invalid space name"})
+                    return
+
+            result = self.gateway.run_ngql(ngql=ngql, space=space)
+            if result.get("ok"):
+                self._json(200, result)
+                return
+            if result.get("error_type") == "validation":
+                self._json(400, result)
+                return
+            self._json(502, result)
+        except Exception as exc:
+            self._json(
+                500,
+                {
+                    "ok": False,
+                    "message": f"gateway internal error: {exc.__class__.__name__}",
+                },
+            )
 
 
 def build_parser() -> argparse.ArgumentParser:
