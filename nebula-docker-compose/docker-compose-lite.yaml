@@ -21,8 +21,8 @@ services:
       retries: 3
       start_period: 20s
     ports:
-      - 9559:9559
-      - 19559:19559
+      - 29559:9559
+      - 39559:19559
       - 19560
     volumes:
       - ./data/meta0:/data/meta
@@ -113,7 +113,7 @@ services:
     depends_on:
       - graphd
     ports:
-      - 8787:8787
+      - 18787:8787
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
