@@ -1,0 +1,310 @@
+{
+  "index": 7,
+  "expected_device": "变压器",
+  "question": "瓦斯继电器报警且油位持续下降，绕组温度同步升高。",
+  "request": {
+    "chatId": "batch-device-20260415234331-07",
+    "stream": true,
+    "detail": true,
+    "customUid": "batch-test-device-10",
+    "messages": [
+      {
+        "role": "user",
+        "content": "瓦斯继电器报警且油位持续下降，绕组温度同步升高。"
+      }
+    ]
+  },
+  "status": "ok",
+  "elapsed_sec": 22.693,
+  "predicted_device": "变压器",
+  "is_correct": true,
+  "response": {
+    "id": "",
+    "model": "",
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "当前故障设备是变压器。\n  【故障判断】\n- 当前最可能故障是变压器绕组短路与断线故障。\n\n  【判断依据】\n1. 已检索到该故障典型现象包含「差动或瓦斯动作」，与你说的瓦斯继电器报警相符。\n2. 已检索到该故障会出现「温升和异响」，与你反馈的绕组温度同步升高相符。\n3. 电测特征上该故障常见「直流电阻和短路阻抗异常」，说明需要重点往绕组短路或断线方向排查。\n\n  【处理建议（按先后）】\n1. 先按检索建议「开展电测定位」，尽快做直阻和阻抗测试，确认故障点。\n2. 设备应「停运检查」，避免故障继续扩大。\n3. 若检查发现引线或焊点问题，按建议「修复引线焊点」；若绕组已受损，则「更换受损绕组后复测投运」。\n\n  【风险提示】\n- 该故障若处置不及时，可能出现「绕组烧毁和长时间停电」；同时「故障电流和电弧会引发喷油着火并危及站内设备安全」。油位持续下降也提示现场风险在上升，需尽快处置。\n\n  【应急资源】\n- 需要「直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员」。\n当前故障设备是变压器。\n  【故障判断】\n- 当前最可能故障是变压器绕组短路与断线故障。\n\n  【判断依据】\n1. 已检索到该故障典型现象包含「差动或瓦斯动作」，与你说的瓦斯继电器报警相符。\n2. 已检索到该故障会出现「温升和异响」，与你反馈的绕组温度同步升高相符。\n3. 电测特征上该故障常见「直流电阻和短路阻抗异常」，说明需要重点往绕组短路或断线方向排查。\n\n  【处理建议（按先后）】\n1. 先按检索建议「开展电测定位」，尽快做直阻和阻抗测试，确认故障点。\n2. 设备应「停运检查」，避免故障继续扩大。\n3. 若检查发现引线或焊点问题，按建议「修复引线焊点」；若绕组已受损，则「更换受损绕组后复测投运」。\n\n  【风险提示】\n- 该故障若处置不及时，可能出现「绕组烧毁和长时间停电」；同时「故障电流和电弧会引发喷油着火并危及站内设备安全」。油位持续下降也提示现场风险在上升，需尽快处置。\n\n  【应急资源】\n- 需要「直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员」。"
+        },
+        "finish_reason": "stop",
+        "index": 0
+      }
+    ],
+    "responseData": [
+      {
+        "moduleName": "common:core.module.template.work_start",
+        "moduleType": "workflowStart",
+        "moduleLogo": "core/workflow/template/workflowStart",
+        "id": "oeKbmWzoaNV5lpHF",
+        "nodeId": "448745",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "设备表初始化",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "vW8O2N7mpqF2diH0",
+        "nodeId": "yb1JWcs00uT9BnMy",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "获取全体设备表",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_breaker",
+          "ngql": "SHOW SPACES;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4230,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 934µs/1.220014ms)\n\nWed, 15 Apr 2026 15:43:33 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 588µs/887.034µs)\n\nWed, 15 Apr 2026 15:43:33 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:43:33 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "d8br9mkMBLUDWY7M",
+        "nodeId": "jAL1KIZmvZFXbL36",
+        "runningTime": 4.24
+      },
+      {
+        "moduleName": "清洗设备表数据",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 934µs/1.220014ms)\n\nWed, 15 Apr 2026 15:43:33 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 588µs/887.034µs)\n\nWed, 15 Apr 2026 15:43:33 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:43:33 UTC\n\n"
+        },
+        "customOutputs": {
+          "devicespace": "llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+        },
+        "codeLog": "",
+        "id": "qCYxtz4Y5vbu4Spi",
+        "nodeId": "dqaMJ59ZDTGGxv68",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "设备识别",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "瓦斯继电器报警且油位持续下降，绕组温度同步升高。",
+        "inputTokens": 378,
+        "outputTokens": 11,
+        "extractDescription": "请从llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中，找出最匹配用户中文输入问题的表并输出，只输出英文的表的名称，不要输出别的任何东西",
+        "extractResult": {
+          "设备表": "llmkg_transformer"
+        },
+        "contextTotalLen": 2,
+        "id": "jOx0gKbN7cIlg9CG",
+        "nodeId": "hJmYZWKFOW26n5E1",
+        "runningTime": 0.85
+      },
+      {
+        "moduleName": "缓存初始化数据",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "dkly5uL3YX5IwHkV",
+        "nodeId": "c1RpkoiqOmMF7adv",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "基础数据获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transformer",
+          "ngql": "MATCH (l1:entity)-[:rel]->(l2:entity) WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 RETURN l1.entity.source_id AS l1_source_id, l1.entity.name AS l1_name, l2.entity.source_id AS l2_source_id, l2.entity.name AS l2_name ORDER BY l1_source_id, l2_source_id;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4124,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 986µs/1.254376ms)\n\nWed, 15 Apr 2026 15:43:38 UTC\n\n(root@nebula) [llmkg_transformer]> +--------------+----------------------------+--------------+------------------------------------+\n| l1_source_id | l1_name                    | l2_source_id | l2_name                            |\n+--------------+----------------------------+--------------+------------------------------------+\n| 16           | \"本体绝缘与铁心绕组故障\"   | 17           | \"变压器进水受潮故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 24           | \"变压器铁心多点接地故障\"           |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 31           | \"变压器绕组短路与断线故障\"         |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 38           | \"变压器绕组变形故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 45           | \"变压器铁心故障\"                   |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 52           | \"大型电力变压器围屏爬电故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 60           | \"有载调压分接开关箱渗油故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 67           | \"变压器套管引线故障\"               |\n| 59           | \"套管与调压及油箱附件故障\" | 74           | \"小型配电变压器喷油与油箱炸裂故障\" |\n+--------------+----------------------------+--------------+------------------------------------+\nGot 9 rows (time spent 3.796ms/4.306499ms)\n\nWed, 15 Apr 2026 15:43:38 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:43:38 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "rCaPTllHYDe6ToCN",
+        "nodeId": "fFpXpftMQrWMSyQb",
+        "runningTime": 4.13
+      },
+      {
+        "moduleName": "基础数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 4124,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 986µs/1.254376ms)\n\nWed, 15 Apr 2026 15:43:38 UTC\n\n(root@nebula) [llmkg_transformer]> +--------------+----------------------------+--------------+------------------------------------+\n| l1_source_id | l1_name                    | l2_source_id | l2_name                            |\n+--------------+----------------------------+--------------+------------------------------------+\n| 16           | \"本体绝缘与铁心绕组故障\"   | 17           | \"变压器进水受潮故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 24           | \"变压器铁心多点接地故障\"           |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 31           | \"变压器绕组短路与断线故障\"         |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 38           | \"变压器绕组变形故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 45           | \"变压器铁心故障\"                   |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 52           | \"大型电力变压器围屏爬电故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 60           | \"有载调压分接开关箱渗油故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 67           | \"变压器套管引线故障\"               |\n| 59           | \"套管与调压及油箱附件故障\" | 74           | \"小型配电变压器喷油与油箱炸裂故障\" |\n+--------------+----------------------------+--------------+------------------------------------+\nGot 9 rows (time spent 3.796ms/4.306499ms)\n\nWed, 15 Apr 2026 15:43:38 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:43:38 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "summary_text": "一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。"
+        },
+        "codeLog": "",
+        "id": "lWKHzWyAOR4Ei3li",
+        "nodeId": "gMBZtrBTbpDPI3Ob",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "基础数据更新",
+        "moduleType": "variableUpdate",
+        "moduleLogo": "core/workflow/template/variableUpdate",
+        "updateVarResult": [
+          "一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。"
+        ],
+        "id": "j1bI6FeAnloGp64Q",
+        "nodeId": "zUjkCcG9mO9I8G6u",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "故障类型分析",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "瓦斯继电器报警且油位持续下降，绕组温度同步升高。",
+        "inputTokens": 493,
+        "outputTokens": 14,
+        "extractDescription": " 你的任务：根据用户输入，在已知的一级/二级故障目录中，匹配“最恰当的一个二级故障名称”。\n\n  已知目录：\n  一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。\n\n  规则：\n 输出要求：\n  只输出一个 JSON 对象，且只能有这个键：\n  {\"故障二级节点\":\"已知目录中的一个二级故障\"}\n\n  现在开始匹配并输出结果。",
+        "extractResult": {
+          "故障二级节点": "变压器绕组短路与断线故障"
+        },
+        "contextTotalLen": 2,
+        "id": "aIfr26QFmmLMTw0x",
+        "nodeId": "bEGyTijQYXiijgkL",
+        "runningTime": 1.2
+      },
+      {
+        "moduleName": "下游节点获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transformer",
+          "ngql": "MATCH (s:entity)-[:rel*1..5]->(m:entity) WHERE s.entity.lvl == 2 AND s.entity.name == \"变压器绕组短路与断线故障\" RETURN DISTINCT m.entity.lvl AS lvl, m.entity.name AS name, m.entity.node_desc AS node_desc ORDER BY lvl, name;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4061,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 815µs/1.038073ms)\n\nWed, 15 Apr 2026 15:43:44 UTC\n\n(root@nebula) [llmkg_transformer]> +-----+-------------------------------------+------------------------------------------------------------------------+\n| lvl | name                                | node_desc                                                              |\n+-----+-------------------------------------+------------------------------------------------------------------------+\n| 3   | \"变压器绕组短路与断线故障-应对措施\" | \"开展电测定位并停运检查，修复引线焊点或更换受损绕组后复测投运。\"       |\n| 3   | \"变压器绕组短路与断线故障-故障原因\" | \"外部短路冲击、绝缘老化受潮、焊接缺陷和机械应力会导致绕组短路或断线。\" |\n| 4   | \"变压器绕组短路与断线故障-安全风险\" | \"故障电流和电弧会引发喷油着火并危及站内设备安全。\"                     |\n| 4   | \"变压器绕组短路与断线故障-应急资源\" | \"需要直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员。\"     |\n| 4   | \"变压器绕组短路与断线故障-故障后果\" | \"若保护拒动或处置不及时，可能造成绕组烧毁和长时间停电。\"               |\n| 4   | \"变压器绕组短路与断线故障-故障现象\" | \"可见差动或瓦斯动作，直流电阻和短路阻抗异常，伴随温升和异响。\"         |\n+-----+-------------------------------------+------------------------------------------------------------------------+\nGot 6 rows (time spent 4.63ms/5.065207ms)\n\nWed, 15 Apr 2026 15:43:44 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:43:44 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "q5ibWc7X80zdqNh2",
+        "nodeId": "rpJznDcYzR74Wijw",
+        "runningTime": 4.07
+      },
+      {
+        "moduleName": "下游节点数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 4061,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 815µs/1.038073ms)\n\nWed, 15 Apr 2026 15:43:44 UTC\n\n(root@nebula) [llmkg_transformer]> +-----+-------------------------------------+------------------------------------------------------------------------+\n| lvl | name                                | node_desc                                                              |\n+-----+-------------------------------------+------------------------------------------------------------------------+\n| 3   | \"变压器绕组短路与断线故障-应对措施\" | \"开展电测定位并停运检查，修复引线焊点或更换受损绕组后复测投运。\"       |\n| 3   | \"变压器绕组短路与断线故障-故障原因\" | \"外部短路冲击、绝缘老化受潮、焊接缺陷和机械应力会导致绕组短路或断线。\" |\n| 4   | \"变压器绕组短路与断线故障-安全风险\" | \"故障电流和电弧会引发喷油着火并危及站内设备安全。\"                     |\n| 4   | \"变压器绕组短路与断线故障-应急资源\" | \"需要直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员。\"     |\n| 4   | \"变压器绕组短路与断线故障-故障后果\" | \"若保护拒动或处置不及时，可能造成绕组烧毁和长时间停电。\"               |\n| 4   | \"变压器绕组短路与断线故障-故障现象\" | \"可见差动或瓦斯动作，直流电阻和短路阻抗异常，伴随温升和异响。\"         |\n+-----+-------------------------------------+------------------------------------------------------------------------+\nGot 6 rows (time spent 4.63ms/5.065207ms)\n\nWed, 15 Apr 2026 15:43:44 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:43:44 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "result": "当前二级故障：变压器绕组短路与断线故障。故障原因：变压器绕组短路与断线故障-故障原因：外部短路冲击、绝缘老化受潮、焊接缺陷和机械应力会导致绕组短路或断线。。应对措施：变压器绕组短路与断线故障-应对措施：开展电测定位并停运检查，修复引线焊点或更换受损绕组后复测投运。。故障现象：变压器绕组短路与断线故障-故障现象：可见差动或瓦斯动作，直流电阻和短路阻抗异常，伴随温升和异响。。故障后果：变压器绕组短路与断线故障-故障后果：若保护拒动或处置不及时，可能造成绕组烧毁和长时间停电。。安全风险：变压器绕组短路与断线故障-安全风险：故障电流和电弧会引发喷油着火并危及站内设备安全。。应急资源：变压器绕组短路与断线故障-应急资源：需要直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员。。其他相关节点：无。"
+        },
+        "codeLog": "",
+        "id": "xkPtZPM7LA9RLgEn",
+        "nodeId": "fmRLeRT0lvkngtJQ",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "最终生成",
+        "moduleType": "chatNode",
+        "moduleLogo": "core/workflow/template/aiChat",
+        "totalPoints": 0,
+        "model": "gpt-5.4",
+        "inputTokens": 632,
+        "outputTokens": 356,
+        "query": "瓦斯继电器报警且油位持续下降，绕组温度同步升高。",
+        "reasoningText": "",
+        "historyPreview": [
+          {
+            "obj": "System",
+            "value": " 你是“电力设备故障解释与处置助手”，面向一线运维人员回答。\n\n  你会收到输入：用户原问题和，设备判断结果和检索清洗结果当前二级故障：变压器绕组短路与断线故障。故障原因：变压器绕组短路与断线故障-故障原因：外部短路冲击、绝缘老化受潮、焊接缺陷和机械应力会导致绕组短路或断线。。应对措施：变压器绕组短路与断线故障-应对措施：开展电测定位并停运检查，修复引线焊点或更换受损绕组后复测投运。。故障现象：变压器绕组短路与断线故障-故障现象：可见差动或瓦斯动作，直流电阻和短路阻抗异常，伴随温升和异响。。故障后果：变压器绕组短路与断线故障-故障后果：若保护拒动或处置不及时，可能造成绕组烧毁和长时间停电。。安全风险：变压器绕组短路与断线故障-安全风险：故障电流和电弧会引发喷油着火并危及站内设备安全。。应急资源：变压器绕组短路与断线故障-应急资源：需要直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员。。其他相关节点：无。\n\n  你的任务：\n1. 只基于“检索清洗结果”作答，不得编造。\n2. 先给出故障判断，再给出依据、处理建议、风险提示、应急资源。\n3. 回答要口语化、简洁、可执行。\n4. “有理有据”要求：必须给出2~4条依据，并引用检索结果中的关键信息（用「」包住短句）。\n5. 若某项是“未检索到”，明确写“该项暂无数据”。\n\n  输出格式（严格按此顺序）：\n当前故障设备是...\n  【故障判断】\n- 一句话说明当前最可能故障。\n\n  【判断依据】\n1. ...\n2. ...\n3. ...\n\n  【处理建议（按先后）】\n1. ...\n2. ...\n3. ...\n\n  【风险提示】\n- ...\n\n  【应急资源】\n- ...\n\n  风格约束：\n- 不要输出JSON。\n- 不要复述整段原始字符串。\n- 不要出现“作为AI”等表述。"
+          },
+          {
+            "obj": "Human",
+            "value": "瓦斯继电器报警且油位持续下降，绕组温度同步升高。"
+          },
+          {
+            "obj": "AI",
+            "value": "当前故障设备是变压器。\n  【故障判断】\n- 当前最可能故障是变压器绕组短路与断线故障。\n\n  【判断依据】\n1. 已检索到该故障典型现象包含「差动或瓦斯动作」，与你说的瓦斯继电器报警相符。\n2. 已检索到该故障会出现「温升和异响」，与你反馈的绕组温度同步升高相符。\n3. 电测特征上该故障常见「直流电阻和短路阻抗异常」，说明需要重点往绕组短路或断线方向排查。\n\n  【处理建议（按先后）】\n1. 先按检索建议「开展电测定位」，尽快做直阻和阻抗测试，确认故障点。\n2. 设备应「停运检查」，避免故障继续扩大。\n3. 若检查发现引线或焊点问题，按建议「修复引线焊点」；若绕组已受损，则「更换受损绕组后复测投运」。\n\n  【风险提示】\n- 该故障若处置不及时，可能出现「绕组烧毁和长时间停电」；同时「故障电流和电弧会引发喷油着火并危及站内设备安全」。油位持续下降也提示现场风险在上升，需尽快处置。\n\n  【应急资源】\n- 需要「直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员」。"
+          }
+        ],
+        "contextTotalLen": 3,
+        "finishReason": "stop",
+        "llmRequestIds": [
+          "0N6SqlSx5fBfKeKp"
+        ],
+        "id": "a7ilqs1b7xowZT8b",
+        "nodeId": "j5U22AiVe7XSNPFG",
+        "runningTime": 7.92
+      },
+      {
+        "moduleName": "指定回复",
+        "moduleType": "answerNode",
+        "moduleLogo": "core/workflow/template/reply",
+        "textOutput": "当前故障设备是变压器。\n  【故障判断】\n- 当前最可能故障是变压器绕组短路与断线故障。\n\n  【判断依据】\n1. 已检索到该故障典型现象包含「差动或瓦斯动作」，与你说的瓦斯继电器报警相符。\n2. 已检索到该故障会出现「温升和异响」，与你反馈的绕组温度同步升高相符。\n3. 电测特征上该故障常见「直流电阻和短路阻抗异常」，说明需要重点往绕组短路或断线方向排查。\n\n  【处理建议（按先后）】\n1. 先按检索建议「开展电测定位」，尽快做直阻和阻抗测试，确认故障点。\n2. 设备应「停运检查」，避免故障继续扩大。\n3. 若检查发现引线或焊点问题，按建议「修复引线焊点」；若绕组已受损，则「更换受损绕组后复测投运」。\n\n  【风险提示】\n- 该故障若处置不及时，可能出现「绕组烧毁和长时间停电」；同时「故障电流和电弧会引发喷油着火并危及站内设备安全」。油位持续下降也提示现场风险在上升，需尽快处置。\n\n  【应急资源】\n- 需要「直阻与阻抗测试设备、吊罩工具、绕组备件、消防器材和检修人员」。",
+        "id": "vXOayO2ty9DIIU7A",
+        "nodeId": "ai8Jn4Wx4O1ZD8TE",
+        "runningTime": 0
+      }
+    ]
+  }
+}

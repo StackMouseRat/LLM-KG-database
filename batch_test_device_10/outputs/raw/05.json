@@ -1,0 +1,310 @@
+{
+  "index": 5,
+  "expected_device": "输电线路",
+  "question": "强对流天气后线路出现风偏放电，间隔距离不足引发短路告警。",
+  "request": {
+    "chatId": "batch-device-20260415234229-05",
+    "stream": true,
+    "detail": true,
+    "customUid": "batch-test-device-10",
+    "messages": [
+      {
+        "role": "user",
+        "content": "强对流天气后线路出现风偏放电，间隔距离不足引发短路告警。"
+      }
+    ]
+  },
+  "status": "ok",
+  "elapsed_sec": 28.573,
+  "predicted_device": "输电线路",
+  "is_correct": true,
+  "response": {
+    "id": "",
+    "model": "",
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "当前故障设备是线路\n  【故障判断】\n- 当前最可能是风偏闪络故障。\n\n  【判断依据】\n1. 现场现象和检索结果一致，检索提到「在大风雷雨天气条件下发生闪络跳闸」，你这边是强对流天气后出现风偏放电、短路告警，特征比较吻合。\n2. 故障机理吻合，检索明确说「强风使导线风偏角过大」，会导致导线偏移、间隔距离变小。\n3. 另外一个关键条件也对上了，检索提到「暴雨又降低空气间隙的放电电压」，强对流天气下更容易出现放电和短路告警。\n4. 如果原有结构裕度不足，检索说明「在设计裕度不足时容易引发风偏闪络故障」，这和你说的间隔距离不足是对应的。\n\n  【处理建议（按先后）】\n1. 先重点排查跳线、引线和导线风摆情况，结合检索建议，开展「跳引线松弛普查与治理」。\n2. 对问题点尽快规范整改，按检索建议「规范跳线安装和改造」，必要时采用「双绝缘子串加装支撑管」。\n3. 现场处理时检查并尽量收紧「支撑管两侧跳线松弛度」，减少再次风偏放电风险。\n4. 后续同步做长效治理，落实「导线风摆整治措施」，并完善「施工和验收实测台账」。\n\n  【风险提示】\n- 这类处置主要注意「高空作业风险、触电/电击伤害风险和设备损坏风险」；如果反复故障处理，还会有「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备。\n- 如果涉及跳线与支撑管改造，还应准备起重机械、备品备件和金具器材。\n当前故障设备是线路\n  【故障判断】\n- 当前最可能是风偏闪络故障。\n\n  【判断依据】\n1. 现场现象和检索结果一致，检索提到「在大风雷雨天气条件下发生闪络跳闸」，你这边是强对流天气后出现风偏放电、短路告警，特征比较吻合。\n2. 故障机理吻合，检索明确说「强风使导线风偏角过大」，会导致导线偏移、间隔距离变小。\n3. 另外一个关键条件也对上了，检索提到「暴雨又降低空气间隙的放电电压」，强对流天气下更容易出现放电和短路告警。\n4. 如果原有结构裕度不足，检索说明「在设计裕度不足时容易引发风偏闪络故障」，这和你说的间隔距离不足是对应的。\n\n  【处理建议（按先后）】\n1. 先重点排查跳线、引线和导线风摆情况，结合检索建议，开展「跳引线松弛普查与治理」。\n2. 对问题点尽快规范整改，按检索建议「规范跳线安装和改造」，必要时采用「双绝缘子串加装支撑管」。\n3. 现场处理时检查并尽量收紧「支撑管两侧跳线松弛度」，减少再次风偏放电风险。\n4. 后续同步做长效治理，落实「导线风摆整治措施」，并完善「施工和验收实测台账」。\n\n  【风险提示】\n- 这类处置主要注意「高空作业风险、触电/电击伤害风险和设备损坏风险」；如果反复故障处理，还会有「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备。\n- 如果涉及跳线与支撑管改造，还应准备起重机械、备品备件和金具器材。"
+        },
+        "finish_reason": "stop",
+        "index": 0
+      }
+    ],
+    "responseData": [
+      {
+        "moduleName": "common:core.module.template.work_start",
+        "moduleType": "workflowStart",
+        "moduleLogo": "core/workflow/template/workflowStart",
+        "id": "dgRWozALPrXBCjCA",
+        "nodeId": "448745",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "设备表初始化",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "xCXVr8fREj65ujEg",
+        "nodeId": "yb1JWcs00uT9BnMy",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "获取全体设备表",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_breaker",
+          "ngql": "SHOW SPACES;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4172,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 970µs/1.269223ms)\n\nWed, 15 Apr 2026 15:42:32 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 765µs/1.133123ms)\n\nWed, 15 Apr 2026 15:42:32 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:42:32 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "hVll6xmmo8nnTGOW",
+        "nodeId": "jAL1KIZmvZFXbL36",
+        "runningTime": 4.17
+      },
+      {
+        "moduleName": "清洗设备表数据",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 970µs/1.269223ms)\n\nWed, 15 Apr 2026 15:42:32 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 765µs/1.133123ms)\n\nWed, 15 Apr 2026 15:42:32 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:42:32 UTC\n\n"
+        },
+        "customOutputs": {
+          "devicespace": "llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+        },
+        "codeLog": "",
+        "id": "mC7pUt15OrLM5tY1",
+        "nodeId": "dqaMJ59ZDTGGxv68",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "设备识别",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "强对流天气后线路出现风偏放电，间隔距离不足引发短路告警。",
+        "inputTokens": 381,
+        "outputTokens": 12,
+        "extractDescription": "请从llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中，找出最匹配用户中文输入问题的表并输出，只输出英文的表的名称，不要输出别的任何东西",
+        "extractResult": {
+          "设备表": "llmkg_transmission_line"
+        },
+        "contextTotalLen": 2,
+        "id": "zefvQyVhQTpjSueh",
+        "nodeId": "hJmYZWKFOW26n5E1",
+        "runningTime": 4.54
+      },
+      {
+        "moduleName": "缓存初始化数据",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "ktSJ4YJIW32PfQSZ",
+        "nodeId": "c1RpkoiqOmMF7adv",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "基础数据获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transmission_line",
+          "ngql": "MATCH (l1:entity)-[:rel]->(l2:entity) WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 RETURN l1.entity.source_id AS l1_source_id, l1.entity.name AS l1_name, l2.entity.source_id AS l2_source_id, l2.entity.name AS l2_name ORDER BY l1_source_id, l2_source_id;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4064,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.133ms/1.523088ms)\n\nWed, 15 Apr 2026 15:42:41 UTC\n\n(root@nebula) [llmkg_transmission_line]> +--------------+----------------+--------------+--------------------------------+\n| l1_source_id | l1_name        | l2_source_id | l2_name                        |\n+--------------+----------------+--------------+--------------------------------+\n| 1            | \"覆冰故障\"     | 8            | \"覆冰过荷载故障\"               |\n| 1            | \"覆冰故障\"     | 15           | \"脱冰跳跃故障\"                 |\n| 2            | \"舞动故障\"     | 22           | \"舞动致螺栓松脱故障\"           |\n| 2            | \"舞动故障\"     | 29           | \"舞动致杆塔损坏故障\"           |\n| 2            | \"舞动故障\"     | 36           | \"舞动致跳闸故障\"               |\n| 3            | \"雷击闪络故障\" | 43           | \"感应雷过电压故障\"             |\n| 3            | \"雷击闪络故障\" | 50           | \"反击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 57           | \"绕击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 64           | \"避雷线档距中央雷击故障\"       |\n| 4            | \"外力破坏故障\" | 71           | \"外力异物短路故障\"             |\n| 4            | \"外力破坏故障\" | 78           | \"吊车碰线故障\"                 |\n| 4            | \"外力破坏故障\" | 85           | \"违章施工故障\"                 |\n| 4            | \"外力破坏故障\" | 92           | \"烟火短路故障\"                 |\n| 4            | \"外力破坏故障\" | 99           | \"山火故障\"                     |\n| 4            | \"外力破坏故障\" | 106          | \"盗窃破坏故障\"                 |\n| 5            | \"风害故障\"     | 113          | \"风致倒塔断线故障\"             |\n| 5            | \"风害故障\"     | 120          | \"风偏闪络故障\"                 |\n| 5            | \"风害故障\"     | 127          | \"风致异物短路故障\"             |\n| 6            | \"鸟害故障\"     | 134          | \"鸟巢异物故障\"                 |\n| 6            | \"鸟害故障\"     | 141          | \"鸟类飞行短路故障\"             |\n| 6            | \"鸟害故障\"     | 148          | \"蛇类捕食诱发闪络故障\"         |\n| 6            | \"鸟害故障\"     | 155          | \"复合绝缘子鸟啄损伤故障\"       |\n| 7            | \"污闪故障\"     | 162          | \"积污污闪故障\"                 |\n| 7            | \"污闪故障\"     | 169          | \"瓷玻璃绝缘子劣化故障\"         |\n| 7            | \"污闪故障\"     | 176          | \"复合绝缘子憎水性丧失闪络故障\" |\n| 7            | \"污闪故障\"     | 183          | \"覆冰（雪）绝缘子污闪故障\"     |\n+--------------+----------------+--------------+--------------------------------+\nGot 26 rows (time spent 3.465ms/3.999209ms)\n\nWed, 15 Apr 2026 15:42:41 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:42:41 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "oXMeE4OJqV763oIy",
+        "nodeId": "fFpXpftMQrWMSyQb",
+        "runningTime": 4.07
+      },
+      {
+        "moduleName": "基础数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 4064,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.133ms/1.523088ms)\n\nWed, 15 Apr 2026 15:42:41 UTC\n\n(root@nebula) [llmkg_transmission_line]> +--------------+----------------+--------------+--------------------------------+\n| l1_source_id | l1_name        | l2_source_id | l2_name                        |\n+--------------+----------------+--------------+--------------------------------+\n| 1            | \"覆冰故障\"     | 8            | \"覆冰过荷载故障\"               |\n| 1            | \"覆冰故障\"     | 15           | \"脱冰跳跃故障\"                 |\n| 2            | \"舞动故障\"     | 22           | \"舞动致螺栓松脱故障\"           |\n| 2            | \"舞动故障\"     | 29           | \"舞动致杆塔损坏故障\"           |\n| 2            | \"舞动故障\"     | 36           | \"舞动致跳闸故障\"               |\n| 3            | \"雷击闪络故障\" | 43           | \"感应雷过电压故障\"             |\n| 3            | \"雷击闪络故障\" | 50           | \"反击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 57           | \"绕击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 64           | \"避雷线档距中央雷击故障\"       |\n| 4            | \"外力破坏故障\" | 71           | \"外力异物短路故障\"             |\n| 4            | \"外力破坏故障\" | 78           | \"吊车碰线故障\"                 |\n| 4            | \"外力破坏故障\" | 85           | \"违章施工故障\"                 |\n| 4            | \"外力破坏故障\" | 92           | \"烟火短路故障\"                 |\n| 4            | \"外力破坏故障\" | 99           | \"山火故障\"                     |\n| 4            | \"外力破坏故障\" | 106          | \"盗窃破坏故障\"                 |\n| 5            | \"风害故障\"     | 113          | \"风致倒塔断线故障\"             |\n| 5            | \"风害故障\"     | 120          | \"风偏闪络故障\"                 |\n| 5            | \"风害故障\"     | 127          | \"风致异物短路故障\"             |\n| 6            | \"鸟害故障\"     | 134          | \"鸟巢异物故障\"                 |\n| 6            | \"鸟害故障\"     | 141          | \"鸟类飞行短路故障\"             |\n| 6            | \"鸟害故障\"     | 148          | \"蛇类捕食诱发闪络故障\"         |\n| 6            | \"鸟害故障\"     | 155          | \"复合绝缘子鸟啄损伤故障\"       |\n| 7            | \"污闪故障\"     | 162          | \"积污污闪故障\"                 |\n| 7            | \"污闪故障\"     | 169          | \"瓷玻璃绝缘子劣化故障\"         |\n| 7            | \"污闪故障\"     | 176          | \"复合绝缘子憎水性丧失闪络故障\" |\n| 7            | \"污闪故障\"     | 183          | \"覆冰（雪）绝缘子污闪故障\"     |\n+--------------+----------------+--------------+--------------------------------+\nGot 26 rows (time spent 3.465ms/3.999209ms)\n\nWed, 15 Apr 2026 15:42:41 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:42:41 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "summary_text": "一级故障有：覆冰故障、舞动故障、雷击闪络故障、外力破坏故障、风害故障、鸟害故障、污闪故障。\n其中：覆冰故障有2个二级故障：覆冰过荷载故障、脱冰跳跃故障；舞动故障有3个二级故障：舞动致螺栓松脱故障、舞动致杆塔损坏故障、舞动致跳闸故障；雷击闪络故障有4个二级故障：感应雷过电压故障、反击雷故障、绕击雷故障、避雷线档距中央雷击故障；外力破坏故障有6个二级故障：外力异物短路故障、吊车碰线故障、违章施工故障、烟火短路故障、山火故障、盗窃破坏故障；风害故障有3个二级故障：风致倒塔断线故障、风偏闪络故障、风致异物短路故障；鸟害故障有4个二级故障：鸟巢异物故障、鸟类飞行短路故障、蛇类捕食诱发闪络故障、复合绝缘子鸟啄损伤故障；污闪故障有4个二级故障：积污污闪故障、瓷玻璃绝缘子劣化故障、复合绝缘子憎水性丧失闪络故障、覆冰（雪）绝缘子污闪故障。\n合计二级故障映射26条。"
+        },
+        "codeLog": "",
+        "id": "boZ9S9wJEOQ2Dy0b",
+        "nodeId": "gMBZtrBTbpDPI3Ob",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "基础数据更新",
+        "moduleType": "variableUpdate",
+        "moduleLogo": "core/workflow/template/variableUpdate",
+        "updateVarResult": [
+          "一级故障有：覆冰故障、舞动故障、雷击闪络故障、外力破坏故障、风害故障、鸟害故障、污闪故障。\n其中：覆冰故障有2个二级故障：覆冰过荷载故障、脱冰跳跃故障；舞动故障有3个二级故障：舞动致螺栓松脱故障、舞动致杆塔损坏故障、舞动致跳闸故障；雷击闪络故障有4个二级故障：感应雷过电压故障、反击雷故障、绕击雷故障、避雷线档距中央雷击故障；外力破坏故障有6个二级故障：外力异物短路故障、吊车碰线故障、违章施工故障、烟火短路故障、山火故障、盗窃破坏故障；风害故障有3个二级故障：风致倒塔断线故障、风偏闪络故障、风致异物短路故障；鸟害故障有4个二级故障：鸟巢异物故障、鸟类飞行短路故障、蛇类捕食诱发闪络故障、复合绝缘子鸟啄损伤故障；污闪故障有4个二级故障：积污污闪故障、瓷玻璃绝缘子劣化故障、复合绝缘子憎水性丧失闪络故障、覆冰（雪）绝缘子污闪故障。\n合计二级故障映射26条。"
+        ],
+        "id": "hDwb26wD2ZahOCIp",
+        "nodeId": "zUjkCcG9mO9I8G6u",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "故障类型分析",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "强对流天气后线路出现风偏放电，间隔距离不足引发短路告警。",
+        "inputTokens": 633,
+        "outputTokens": 11,
+        "extractDescription": " 你的任务：根据用户输入，在已知的一级/二级故障目录中，匹配“最恰当的一个二级故障名称”。\n\n  已知目录：\n  一级故障有：覆冰故障、舞动故障、雷击闪络故障、外力破坏故障、风害故障、鸟害故障、污闪故障。\n其中：覆冰故障有2个二级故障：覆冰过荷载故障、脱冰跳跃故障；舞动故障有3个二级故障：舞动致螺栓松脱故障、舞动致杆塔损坏故障、舞动致跳闸故障；雷击闪络故障有4个二级故障：感应雷过电压故障、反击雷故障、绕击雷故障、避雷线档距中央雷击故障；外力破坏故障有6个二级故障：外力异物短路故障、吊车碰线故障、违章施工故障、烟火短路故障、山火故障、盗窃破坏故障；风害故障有3个二级故障：风致倒塔断线故障、风偏闪络故障、风致异物短路故障；鸟害故障有4个二级故障：鸟巢异物故障、鸟类飞行短路故障、蛇类捕食诱发闪络故障、复合绝缘子鸟啄损伤故障；污闪故障有4个二级故障：积污污闪故障、瓷玻璃绝缘子劣化故障、复合绝缘子憎水性丧失闪络故障、覆冰（雪）绝缘子污闪故障。\n合计二级故障映射26条。\n\n  规则：\n 输出要求：\n  只输出一个 JSON 对象，且只能有这个键：\n  {\"故障二级节点\":\"已知目录中的一个二级故障\"}\n\n  现在开始匹配并输出结果。",
+        "extractResult": {
+          "故障二级节点": "风偏闪络故障"
+        },
+        "contextTotalLen": 2,
+        "id": "nnOP6L8JjSCTBIOo",
+        "nodeId": "bEGyTijQYXiijgkL",
+        "runningTime": 1.35
+      },
+      {
+        "moduleName": "下游节点获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transmission_line",
+          "ngql": "MATCH (s:entity)-[:rel*1..5]->(m:entity) WHERE s.entity.lvl == 2 AND s.entity.name == \"风偏闪络故障\" RETURN DISTINCT m.entity.lvl AS lvl, m.entity.name AS name, m.entity.node_desc AS node_desc ORDER BY lvl, name;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4155,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.052ms/1.35621ms)\n\nWed, 15 Apr 2026 15:42:46 UTC\n\n(root@nebula) [llmkg_transmission_line]> +-----+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| lvl | name                    | node_desc                                                                                                                                                                    |\n+-----+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| 3   | \"风偏闪络故障-应对措施\" | \"应规范跳线安装和改造，采用双绝缘子串加装支撑管，检测并尽量收紧支撑管两侧跳线松弛度，强化施工和验收实测台账；同时全面开展跳引线松弛普查与治理，并配套实施导线风摆整治措施。\" |\n| 3   | \"风偏闪络故障-故障原因\" | \"强风使导线风偏角过大，暴雨又降低空气间隙的放电电压，在设计裕度不足时容易引发风偏闪络故障。\"                                                                                 |\n| 4   | \"风偏闪络故障-安全风险\" | \"在跳线整治、支撑管改造和导线风摆治理过程中，主要存在高空作业风险、触电/电击伤害风险和设备损坏风险；停电窗口和重复故障处理还会带来停电损失风险。\"                            |\n| 4   | \"风偏闪络故障-应急资源\" | \"主要需要抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备；实施跳线与支撑管改造时，还应准备起重机械、备品备件和金具器材。\"                                               |\n| 4   | \"风偏闪络故障-故障后果\" | \"会造成闪络跳闸，在大风雷雨条件下引发线路停电，并使供电可靠性明显下降。\"                                                                                                     |\n| 4   | \"风偏闪络故障-故障现象\" | \"主要表现为在大风雷雨天气条件下发生闪络跳闸。\"                                                                                                                               |\n+-----+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\nGot 6 rows (time spent 4.513ms/4.99306ms)\n\nWed, 15 Apr 2026 15:42:46 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:42:46 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "otseCsBJzZar65nF",
+        "nodeId": "rpJznDcYzR74Wijw",
+        "runningTime": 4.16
+      },
+      {
+        "moduleName": "下游节点数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 4155,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.052ms/1.35621ms)\n\nWed, 15 Apr 2026 15:42:46 UTC\n\n(root@nebula) [llmkg_transmission_line]> +-----+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| lvl | name                    | node_desc                                                                                                                                                                    |\n+-----+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| 3   | \"风偏闪络故障-应对措施\" | \"应规范跳线安装和改造，采用双绝缘子串加装支撑管，检测并尽量收紧支撑管两侧跳线松弛度，强化施工和验收实测台账；同时全面开展跳引线松弛普查与治理，并配套实施导线风摆整治措施。\" |\n| 3   | \"风偏闪络故障-故障原因\" | \"强风使导线风偏角过大，暴雨又降低空气间隙的放电电压，在设计裕度不足时容易引发风偏闪络故障。\"                                                                                 |\n| 4   | \"风偏闪络故障-安全风险\" | \"在跳线整治、支撑管改造和导线风摆治理过程中，主要存在高空作业风险、触电/电击伤害风险和设备损坏风险；停电窗口和重复故障处理还会带来停电损失风险。\"                            |\n| 4   | \"风偏闪络故障-应急资源\" | \"主要需要抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备；实施跳线与支撑管改造时，还应准备起重机械、备品备件和金具器材。\"                                               |\n| 4   | \"风偏闪络故障-故障后果\" | \"会造成闪络跳闸，在大风雷雨条件下引发线路停电，并使供电可靠性明显下降。\"                                                                                                     |\n| 4   | \"风偏闪络故障-故障现象\" | \"主要表现为在大风雷雨天气条件下发生闪络跳闸。\"                                                                                                                               |\n+-----+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\nGot 6 rows (time spent 4.513ms/4.99306ms)\n\nWed, 15 Apr 2026 15:42:46 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:42:46 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "result": "当前二级故障：风偏闪络故障。故障原因：风偏闪络故障-故障原因：强风使导线风偏角过大，暴雨又降低空气间隙的放电电压，在设计裕度不足时容易引发风偏闪络故障。。应对措施：风偏闪络故障-应对措施：应规范跳线安装和改造，采用双绝缘子串加装支撑管，检测并尽量收紧支撑管两侧跳线松弛度，强化施工和验收实测台账；同时全面开展跳引线松弛普查与治理，并配套实施导线风摆整治措施。。故障现象：风偏闪络故障-故障现象：主要表现为在大风雷雨天气条件下发生闪络跳闸。。故障后果：风偏闪络故障-故障后果：会造成闪络跳闸，在大风雷雨条件下引发线路停电，并使供电可靠性明显下降。。安全风险：风偏闪络故障-安全风险：在跳线整治、支撑管改造和导线风摆治理过程中，主要存在高空作业风险、触电/电击伤害风险和设备损坏风险；停电窗口和重复故障处理还会带来停电损失风险。。应急资源：风偏闪络故障-应急资源：主要需要抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备；实施跳线与支撑管改造时，还应准备起重机械、备品备件和金具器材。。其他相关节点：无。"
+        },
+        "codeLog": "",
+        "id": "jCvG1Y1zm91RoU3r",
+        "nodeId": "fmRLeRT0lvkngtJQ",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "最终生成",
+        "moduleType": "chatNode",
+        "moduleLogo": "core/workflow/template/aiChat",
+        "totalPoints": 0,
+        "model": "gpt-5.4",
+        "inputTokens": 699,
+        "outputTokens": 481,
+        "query": "强对流天气后线路出现风偏放电，间隔距离不足引发短路告警。",
+        "reasoningText": "",
+        "historyPreview": [
+          {
+            "obj": "System",
+            "value": " 你是“电力设备故障解释与处置助手”，面向一线运维人员回答。\n\n  你会收到输入：用户原问题和，设备判断结果和检索清洗结果当前二级故障：风偏闪络故障。故障原因：风偏闪络故障-故障原因：强风使导线风偏角过大，暴雨又降低空气间隙的放电电压，在设计裕度不足时容易引发风偏闪络故障。。应对措施：风偏闪络故障-应对措施：应规范跳线安装和改造，采用双绝缘子串加装支撑管，检测并尽量收紧支撑管两侧跳线松弛度，强化施工和验收实测台账；同时全面开展跳引线松弛普查与治理，并配套实施导线风摆整治措施。。故障现象：风偏闪络故障-故障现象：主要表现为在大风雷雨天气条件下发生闪络跳闸。。故障后果：风偏闪络故障-故障后果：会造成闪络跳闸，在大风雷雨条件下引发线路停电，并使供电可靠性明显下降。。安全风险：风偏闪络故障-安全风险：在跳线整治、支撑管改造和导线风摆治理过程中，主要存在高空作业风险、触电/电击伤害风险和设备损坏风险；停电窗口和重复故障处理还会带来停电损失风险。。应急资源：风偏闪络故障-应急资源：主要需要抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备；实施跳线与支撑管改造时，还应准备起重机械、备品备件和金具器材。。其他相关节点：无。\n\n  你的任务：\n1. 只基于“检索清洗结果”作答，不得编造。\n2. 先给出故障判断，再给出依据、处理建议、风险提示、应急资源。\n3. 回答要口语化、简洁、可执行。\n4. “有理有据”要求：必须给出2~4条依据，并引用检索结果中的关键信息（用「」包住短句）。\n5. 若某项是“未检索到”，明确写“该项暂无数据”。\n\n  输出格式（严格按此顺序）：\n当前故障设备是...\n  【故障判断】\n- 一句话说明当前最可能故障。\n\n  【判断依据】\n1. ...\n2. ...\n3. ...\n\n  【处理建议（按先后）】\n1. ...\n2. ...\n3. ...\n\n  【风险提示】\n- ...\n\n  【应急资源】\n- ...\n\n  风格约束：\n- 不要输出JSON。\n- 不要复述整段原始字符串。\n- 不要出现“作为AI”等表述。"
+          },
+          {
+            "obj": "Human",
+            "value": "强对流天气后线路出现风偏放电，间隔距离不足引发短路告警。"
+          },
+          {
+            "obj": "AI",
+            "value": "当前故障设备是线路\n  【故障判断】\n- 当前最可能是风偏闪络故障。\n\n  【判断依据】\n1. 现场现象和检索结果一致，检索提到「在大风雷雨天气条件下发生闪络跳闸」，你这边是强对流天气后出现风偏放电、短路告警，特征比较吻合。\n2. 故障机理吻合，检索明确说「强风使导线风偏角过大」，会导致导线偏移、间隔距离变小。\n3. 另外一个关键条件也对上了，检索提到「暴雨又降低空气间隙的放电电压」，强对流天气下更容易出现放电和短路告警。\n4. 如果原有结构裕度不足，检索说明「在设计裕度不足时容易引发风偏闪络故障」，这和你说的间隔距离不足是对应的。\n\n  【处理建议（按先后）】\n1. 先重点排查跳线、引线和导线风摆情况，结合检索建议，开展「跳引线松弛普查与治理」。\n2. 对问题点尽快规范整改，按检索建议「规范跳线安装和改造」，必要时采用「双绝缘子串加装支撑管」。\n3. 现场处理时检查并尽量收紧「支撑管两侧跳线松弛度」，减少再次风偏放电风险。\n4. 后续同步做长效治理，落实「导线风摆整治措施」，并完善「施工和验收实测台账」。\n\n  【风险提示】\n- 这类处置主要注意「高空作业风险、触电/电击伤害风险和设备损坏风险」；如果反复故障处理，还会有「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备。\n- 如果涉及跳线与支撑管改造，还应准备起重机械、备品备件和金具器材。"
+          }
+        ],
+        "contextTotalLen": 3,
+        "finishReason": "stop",
+        "llmRequestIds": [
+          "w0XO9tPPHiW-TO9g"
+        ],
+        "id": "izXSA6J2BXlKLp8z",
+        "nodeId": "j5U22AiVe7XSNPFG",
+        "runningTime": 9.96
+      },
+      {
+        "moduleName": "指定回复",
+        "moduleType": "answerNode",
+        "moduleLogo": "core/workflow/template/reply",
+        "textOutput": "当前故障设备是线路\n  【故障判断】\n- 当前最可能是风偏闪络故障。\n\n  【判断依据】\n1. 现场现象和检索结果一致，检索提到「在大风雷雨天气条件下发生闪络跳闸」，你这边是强对流天气后出现风偏放电、短路告警，特征比较吻合。\n2. 故障机理吻合，检索明确说「强风使导线风偏角过大」，会导致导线偏移、间隔距离变小。\n3. 另外一个关键条件也对上了，检索提到「暴雨又降低空气间隙的放电电压」，强对流天气下更容易出现放电和短路告警。\n4. 如果原有结构裕度不足，检索说明「在设计裕度不足时容易引发风偏闪络故障」，这和你说的间隔距离不足是对应的。\n\n  【处理建议（按先后）】\n1. 先重点排查跳线、引线和导线风摆情况，结合检索建议，开展「跳引线松弛普查与治理」。\n2. 对问题点尽快规范整改，按检索建议「规范跳线安装和改造」，必要时采用「双绝缘子串加装支撑管」。\n3. 现场处理时检查并尽量收紧「支撑管两侧跳线松弛度」，减少再次风偏放电风险。\n4. 后续同步做长效治理，落实「导线风摆整治措施」，并完善「施工和验收实测台账」。\n\n  【风险提示】\n- 这类处置主要注意「高空作业风险、触电/电击伤害风险和设备损坏风险」；如果反复故障处理，还会有「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、绝缘工具、安全防护用品、交通工具和备用设备。\n- 如果涉及跳线与支撑管改造，还应准备起重机械、备品备件和金具器材。",
+        "id": "c22lg3eOkGnwTBYZ",
+        "nodeId": "ai8Jn4Wx4O1ZD8TE",
+        "runningTime": 0
+      }
+    ]
+  }
+}
