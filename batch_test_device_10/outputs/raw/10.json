@@ -1,0 +1,167 @@
+{
+  "index": 10,
+  "expected_device": "互感器",
+  "question": "系统轻微波动就误动，怀疑PT二次采样失真导致保护误判。",
+  "request": {
+    "chatId": "batch-device-20260415234451-10",
+    "stream": true,
+    "detail": true,
+    "customUid": "batch-test-device-10",
+    "messages": [
+      {
+        "role": "user",
+        "content": "系统轻微波动就误动，怀疑PT二次采样失真导致保护误判。"
+      }
+    ]
+  },
+  "status": "ok",
+  "elapsed_sec": 9.849,
+  "predicted_device": "互感器",
+  "is_correct": true,
+  "response": {
+    "id": "",
+    "model": "",
+    "choices": [
+      {
+        "delta": {
+          "role": "assistant",
+          "content": null
+        },
+        "index": 0,
+        "finish_reason": "stop"
+      }
+    ],
+    "responseData": [
+      {
+        "moduleName": "common:core.module.template.work_start",
+        "moduleType": "workflowStart",
+        "moduleLogo": "core/workflow/template/workflowStart",
+        "id": "gNYQQ2Fdr1tHqv0X",
+        "nodeId": "448745",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "设备表初始化",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "dU6qmktYEdi8J97Z",
+        "nodeId": "yb1JWcs00uT9BnMy",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "获取全体设备表",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_breaker",
+          "ngql": "SHOW SPACES;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 3986,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.274ms/1.674474ms)\n\nWed, 15 Apr 2026 15:44:54 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 1.033ms/1.452408ms)\n\nWed, 15 Apr 2026 15:44:54 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:44:54 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "lwfJouceTNJLbOu7",
+        "nodeId": "jAL1KIZmvZFXbL36",
+        "runningTime": 3.99
+      },
+      {
+        "moduleName": "清洗设备表数据",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.274ms/1.674474ms)\n\nWed, 15 Apr 2026 15:44:54 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 1.033ms/1.452408ms)\n\nWed, 15 Apr 2026 15:44:54 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:44:54 UTC\n\n"
+        },
+        "customOutputs": {
+          "devicespace": "llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+        },
+        "codeLog": "",
+        "id": "x5cUxGLJxeQ1tMmB",
+        "nodeId": "dqaMJ59ZDTGGxv68",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "设备识别",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "系统轻微波动就误动，怀疑PT二次采样失真导致保护误判。",
+        "inputTokens": 380,
+        "outputTokens": 10,
+        "extractDescription": "请从llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中，找出最匹配用户中文输入问题的表并输出，只输出英文的表的名称，不要输出别的任何东西",
+        "extractResult": {
+          "设备表": "llmkg_pt"
+        },
+        "contextTotalLen": 2,
+        "id": "ipWizrld8rhF9VBn",
+        "nodeId": "hJmYZWKFOW26n5E1",
+        "runningTime": 1.43
+      },
+      {
+        "moduleName": "缓存初始化数据",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "ep63l9WrrCfH5eZL",
+        "nodeId": "c1RpkoiqOmMF7adv",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "基础数据获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "body": {
+          "space": "llmkg_pt",
+          "ngql": "MATCH (l1:entity)-[:rel]->(l2:entity) WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 RETURN l1.entity.source_id AS l1_source_id, l1.entity.name AS l1_name, l2.entity.source_id AS l2_source_id, l2.entity.name AS l2_name ORDER BY l1_source_id, l2_source_id;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "error": {
+            "message": "Request failed with status code 502",
+            "data": {
+              "ok": false,
+              "duration_ms": 4189,
+              "return_code": 0,
+              "errors": [
+                "SpaceNotFound: SpaceName `llmkg_pt`",
+                "SemanticError: Space was not chosen."
+              ],
+              "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> [ERROR (-1005)]: SpaceNotFound: SpaceName `llmkg_pt`\n\nWed, 15 Apr 2026 15:45:00 UTC\n\n(root@nebula) [(none)]> [ERROR (-1009)]: SemanticError: Space was not chosen.\n\nWed, 15 Apr 2026 15:45:00 UTC\n\n(root@nebula) [(none)]> \n\nBye root!\nWed, 15 Apr 2026 15:45:00 UTC\n\n",
+              "stderr": "",
+              "meta": {
+                "docker_network": "nebula-docker-compose_nebula-net",
+                "nebula_host": "graphd",
+                "nebula_port": 9669
+              }
+            },
+            "name": "AxiosError",
+            "method": "post",
+            "code": "ERR_BAD_RESPONSE",
+            "status": 502
+          }
+        },
+        "id": "xoGhzkK3VpxMTRpi",
+        "nodeId": "fFpXpftMQrWMSyQb",
+        "runningTime": 4.19
+      }
+    ]
+  }
+}

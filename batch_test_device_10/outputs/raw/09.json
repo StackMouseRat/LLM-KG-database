@@ -1,0 +1,310 @@
+{
+  "index": 9,
+  "expected_device": "互感器",
+  "question": "电流互感器二次回路开路，计量异常且保护判据紊乱。",
+  "request": {
+    "chatId": "batch-device-20260415234424-09",
+    "stream": true,
+    "detail": true,
+    "customUid": "batch-test-device-10",
+    "messages": [
+      {
+        "role": "user",
+        "content": "电流互感器二次回路开路，计量异常且保护判据紊乱。"
+      }
+    ]
+  },
+  "status": "ok",
+  "elapsed_sec": 27.739,
+  "predicted_device": "互感器",
+  "is_correct": true,
+  "response": {
+    "id": "",
+    "model": "",
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "当前故障设备是电流互感器二次回路\n\n【故障判断】\n- 当前最可能故障是电流互感器二次回路开路，已导致计量异常和保护判据紊乱。\n\n【判断依据】\n1. 用户现象直接指向「二次回路开路」，且已出现「计量异常」。\n2. 同时伴随「保护判据紊乱」，符合二次回路异常对保护和计量共同造成影响的表现。\n3. 该故障的原因、处理、风险、资源等信息，该项暂无数据。\n\n【处理建议（按先后）】\n1. 先按电流互感器二次回路开路进行处置，尽快核查二次回路连接状态。\n2. 对计量和保护异常信号同步排查，重点确认开路点位置。\n3. 由于具体处置措施未检索到，后续操作细节该项暂无数据。\n\n【风险提示】\n- 该故障已影响计量和保护判断；其他安全风险信息，该项暂无数据。\n\n【应急资源】\n- 该项暂无数据。\n当前故障设备是电流互感器二次回路\n\n【故障判断】\n- 当前最可能故障是电流互感器二次回路开路，已导致计量异常和保护判据紊乱。\n\n【判断依据】\n1. 用户现象直接指向「二次回路开路」，且已出现「计量异常」。\n2. 同时伴随「保护判据紊乱」，符合二次回路异常对保护和计量共同造成影响的表现。\n3. 该故障的原因、处理、风险、资源等信息，该项暂无数据。\n\n【处理建议（按先后）】\n1. 先按电流互感器二次回路开路进行处置，尽快核查二次回路连接状态。\n2. 对计量和保护异常信号同步排查，重点确认开路点位置。\n3. 由于具体处置措施未检索到，后续操作细节该项暂无数据。\n\n【风险提示】\n- 该故障已影响计量和保护判断；其他安全风险信息，该项暂无数据。\n\n【应急资源】\n- 该项暂无数据。"
+        },
+        "finish_reason": "stop",
+        "index": 0
+      }
+    ],
+    "responseData": [
+      {
+        "moduleName": "common:core.module.template.work_start",
+        "moduleType": "workflowStart",
+        "moduleLogo": "core/workflow/template/workflowStart",
+        "id": "rSkpLVHeMqekyLkN",
+        "nodeId": "448745",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "设备表初始化",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "gIA4vBX17FySzU90",
+        "nodeId": "yb1JWcs00uT9BnMy",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "获取全体设备表",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_breaker",
+          "ngql": "SHOW SPACES;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4402,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 991µs/1.344477ms)\n\nWed, 15 Apr 2026 15:44:27 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 673µs/980.056µs)\n\nWed, 15 Apr 2026 15:44:27 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:44:27 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "ip2iidtTQpNU53Mt",
+        "nodeId": "jAL1KIZmvZFXbL36",
+        "runningTime": 4.41
+      },
+      {
+        "moduleName": "清洗设备表数据",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 991µs/1.344477ms)\n\nWed, 15 Apr 2026 15:44:27 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 673µs/980.056µs)\n\nWed, 15 Apr 2026 15:44:27 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:44:27 UTC\n\n"
+        },
+        "customOutputs": {
+          "devicespace": "llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+        },
+        "codeLog": "",
+        "id": "dSZkGtjt3tO5q1oE",
+        "nodeId": "dqaMJ59ZDTGGxv68",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "设备识别",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "电流互感器二次回路开路，计量异常且保护判据紊乱。",
+        "inputTokens": 379,
+        "outputTokens": 11,
+        "extractDescription": "请从llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中，找出最匹配用户中文输入问题的表并输出，只输出英文的表的名称，不要输出别的任何东西",
+        "extractResult": {
+          "设备表": "llmkg_transformer"
+        },
+        "contextTotalLen": 2,
+        "id": "mUXBXcTdRmliKNbx",
+        "nodeId": "hJmYZWKFOW26n5E1",
+        "runningTime": 1.6
+      },
+      {
+        "moduleName": "缓存初始化数据",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "gw6knJ4areSFR9rL",
+        "nodeId": "c1RpkoiqOmMF7adv",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "基础数据获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transformer",
+          "ngql": "MATCH (l1:entity)-[:rel]->(l2:entity) WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 RETURN l1.entity.source_id AS l1_source_id, l1.entity.name AS l1_name, l2.entity.source_id AS l2_source_id, l2.entity.name AS l2_name ORDER BY l1_source_id, l2_source_id;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 3876,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 764µs/1.015851ms)\n\nWed, 15 Apr 2026 15:44:32 UTC\n\n(root@nebula) [llmkg_transformer]> +--------------+----------------------------+--------------+------------------------------------+\n| l1_source_id | l1_name                    | l2_source_id | l2_name                            |\n+--------------+----------------------------+--------------+------------------------------------+\n| 16           | \"本体绝缘与铁心绕组故障\"   | 17           | \"变压器进水受潮故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 24           | \"变压器铁心多点接地故障\"           |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 31           | \"变压器绕组短路与断线故障\"         |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 38           | \"变压器绕组变形故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 45           | \"变压器铁心故障\"                   |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 52           | \"大型电力变压器围屏爬电故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 60           | \"有载调压分接开关箱渗油故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 67           | \"变压器套管引线故障\"               |\n| 59           | \"套管与调压及油箱附件故障\" | 74           | \"小型配电变压器喷油与油箱炸裂故障\" |\n+--------------+----------------------------+--------------+------------------------------------+\nGot 9 rows (time spent 2.997ms/3.338074ms)\n\nWed, 15 Apr 2026 15:44:32 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:32 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "uFdRAizt4aTF8nbB",
+        "nodeId": "fFpXpftMQrWMSyQb",
+        "runningTime": 3.88
+      },
+      {
+        "moduleName": "基础数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 3876,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 764µs/1.015851ms)\n\nWed, 15 Apr 2026 15:44:32 UTC\n\n(root@nebula) [llmkg_transformer]> +--------------+----------------------------+--------------+------------------------------------+\n| l1_source_id | l1_name                    | l2_source_id | l2_name                            |\n+--------------+----------------------------+--------------+------------------------------------+\n| 16           | \"本体绝缘与铁心绕组故障\"   | 17           | \"变压器进水受潮故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 24           | \"变压器铁心多点接地故障\"           |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 31           | \"变压器绕组短路与断线故障\"         |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 38           | \"变压器绕组变形故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 45           | \"变压器铁心故障\"                   |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 52           | \"大型电力变压器围屏爬电故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 60           | \"有载调压分接开关箱渗油故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 67           | \"变压器套管引线故障\"               |\n| 59           | \"套管与调压及油箱附件故障\" | 74           | \"小型配电变压器喷油与油箱炸裂故障\" |\n+--------------+----------------------------+--------------+------------------------------------+\nGot 9 rows (time spent 2.997ms/3.338074ms)\n\nWed, 15 Apr 2026 15:44:32 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:32 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "summary_text": "一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。"
+        },
+        "codeLog": "",
+        "id": "d6ZO72nHVfzmFOZZ",
+        "nodeId": "gMBZtrBTbpDPI3Ob",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "基础数据更新",
+        "moduleType": "variableUpdate",
+        "moduleLogo": "core/workflow/template/variableUpdate",
+        "updateVarResult": [
+          "一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。"
+        ],
+        "id": "yJpTKgD1L8o3nKa6",
+        "nodeId": "zUjkCcG9mO9I8G6u",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "故障类型分析",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "电流互感器二次回路开路，计量异常且保护判据紊乱。",
+        "inputTokens": 494,
+        "outputTokens": 12,
+        "extractDescription": " 你的任务：根据用户输入，在已知的一级/二级故障目录中，匹配“最恰当的一个二级故障名称”。\n\n  已知目录：\n  一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。\n\n  规则：\n 输出要求：\n  只输出一个 JSON 对象，且只能有这个键：\n  {\"故障二级节点\":\"已知目录中的一个二级故障\"}\n\n  现在开始匹配并输出结果。",
+        "extractResult": {
+          "故障二级节点": "变压器套管引线故障"
+        },
+        "contextTotalLen": 2,
+        "id": "sJez3HhuhiCTljYj",
+        "nodeId": "bEGyTijQYXiijgkL",
+        "runningTime": 6.04
+      },
+      {
+        "moduleName": "下游节点获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transformer",
+          "ngql": "MATCH (s:entity)-[:rel*1..5]->(m:entity) WHERE s.entity.lvl == 2 AND s.entity.name == \"变压器套管引线故障\" RETURN DISTINCT m.entity.lvl AS lvl, m.entity.name AS name, m.entity.node_desc AS node_desc ORDER BY lvl, name;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 3897,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 891µs/1.14312ms)\n\nWed, 15 Apr 2026 15:44:42 UTC\n\n(root@nebula) [llmkg_transformer]> +-----+-------------------------------+----------------------------------------------------------------------+\n| lvl | name                          | node_desc                                                            |\n+-----+-------------------------------+----------------------------------------------------------------------+\n| 3   | \"变压器套管引线故障-应对措施\" | \"通过测温和停电检查紧固接头，清污补涂并更换老化密封与受损引线。\"     |\n| 3   | \"变压器套管引线故障-故障原因\" | \"连接松动、接触电阻增大、振动疲劳及密封老化受潮会导致套管引线故障。\" |\n| 4   | \"变压器套管引线故障-安全风险\" | \"涉及高处与高压部位作业，存在触电和坠落风险。\"                       |\n| 4   | \"变压器套管引线故障-应急资源\" | \"需要测温设备、力矩工具、引线与密封备件、绝缘涂料和登高防护。\"       |\n| 4   | \"变压器套管引线故障-故障后果\" | \"接头烧蚀可进一步发展为套管击穿和主变停运故障。\"                     |\n| 4   | \"变压器套管引线故障-故障现象\" | \"套管发热变色并伴随放电声、渗油和接头温度异常。\"                     |\n+-----+-------------------------------+----------------------------------------------------------------------+\nGot 6 rows (time spent 5.396ms/5.889689ms)\n\nWed, 15 Apr 2026 15:44:42 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:42 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "oE9VxsJ3OSqUve1B",
+        "nodeId": "rpJznDcYzR74Wijw",
+        "runningTime": 3.9
+      },
+      {
+        "moduleName": "下游节点数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 3897,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 891µs/1.14312ms)\n\nWed, 15 Apr 2026 15:44:42 UTC\n\n(root@nebula) [llmkg_transformer]> +-----+-------------------------------+----------------------------------------------------------------------+\n| lvl | name                          | node_desc                                                            |\n+-----+-------------------------------+----------------------------------------------------------------------+\n| 3   | \"变压器套管引线故障-应对措施\" | \"通过测温和停电检查紧固接头，清污补涂并更换老化密封与受损引线。\"     |\n| 3   | \"变压器套管引线故障-故障原因\" | \"连接松动、接触电阻增大、振动疲劳及密封老化受潮会导致套管引线故障。\" |\n| 4   | \"变压器套管引线故障-安全风险\" | \"涉及高处与高压部位作业，存在触电和坠落风险。\"                       |\n| 4   | \"变压器套管引线故障-应急资源\" | \"需要测温设备、力矩工具、引线与密封备件、绝缘涂料和登高防护。\"       |\n| 4   | \"变压器套管引线故障-故障后果\" | \"接头烧蚀可进一步发展为套管击穿和主变停运故障。\"                     |\n| 4   | \"变压器套管引线故障-故障现象\" | \"套管发热变色并伴随放电声、渗油和接头温度异常。\"                     |\n+-----+-------------------------------+----------------------------------------------------------------------+\nGot 6 rows (time spent 5.396ms/5.889689ms)\n\nWed, 15 Apr 2026 15:44:42 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:42 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "result": "当前二级故障：变压器套管引线故障。故障原因：变压器套管引线故障-故障原因：连接松动、接触电阻增大、振动疲劳及密封老化受潮会导致套管引线故障。。应对措施：变压器套管引线故障-应对措施：通过测温和停电检查紧固接头，清污补涂并更换老化密封与受损引线。。故障现象：变压器套管引线故障-故障现象：套管发热变色并伴随放电声、渗油和接头温度异常。。故障后果：变压器套管引线故障-故障后果：接头烧蚀可进一步发展为套管击穿和主变停运故障。。安全风险：变压器套管引线故障-安全风险：涉及高处与高压部位作业，存在触电和坠落风险。。应急资源：变压器套管引线故障-应急资源：需要测温设备、力矩工具、引线与密封备件、绝缘涂料和登高防护。。其他相关节点：无。"
+        },
+        "codeLog": "",
+        "id": "qDSWgcUmzvjc1P1t",
+        "nodeId": "fmRLeRT0lvkngtJQ",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "最终生成",
+        "moduleType": "chatNode",
+        "moduleLogo": "core/workflow/template/aiChat",
+        "totalPoints": 0,
+        "model": "gpt-5.4",
+        "inputTokens": 606,
+        "outputTokens": 259,
+        "query": "电流互感器二次回路开路，计量异常且保护判据紊乱。",
+        "reasoningText": "",
+        "historyPreview": [
+          {
+            "obj": "System",
+            "value": " 你是“电力设备故障解释与处置助手”，面向一线运维人员回答。\n\n  你会收到输入：用户原问题和，设备判断结果和检索清洗结果当前二级故障：变压器套管引线故障。故障原因：变压器套管引线故障-故障原因：连接松动、接触电阻增大、振动疲劳及密封老化受潮会导致套管引线故障。。应对措施：变压器套管引线故障-应对措施：通过测温和停电检查紧固接头，清污补涂并更换老化密封与受损引线。。故障现象：变压器套管引线故障-故障现象：套管发热变色并伴随放电声、渗油和接头温度异常。。故障后果：变压器套管引线故障-故障后果：接头烧蚀可进一步发展为套管击穿和主变停运故障。。安全风险：变压器套管引线故障-安全风险：涉及高处与高压部位作业，存在触电和坠落风险。。应急资源：变压器套管引线故障-应急资源：需要测温设备、力矩工具、引线与密封备件、绝缘涂料和登高防护。。其他相关节点：无。\n\n  你的任务：\n1. 只基于“检索清洗结果”作答，不得编造。\n2. 先给出故障判断，再给出依据、处理建议、风险提示、应急资源。\n3. 回答要口语化、简洁、可执行。\n4. “有理有据”要求：必须给出2~4条依据，并引用检索结果中的关键信息（用「」包住短句）。\n5. 若某项是“未检索到”，明确写“该项暂无数据”。\n\n  输出格式（严格按此顺序）：\n当前故障设备是...\n  【故障判断】\n- 一句话说明当前最可能故障。\n\n  【判断依据】\n1. ...\n2. ...\n3. ...\n\n  【处理建议（按先后）】\n1. ...\n2. ...\n3. ...\n\n  【风险提示】\n- ...\n\n  【应急资源】\n- ...\n\n  风格约束：\n- 不要输出JSON。\n- 不要复述整段原始字符串。\n- 不要出现“作为AI”等表述。"
+          },
+          {
+            "obj": "Human",
+            "value": "电流互感器二次回路开路，计量异常且保护判据紊乱。"
+          },
+          {
+            "obj": "AI",
+            "value": "当前故障设备是电流互感器二次回路\n\n【故障判断】\n- 当前最可能故障是电流互感器二次回路开路，已导致计量异常和保护判据紊乱。\n\n【判断依据】\n1. 用户现象直接指向「二次回路开路」，且已出现「计量异常」。\n2. 同时伴随「保护判据紊乱」，符合二次回路异常对保护和计量共同造成影响的表现。\n3. 该故障的原因、处理、风险、资源等信息，该项暂无数据。\n\n【处理建议（按先后）】\n1. 先按电流互感器二次回路开路进行处置，尽快核查二次回路连接状态。\n2. 对计量和保护异常信号同步排查，重点确认开路点位置。\n3. 由于具体处置措施未检索到，后续操作细节该项暂无数据。\n\n【风险提示】\n- 该故障已影响计量和保护判断；其他安全风险信息，该项暂无数据。\n\n【应急资源】\n- 该项暂无数据。"
+          }
+        ],
+        "contextTotalLen": 3,
+        "finishReason": "stop",
+        "llmRequestIds": [
+          "FmXotc2l2DTdqOB0"
+        ],
+        "id": "mjpeEXLXbOiYKJ5g",
+        "nodeId": "j5U22AiVe7XSNPFG",
+        "runningTime": 7.45
+      },
+      {
+        "moduleName": "指定回复",
+        "moduleType": "answerNode",
+        "moduleLogo": "core/workflow/template/reply",
+        "textOutput": "当前故障设备是电流互感器二次回路\n\n【故障判断】\n- 当前最可能故障是电流互感器二次回路开路，已导致计量异常和保护判据紊乱。\n\n【判断依据】\n1. 用户现象直接指向「二次回路开路」，且已出现「计量异常」。\n2. 同时伴随「保护判据紊乱」，符合二次回路异常对保护和计量共同造成影响的表现。\n3. 该故障的原因、处理、风险、资源等信息，该项暂无数据。\n\n【处理建议（按先后）】\n1. 先按电流互感器二次回路开路进行处置，尽快核查二次回路连接状态。\n2. 对计量和保护异常信号同步排查，重点确认开路点位置。\n3. 由于具体处置措施未检索到，后续操作细节该项暂无数据。\n\n【风险提示】\n- 该故障已影响计量和保护判断；其他安全风险信息，该项暂无数据。\n\n【应急资源】\n- 该项暂无数据。",
+        "id": "cnrUdnPCVJX7dlLx",
+        "nodeId": "ai8Jn4Wx4O1ZD8TE",
+        "runningTime": 0
+      }
+    ]
+  }
+}

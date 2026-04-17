@@ -1,0 +1,310 @@
+{
+  "index": 8,
+  "expected_device": "变压器",
+  "question": "有载分接开关切换异常，分接位置不稳并伴随油中气体异常。",
+  "request": {
+    "chatId": "batch-device-20260415234353-08",
+    "stream": true,
+    "detail": true,
+    "customUid": "batch-test-device-10",
+    "messages": [
+      {
+        "role": "user",
+        "content": "有载分接开关切换异常，分接位置不稳并伴随油中气体异常。"
+      }
+    ]
+  },
+  "status": "ok",
+  "elapsed_sec": 30.379,
+  "predicted_device": "变压器",
+  "is_correct": true,
+  "response": {
+    "id": "",
+    "model": "",
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "当前故障设备是有载调压分接开关箱。\n\n【故障判断】\n- 当前最可能故障是有载调压分接开关箱渗油故障，已影响到切换稳定性。\n\n【判断依据】\n1. 检索结果明确指向当前二级故障为「有载调压分接开关箱渗油故障」。\n2. 现象上与现场描述吻合，已检索到故障现象包括「调压切换异常或报警」。\n3. 同时还能看到典型伴随表现是「可见油位下降和箱体油迹」，这类渗油会进一步影响开关箱状态。\n4. 后果信息也支持这一判断，油位异常后「油位过低会引起触头过热」，进而导致调压功能异常。\n\n【处理建议（按先后）】\n1. 先停电并做好隔离，按检索建议「停电隔离后定位渗漏点」。\n2. 找到渗漏位置后，优先处理本体缺陷，按条件「更换密封件或补焊」。\n3. 缺陷处理完成后进行「补油试验后恢复运行」，恢复前确认切换功能正常。\n\n【风险提示】\n- 这个故障不能带缺陷硬切换，检索结果提示「带缺陷切换存在弧光、喷油和火灾风险」；如果油位继续下降，还可能「导致调压功能失效甚至内部故障」。\n\n【应急资源】\n- 需要「密封件套件、补焊工装、补油设备、切换试验工具和检修人员」。\n当前故障设备是有载调压分接开关箱。\n\n【故障判断】\n- 当前最可能故障是有载调压分接开关箱渗油故障，已影响到切换稳定性。\n\n【判断依据】\n1. 检索结果明确指向当前二级故障为「有载调压分接开关箱渗油故障」。\n2. 现象上与现场描述吻合，已检索到故障现象包括「调压切换异常或报警」。\n3. 同时还能看到典型伴随表现是「可见油位下降和箱体油迹」，这类渗油会进一步影响开关箱状态。\n4. 后果信息也支持这一判断，油位异常后「油位过低会引起触头过热」，进而导致调压功能异常。\n\n【处理建议（按先后）】\n1. 先停电并做好隔离，按检索建议「停电隔离后定位渗漏点」。\n2. 找到渗漏位置后，优先处理本体缺陷，按条件「更换密封件或补焊」。\n3. 缺陷处理完成后进行「补油试验后恢复运行」，恢复前确认切换功能正常。\n\n【风险提示】\n- 这个故障不能带缺陷硬切换，检索结果提示「带缺陷切换存在弧光、喷油和火灾风险」；如果油位继续下降，还可能「导致调压功能失效甚至内部故障」。\n\n【应急资源】\n- 需要「密封件套件、补焊工装、补油设备、切换试验工具和检修人员」。"
+        },
+        "finish_reason": "stop",
+        "index": 0
+      }
+    ],
+    "responseData": [
+      {
+        "moduleName": "common:core.module.template.work_start",
+        "moduleType": "workflowStart",
+        "moduleLogo": "core/workflow/template/workflowStart",
+        "id": "uPGLW49AsjDyqW98",
+        "nodeId": "448745",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "设备表初始化",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "cSuhk2wtG3mDojPZ",
+        "nodeId": "yb1JWcs00uT9BnMy",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "获取全体设备表",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_breaker",
+          "ngql": "SHOW SPACES;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4109,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.019ms/1.351624ms)\n\nWed, 15 Apr 2026 15:43:56 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 705µs/1.05421ms)\n\nWed, 15 Apr 2026 15:43:56 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:43:56 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "c5iUTcdvbNGJzh3B",
+        "nodeId": "jAL1KIZmvZFXbL36",
+        "runningTime": 4.11
+      },
+      {
+        "moduleName": "清洗设备表数据",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.019ms/1.351624ms)\n\nWed, 15 Apr 2026 15:43:56 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 705µs/1.05421ms)\n\nWed, 15 Apr 2026 15:43:56 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:43:56 UTC\n\n"
+        },
+        "customOutputs": {
+          "devicespace": "llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+        },
+        "codeLog": "",
+        "id": "hd1AlnlZ8WhIblyO",
+        "nodeId": "dqaMJ59ZDTGGxv68",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "设备识别",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "有载分接开关切换异常，分接位置不稳并伴随油中气体异常。",
+        "inputTokens": 380,
+        "outputTokens": 11,
+        "extractDescription": "请从llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中，找出最匹配用户中文输入问题的表并输出，只输出英文的表的名称，不要输出别的任何东西",
+        "extractResult": {
+          "设备表": "llmkg_transformer"
+        },
+        "contextTotalLen": 2,
+        "id": "khlZW6vJWf7GElAC",
+        "nodeId": "hJmYZWKFOW26n5E1",
+        "runningTime": 1.72
+      },
+      {
+        "moduleName": "缓存初始化数据",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "i1lM55axGtcYUuup",
+        "nodeId": "c1RpkoiqOmMF7adv",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "基础数据获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transformer",
+          "ngql": "MATCH (l1:entity)-[:rel]->(l2:entity) WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 RETURN l1.entity.source_id AS l1_source_id, l1.entity.name AS l1_name, l2.entity.source_id AS l2_source_id, l2.entity.name AS l2_name ORDER BY l1_source_id, l2_source_id;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4076,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 869µs/1.119505ms)\n\nWed, 15 Apr 2026 15:44:02 UTC\n\n(root@nebula) [llmkg_transformer]> +--------------+----------------------------+--------------+------------------------------------+\n| l1_source_id | l1_name                    | l2_source_id | l2_name                            |\n+--------------+----------------------------+--------------+------------------------------------+\n| 16           | \"本体绝缘与铁心绕组故障\"   | 17           | \"变压器进水受潮故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 24           | \"变压器铁心多点接地故障\"           |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 31           | \"变压器绕组短路与断线故障\"         |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 38           | \"变压器绕组变形故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 45           | \"变压器铁心故障\"                   |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 52           | \"大型电力变压器围屏爬电故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 60           | \"有载调压分接开关箱渗油故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 67           | \"变压器套管引线故障\"               |\n| 59           | \"套管与调压及油箱附件故障\" | 74           | \"小型配电变压器喷油与油箱炸裂故障\" |\n+--------------+----------------------------+--------------+------------------------------------+\nGot 9 rows (time spent 4.516ms/4.96838ms)\n\nWed, 15 Apr 2026 15:44:02 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:02 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "fpnoh6HlmYsRCvuC",
+        "nodeId": "fFpXpftMQrWMSyQb",
+        "runningTime": 4.08
+      },
+      {
+        "moduleName": "基础数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 4076,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 869µs/1.119505ms)\n\nWed, 15 Apr 2026 15:44:02 UTC\n\n(root@nebula) [llmkg_transformer]> +--------------+----------------------------+--------------+------------------------------------+\n| l1_source_id | l1_name                    | l2_source_id | l2_name                            |\n+--------------+----------------------------+--------------+------------------------------------+\n| 16           | \"本体绝缘与铁心绕组故障\"   | 17           | \"变压器进水受潮故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 24           | \"变压器铁心多点接地故障\"           |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 31           | \"变压器绕组短路与断线故障\"         |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 38           | \"变压器绕组变形故障\"               |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 45           | \"变压器铁心故障\"                   |\n| 16           | \"本体绝缘与铁心绕组故障\"   | 52           | \"大型电力变压器围屏爬电故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 60           | \"有载调压分接开关箱渗油故障\"       |\n| 59           | \"套管与调压及油箱附件故障\" | 67           | \"变压器套管引线故障\"               |\n| 59           | \"套管与调压及油箱附件故障\" | 74           | \"小型配电变压器喷油与油箱炸裂故障\" |\n+--------------+----------------------------+--------------+------------------------------------+\nGot 9 rows (time spent 4.516ms/4.96838ms)\n\nWed, 15 Apr 2026 15:44:02 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:02 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "summary_text": "一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。"
+        },
+        "codeLog": "",
+        "id": "z48P1KBqVgqyAfyg",
+        "nodeId": "gMBZtrBTbpDPI3Ob",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "基础数据更新",
+        "moduleType": "variableUpdate",
+        "moduleLogo": "core/workflow/template/variableUpdate",
+        "updateVarResult": [
+          "一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。"
+        ],
+        "id": "wx974AtmecFG0sQ0",
+        "nodeId": "zUjkCcG9mO9I8G6u",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "故障类型分析",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "有载分接开关切换异常，分接位置不稳并伴随油中气体异常。",
+        "inputTokens": 495,
+        "outputTokens": 17,
+        "extractDescription": " 你的任务：根据用户输入，在已知的一级/二级故障目录中，匹配“最恰当的一个二级故障名称”。\n\n  已知目录：\n  一级故障有：本体绝缘与铁心绕组故障、套管与调压及油箱附件故障。\n其中：本体绝缘与铁心绕组故障有6个二级故障：变压器进水受潮故障、变压器铁心多点接地故障、变压器绕组短路与断线故障、变压器绕组变形故障、变压器铁心故障、大型电力变压器围屏爬电故障；套管与调压及油箱附件故障有3个二级故障：有载调压分接开关箱渗油故障、变压器套管引线故障、小型配电变压器喷油与油箱炸裂故障。\n合计二级故障映射9条。\n\n  规则：\n 输出要求：\n  只输出一个 JSON 对象，且只能有这个键：\n  {\"故障二级节点\":\"已知目录中的一个二级故障\"}\n\n  现在开始匹配并输出结果。",
+        "extractResult": {
+          "故障二级节点": "有载调压分接开关箱渗油故障"
+        },
+        "contextTotalLen": 2,
+        "id": "hRucQD0ErXGEztU1",
+        "nodeId": "bEGyTijQYXiijgkL",
+        "runningTime": 4.51
+      },
+      {
+        "moduleName": "下游节点获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transformer",
+          "ngql": "MATCH (s:entity)-[:rel*1..5]->(m:entity) WHERE s.entity.lvl == 2 AND s.entity.name == \"有载调压分接开关箱渗油故障\" RETURN DISTINCT m.entity.lvl AS lvl, m.entity.name AS name, m.entity.node_desc AS node_desc ORDER BY lvl, name;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 7231,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 955µs/1.235509ms)\n\nWed, 15 Apr 2026 15:44:12 UTC\n\n(root@nebula) [llmkg_transformer]> +-----+---------------------------------------+------------------------------------------------------------------+\n| lvl | name                                  | node_desc                                                        |\n+-----+---------------------------------------+------------------------------------------------------------------+\n| 3   | \"有载调压分接开关箱渗油故障-应对措施\" | \"停电隔离后定位渗漏点，更换密封件或补焊并补油试验后恢复运行。\"   |\n| 3   | \"有载调压分接开关箱渗油故障-故障原因\" | \"密封圈老化、焊缝缺陷、机械振动和温度循环会造成分接开关箱渗油。\" |\n| 4   | \"有载调压分接开关箱渗油故障-安全风险\" | \"带缺陷切换存在弧光、喷油和火灾风险。\"                           |\n| 4   | \"有载调压分接开关箱渗油故障-应急资源\" | \"需要密封件套件、补焊工装、补油设备、切换试验工具和检修人员。\"   |\n| 4   | \"有载调压分接开关箱渗油故障-故障后果\" | \"油位过低会引起触头过热，导致调压功能失效甚至内部故障。\"         |\n| 4   | \"有载调压分接开关箱渗油故障-故障现象\" | \"可见油位下降和箱体油迹，并伴随调压切换异常或报警。\"             |\n+-----+---------------------------------------+------------------------------------------------------------------+\nGot 6 rows (time spent 4.433ms/4.891648ms)\n\nWed, 15 Apr 2026 15:44:12 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:12 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "kYmVHs5mPXn7IPGo",
+        "nodeId": "rpJznDcYzR74Wijw",
+        "runningTime": 7.24
+      },
+      {
+        "moduleName": "下游节点数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 7231,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 955µs/1.235509ms)\n\nWed, 15 Apr 2026 15:44:12 UTC\n\n(root@nebula) [llmkg_transformer]> +-----+---------------------------------------+------------------------------------------------------------------+\n| lvl | name                                  | node_desc                                                        |\n+-----+---------------------------------------+------------------------------------------------------------------+\n| 3   | \"有载调压分接开关箱渗油故障-应对措施\" | \"停电隔离后定位渗漏点，更换密封件或补焊并补油试验后恢复运行。\"   |\n| 3   | \"有载调压分接开关箱渗油故障-故障原因\" | \"密封圈老化、焊缝缺陷、机械振动和温度循环会造成分接开关箱渗油。\" |\n| 4   | \"有载调压分接开关箱渗油故障-安全风险\" | \"带缺陷切换存在弧光、喷油和火灾风险。\"                           |\n| 4   | \"有载调压分接开关箱渗油故障-应急资源\" | \"需要密封件套件、补焊工装、补油设备、切换试验工具和检修人员。\"   |\n| 4   | \"有载调压分接开关箱渗油故障-故障后果\" | \"油位过低会引起触头过热，导致调压功能失效甚至内部故障。\"         |\n| 4   | \"有载调压分接开关箱渗油故障-故障现象\" | \"可见油位下降和箱体油迹，并伴随调压切换异常或报警。\"             |\n+-----+---------------------------------------+------------------------------------------------------------------+\nGot 6 rows (time spent 4.433ms/4.891648ms)\n\nWed, 15 Apr 2026 15:44:12 UTC\n\n(root@nebula) [llmkg_transformer]> \n\nBye root!\nWed, 15 Apr 2026 15:44:12 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "result": "当前二级故障：有载调压分接开关箱渗油故障。故障原因：有载调压分接开关箱渗油故障-故障原因：密封圈老化、焊缝缺陷、机械振动和温度循环会造成分接开关箱渗油。。应对措施：有载调压分接开关箱渗油故障-应对措施：停电隔离后定位渗漏点，更换密封件或补焊并补油试验后恢复运行。。故障现象：有载调压分接开关箱渗油故障-故障现象：可见油位下降和箱体油迹，并伴随调压切换异常或报警。。故障后果：有载调压分接开关箱渗油故障-故障后果：油位过低会引起触头过热，导致调压功能失效甚至内部故障。。安全风险：有载调压分接开关箱渗油故障-安全风险：带缺陷切换存在弧光、喷油和火灾风险。。应急资源：有载调压分接开关箱渗油故障-应急资源：需要密封件套件、补焊工装、补油设备、切换试验工具和检修人员。。其他相关节点：无。"
+        },
+        "codeLog": "",
+        "id": "rJBujlv4VJvQsSrV",
+        "nodeId": "fmRLeRT0lvkngtJQ",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "最终生成",
+        "moduleType": "chatNode",
+        "moduleLogo": "core/workflow/template/aiChat",
+        "totalPoints": 0,
+        "model": "gpt-5.4",
+        "inputTokens": 636,
+        "outputTokens": 382,
+        "query": "有载分接开关切换异常，分接位置不稳并伴随油中气体异常。",
+        "reasoningText": "",
+        "historyPreview": [
+          {
+            "obj": "System",
+            "value": " 你是“电力设备故障解释与处置助手”，面向一线运维人员回答。\n\n  你会收到输入：用户原问题和，设备判断结果和检索清洗结果当前二级故障：有载调压分接开关箱渗油故障。故障原因：有载调压分接开关箱渗油故障-故障原因：密封圈老化、焊缝缺陷、机械振动和温度循环会造成分接开关箱渗油。。应对措施：有载调压分接开关箱渗油故障-应对措施：停电隔离后定位渗漏点，更换密封件或补焊并补油试验后恢复运行。。故障现象：有载调压分接开关箱渗油故障-故障现象：可见油位下降和箱体油迹，并伴随调压切换异常或报警。。故障后果：有载调压分接开关箱渗油故障-故障后果：油位过低会引起触头过热，导致调压功能失效甚至内部故障。。安全风险：有载调压分接开关箱渗油故障-安全风险：带缺陷切换存在弧光、喷油和火灾风险。。应急资源：有载调压分接开关箱渗油故障-应急资源：需要密封件套件、补焊工装、补油设备、切换试验工具和检修人员。。其他相关节点：无。\n\n  你的任务：\n1. 只基于“检索清洗结果”作答，不得编造。\n2. 先给出故障判断，再给出依据、处理建议、风险提示、应急资源。\n3. 回答要口语化、简洁、可执行。\n4. “有理有据”要求：必须给出2~4条依据，并引用检索结果中的关键信息（用「」包住短句）。\n5. 若某项是“未检索到”，明确写“该项暂无数据”。\n\n  输出格式（严格按此顺序）：\n当前故障设备是...\n  【故障判断】\n- 一句话说明当前最可能故障。\n\n  【判断依据】\n1. ...\n2. ...\n3. ...\n\n  【处理建议（按先后）】\n1. ...\n2. ...\n3. ...\n\n  【风险提示】\n- ...\n\n  【应急资源】\n- ...\n\n  风格约束：\n- 不要输出JSON。\n- 不要复述整段原始字符串。\n- 不要出现“作为AI”等表述。"
+          },
+          {
+            "obj": "Human",
+            "value": "有载分接开关切换异常，分接位置不稳并伴随油中气体异常。"
+          },
+          {
+            "obj": "AI",
+            "value": "当前故障设备是有载调压分接开关箱。\n\n【故障判断】\n- 当前最可能故障是有载调压分接开关箱渗油故障，已影响到切换稳定性。\n\n【判断依据】\n1. 检索结果明确指向当前二级故障为「有载调压分接开关箱渗油故障」。\n2. 现象上与现场描述吻合，已检索到故障现象包括「调压切换异常或报警」。\n3. 同时还能看到典型伴随表现是「可见油位下降和箱体油迹」，这类渗油会进一步影响开关箱状态。\n4. 后果信息也支持这一判断，油位异常后「油位过低会引起触头过热」，进而导致调压功能异常。\n\n【处理建议（按先后）】\n1. 先停电并做好隔离，按检索建议「停电隔离后定位渗漏点」。\n2. 找到渗漏位置后，优先处理本体缺陷，按条件「更换密封件或补焊」。\n3. 缺陷处理完成后进行「补油试验后恢复运行」，恢复前确认切换功能正常。\n\n【风险提示】\n- 这个故障不能带缺陷硬切换，检索结果提示「带缺陷切换存在弧光、喷油和火灾风险」；如果油位继续下降，还可能「导致调压功能失效甚至内部故障」。\n\n【应急资源】\n- 需要「密封件套件、补焊工装、补油设备、切换试验工具和检修人员」。"
+          }
+        ],
+        "contextTotalLen": 3,
+        "finishReason": "stop",
+        "llmRequestIds": [
+          "enNF2H8AKLWpf_Jl"
+        ],
+        "id": "tZxbDkltJrBcyMkm",
+        "nodeId": "j5U22AiVe7XSNPFG",
+        "runningTime": 8.32
+      },
+      {
+        "moduleName": "指定回复",
+        "moduleType": "answerNode",
+        "moduleLogo": "core/workflow/template/reply",
+        "textOutput": "当前故障设备是有载调压分接开关箱。\n\n【故障判断】\n- 当前最可能故障是有载调压分接开关箱渗油故障，已影响到切换稳定性。\n\n【判断依据】\n1. 检索结果明确指向当前二级故障为「有载调压分接开关箱渗油故障」。\n2. 现象上与现场描述吻合，已检索到故障现象包括「调压切换异常或报警」。\n3. 同时还能看到典型伴随表现是「可见油位下降和箱体油迹」，这类渗油会进一步影响开关箱状态。\n4. 后果信息也支持这一判断，油位异常后「油位过低会引起触头过热」，进而导致调压功能异常。\n\n【处理建议（按先后）】\n1. 先停电并做好隔离，按检索建议「停电隔离后定位渗漏点」。\n2. 找到渗漏位置后，优先处理本体缺陷，按条件「更换密封件或补焊」。\n3. 缺陷处理完成后进行「补油试验后恢复运行」，恢复前确认切换功能正常。\n\n【风险提示】\n- 这个故障不能带缺陷硬切换，检索结果提示「带缺陷切换存在弧光、喷油和火灾风险」；如果油位继续下降，还可能「导致调压功能失效甚至内部故障」。\n\n【应急资源】\n- 需要「密封件套件、补焊工装、补油设备、切换试验工具和检修人员」。",
+        "id": "wHnFNb5A2WKeIgJG",
+        "nodeId": "ai8Jn4Wx4O1ZD8TE",
+        "runningTime": 0
+      }
+    ]
+  }
+}

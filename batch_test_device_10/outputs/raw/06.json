@@ -1,0 +1,310 @@
+{
+  "index": 6,
+  "expected_device": "输电线路",
+  "question": "通道附近异物悬挂导线，造成外力破坏并触发线路跳闸。",
+  "request": {
+    "chatId": "batch-device-20260415234258-06",
+    "stream": true,
+    "detail": true,
+    "customUid": "batch-test-device-10",
+    "messages": [
+      {
+        "role": "user",
+        "content": "通道附近异物悬挂导线，造成外力破坏并触发线路跳闸。"
+      }
+    ]
+  },
+  "status": "ok",
+  "elapsed_sec": 32.67,
+  "predicted_device": "输电线路",
+  "is_correct": true,
+  "response": {
+    "id": "",
+    "model": "",
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "当前故障设备是...\n  【故障判断】\n- 当前最可能是外力异物短路故障，异物悬挂导线后引发线路闪络，进而导致跳闸。\n\n  【判断依据】\n1. 检索信息提到故障原因是「具有一定导电性的异物将相间或相地之间连接」，而且「气球、风筝等异物挂线都可能引发该故障」。\n2. 现场描述是通道附近异物悬挂导线，与故障现象中的「相间或相地之间被异物连接」和「空气间隙被异物短接」一致。\n3. 该类故障后果明确包括「造成线路闪络」，并会「进一步引发线路跳闸、停运和局部设备损伤」，与当前跳闸现象吻合。\n\n  【处理建议（按先后）】\n1. 先开展现场核查和异物隐患排查，重点确认异物是否仍挂在线路上、是否存在继续短接风险。\n2. 组织抢修力量进行异物拆除和通道清理，并落实绝缘工具和安全防护措施后再开展处置。\n3. 后续加强日常巡视与特巡，做好外破隐患排查和档案建立，配合「移动视频监控预警装置」、通道整治和护线宣传，降低再次发生风险。\n\n  【风险提示】\n- 处置过程中重点防范「触电/电击伤害风险、人员伤亡风险和设备损坏风险」；如果已经引起停运，还存在「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需持续监控和预警，还应配置监测设备和应急电源。\n当前故障设备是...\n  【故障判断】\n- 当前最可能是外力异物短路故障，异物悬挂导线后引发线路闪络，进而导致跳闸。\n\n  【判断依据】\n1. 检索信息提到故障原因是「具有一定导电性的异物将相间或相地之间连接」，而且「气球、风筝等异物挂线都可能引发该故障」。\n2. 现场描述是通道附近异物悬挂导线，与故障现象中的「相间或相地之间被异物连接」和「空气间隙被异物短接」一致。\n3. 该类故障后果明确包括「造成线路闪络」，并会「进一步引发线路跳闸、停运和局部设备损伤」，与当前跳闸现象吻合。\n\n  【处理建议（按先后）】\n1. 先开展现场核查和异物隐患排查，重点确认异物是否仍挂在线路上、是否存在继续短接风险。\n2. 组织抢修力量进行异物拆除和通道清理，并落实绝缘工具和安全防护措施后再开展处置。\n3. 后续加强日常巡视与特巡，做好外破隐患排查和档案建立，配合「移动视频监控预警装置」、通道整治和护线宣传，降低再次发生风险。\n\n  【风险提示】\n- 处置过程中重点防范「触电/电击伤害风险、人员伤亡风险和设备损坏风险」；如果已经引起停运，还存在「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需持续监控和预警，还应配置监测设备和应急电源。"
+        },
+        "finish_reason": "stop",
+        "index": 0
+      }
+    ],
+    "responseData": [
+      {
+        "moduleName": "common:core.module.template.work_start",
+        "moduleType": "workflowStart",
+        "moduleLogo": "core/workflow/template/workflowStart",
+        "id": "pXL5PMTFOE42zTjm",
+        "nodeId": "448745",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "设备表初始化",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "bvNwKfP26l2UaHpM",
+        "nodeId": "yb1JWcs00uT9BnMy",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "获取全体设备表",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_breaker",
+          "ngql": "SHOW SPACES;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4194,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.023ms/1.271734ms)\n\nWed, 15 Apr 2026 15:43:01 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 622µs/932.383µs)\n\nWed, 15 Apr 2026 15:43:01 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:43:01 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "rFem8IualwUiH3wu",
+        "nodeId": "jAL1KIZmvZFXbL36",
+        "runningTime": 4.2
+      },
+      {
+        "moduleName": "清洗设备表数据",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 1.023ms/1.271734ms)\n\nWed, 15 Apr 2026 15:43:01 UTC\n\n(root@nebula) [llmkg_breaker]> +---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 10 rows (time spent 622µs/932.383µs)\n\nWed, 15 Apr 2026 15:43:01 UTC\n\n(root@nebula) [llmkg_breaker]> \n\nBye root!\nWed, 15 Apr 2026 15:43:01 UTC\n\n"
+        },
+        "customOutputs": {
+          "devicespace": "llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+        },
+        "codeLog": "",
+        "id": "aAIlt4samaKba0VD",
+        "nodeId": "dqaMJ59ZDTGGxv68",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "设备识别",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "通道附近异物悬挂导线，造成外力破坏并触发线路跳闸。",
+        "inputTokens": 377,
+        "outputTokens": 12,
+        "extractDescription": "请从llmkg_breaker,llmkg_cable,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中，找出最匹配用户中文输入问题的表并输出，只输出英文的表的名称，不要输出别的任何东西",
+        "extractResult": {
+          "设备表": "llmkg_transmission_line"
+        },
+        "contextTotalLen": 2,
+        "id": "fp2zx88vpiqm6jI7",
+        "nodeId": "hJmYZWKFOW26n5E1",
+        "runningTime": 3.89
+      },
+      {
+        "moduleName": "缓存初始化数据",
+        "moduleType": "ifElseNode",
+        "moduleLogo": "core/workflow/template/ifelse",
+        "totalPoints": 0,
+        "ifElseResult": "IF",
+        "id": "pVn2a1rslUtmCRZa",
+        "nodeId": "c1RpkoiqOmMF7adv",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "基础数据获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transmission_line",
+          "ngql": "MATCH (l1:entity)-[:rel]->(l2:entity) WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 RETURN l1.entity.source_id AS l1_source_id, l1.entity.name AS l1_name, l2.entity.source_id AS l2_source_id, l2.entity.name AS l2_name ORDER BY l1_source_id, l2_source_id;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 5817,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 995µs/1.301875ms)\n\nWed, 15 Apr 2026 15:43:11 UTC\n\n(root@nebula) [llmkg_transmission_line]> +--------------+----------------+--------------+--------------------------------+\n| l1_source_id | l1_name        | l2_source_id | l2_name                        |\n+--------------+----------------+--------------+--------------------------------+\n| 1            | \"覆冰故障\"     | 8            | \"覆冰过荷载故障\"               |\n| 1            | \"覆冰故障\"     | 15           | \"脱冰跳跃故障\"                 |\n| 2            | \"舞动故障\"     | 22           | \"舞动致螺栓松脱故障\"           |\n| 2            | \"舞动故障\"     | 29           | \"舞动致杆塔损坏故障\"           |\n| 2            | \"舞动故障\"     | 36           | \"舞动致跳闸故障\"               |\n| 3            | \"雷击闪络故障\" | 43           | \"感应雷过电压故障\"             |\n| 3            | \"雷击闪络故障\" | 50           | \"反击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 57           | \"绕击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 64           | \"避雷线档距中央雷击故障\"       |\n| 4            | \"外力破坏故障\" | 71           | \"外力异物短路故障\"             |\n| 4            | \"外力破坏故障\" | 78           | \"吊车碰线故障\"                 |\n| 4            | \"外力破坏故障\" | 85           | \"违章施工故障\"                 |\n| 4            | \"外力破坏故障\" | 92           | \"烟火短路故障\"                 |\n| 4            | \"外力破坏故障\" | 99           | \"山火故障\"                     |\n| 4            | \"外力破坏故障\" | 106          | \"盗窃破坏故障\"                 |\n| 5            | \"风害故障\"     | 113          | \"风致倒塔断线故障\"             |\n| 5            | \"风害故障\"     | 120          | \"风偏闪络故障\"                 |\n| 5            | \"风害故障\"     | 127          | \"风致异物短路故障\"             |\n| 6            | \"鸟害故障\"     | 134          | \"鸟巢异物故障\"                 |\n| 6            | \"鸟害故障\"     | 141          | \"鸟类飞行短路故障\"             |\n| 6            | \"鸟害故障\"     | 148          | \"蛇类捕食诱发闪络故障\"         |\n| 6            | \"鸟害故障\"     | 155          | \"复合绝缘子鸟啄损伤故障\"       |\n| 7            | \"污闪故障\"     | 162          | \"积污污闪故障\"                 |\n| 7            | \"污闪故障\"     | 169          | \"瓷玻璃绝缘子劣化故障\"         |\n| 7            | \"污闪故障\"     | 176          | \"复合绝缘子憎水性丧失闪络故障\" |\n| 7            | \"污闪故障\"     | 183          | \"覆冰（雪）绝缘子污闪故障\"     |\n+--------------+----------------+--------------+--------------------------------+\nGot 26 rows (time spent 4.92ms/5.602644ms)\n\nWed, 15 Apr 2026 15:43:11 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:43:11 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "oeVeqTXoQ6Nns47C",
+        "nodeId": "fFpXpftMQrWMSyQb",
+        "runningTime": 5.82
+      },
+      {
+        "moduleName": "基础数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 5817,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 995µs/1.301875ms)\n\nWed, 15 Apr 2026 15:43:11 UTC\n\n(root@nebula) [llmkg_transmission_line]> +--------------+----------------+--------------+--------------------------------+\n| l1_source_id | l1_name        | l2_source_id | l2_name                        |\n+--------------+----------------+--------------+--------------------------------+\n| 1            | \"覆冰故障\"     | 8            | \"覆冰过荷载故障\"               |\n| 1            | \"覆冰故障\"     | 15           | \"脱冰跳跃故障\"                 |\n| 2            | \"舞动故障\"     | 22           | \"舞动致螺栓松脱故障\"           |\n| 2            | \"舞动故障\"     | 29           | \"舞动致杆塔损坏故障\"           |\n| 2            | \"舞动故障\"     | 36           | \"舞动致跳闸故障\"               |\n| 3            | \"雷击闪络故障\" | 43           | \"感应雷过电压故障\"             |\n| 3            | \"雷击闪络故障\" | 50           | \"反击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 57           | \"绕击雷故障\"                   |\n| 3            | \"雷击闪络故障\" | 64           | \"避雷线档距中央雷击故障\"       |\n| 4            | \"外力破坏故障\" | 71           | \"外力异物短路故障\"             |\n| 4            | \"外力破坏故障\" | 78           | \"吊车碰线故障\"                 |\n| 4            | \"外力破坏故障\" | 85           | \"违章施工故障\"                 |\n| 4            | \"外力破坏故障\" | 92           | \"烟火短路故障\"                 |\n| 4            | \"外力破坏故障\" | 99           | \"山火故障\"                     |\n| 4            | \"外力破坏故障\" | 106          | \"盗窃破坏故障\"                 |\n| 5            | \"风害故障\"     | 113          | \"风致倒塔断线故障\"             |\n| 5            | \"风害故障\"     | 120          | \"风偏闪络故障\"                 |\n| 5            | \"风害故障\"     | 127          | \"风致异物短路故障\"             |\n| 6            | \"鸟害故障\"     | 134          | \"鸟巢异物故障\"                 |\n| 6            | \"鸟害故障\"     | 141          | \"鸟类飞行短路故障\"             |\n| 6            | \"鸟害故障\"     | 148          | \"蛇类捕食诱发闪络故障\"         |\n| 6            | \"鸟害故障\"     | 155          | \"复合绝缘子鸟啄损伤故障\"       |\n| 7            | \"污闪故障\"     | 162          | \"积污污闪故障\"                 |\n| 7            | \"污闪故障\"     | 169          | \"瓷玻璃绝缘子劣化故障\"         |\n| 7            | \"污闪故障\"     | 176          | \"复合绝缘子憎水性丧失闪络故障\" |\n| 7            | \"污闪故障\"     | 183          | \"覆冰（雪）绝缘子污闪故障\"     |\n+--------------+----------------+--------------+--------------------------------+\nGot 26 rows (time spent 4.92ms/5.602644ms)\n\nWed, 15 Apr 2026 15:43:11 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:43:11 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "summary_text": "一级故障有：覆冰故障、舞动故障、雷击闪络故障、外力破坏故障、风害故障、鸟害故障、污闪故障。\n其中：覆冰故障有2个二级故障：覆冰过荷载故障、脱冰跳跃故障；舞动故障有3个二级故障：舞动致螺栓松脱故障、舞动致杆塔损坏故障、舞动致跳闸故障；雷击闪络故障有4个二级故障：感应雷过电压故障、反击雷故障、绕击雷故障、避雷线档距中央雷击故障；外力破坏故障有6个二级故障：外力异物短路故障、吊车碰线故障、违章施工故障、烟火短路故障、山火故障、盗窃破坏故障；风害故障有3个二级故障：风致倒塔断线故障、风偏闪络故障、风致异物短路故障；鸟害故障有4个二级故障：鸟巢异物故障、鸟类飞行短路故障、蛇类捕食诱发闪络故障、复合绝缘子鸟啄损伤故障；污闪故障有4个二级故障：积污污闪故障、瓷玻璃绝缘子劣化故障、复合绝缘子憎水性丧失闪络故障、覆冰（雪）绝缘子污闪故障。\n合计二级故障映射26条。"
+        },
+        "codeLog": "",
+        "id": "ymFHQ0AWHPOaECro",
+        "nodeId": "gMBZtrBTbpDPI3Ob",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "基础数据更新",
+        "moduleType": "variableUpdate",
+        "moduleLogo": "core/workflow/template/variableUpdate",
+        "updateVarResult": [
+          "一级故障有：覆冰故障、舞动故障、雷击闪络故障、外力破坏故障、风害故障、鸟害故障、污闪故障。\n其中：覆冰故障有2个二级故障：覆冰过荷载故障、脱冰跳跃故障；舞动故障有3个二级故障：舞动致螺栓松脱故障、舞动致杆塔损坏故障、舞动致跳闸故障；雷击闪络故障有4个二级故障：感应雷过电压故障、反击雷故障、绕击雷故障、避雷线档距中央雷击故障；外力破坏故障有6个二级故障：外力异物短路故障、吊车碰线故障、违章施工故障、烟火短路故障、山火故障、盗窃破坏故障；风害故障有3个二级故障：风致倒塔断线故障、风偏闪络故障、风致异物短路故障；鸟害故障有4个二级故障：鸟巢异物故障、鸟类飞行短路故障、蛇类捕食诱发闪络故障、复合绝缘子鸟啄损伤故障；污闪故障有4个二级故障：积污污闪故障、瓷玻璃绝缘子劣化故障、复合绝缘子憎水性丧失闪络故障、覆冰（雪）绝缘子污闪故障。\n合计二级故障映射26条。"
+        ],
+        "id": "zV2sdKmDlicEOjDz",
+        "nodeId": "zUjkCcG9mO9I8G6u",
+        "runningTime": 0
+      },
+      {
+        "moduleName": "故障类型分析",
+        "moduleType": "contentExtract",
+        "moduleLogo": "core/workflow/template/extractJson",
+        "totalPoints": 0,
+        "model": "M2.5",
+        "query": "通道附近异物悬挂导线，造成外力破坏并触发线路跳闸。",
+        "inputTokens": 629,
+        "outputTokens": 11,
+        "extractDescription": " 你的任务：根据用户输入，在已知的一级/二级故障目录中，匹配“最恰当的一个二级故障名称”。\n\n  已知目录：\n  一级故障有：覆冰故障、舞动故障、雷击闪络故障、外力破坏故障、风害故障、鸟害故障、污闪故障。\n其中：覆冰故障有2个二级故障：覆冰过荷载故障、脱冰跳跃故障；舞动故障有3个二级故障：舞动致螺栓松脱故障、舞动致杆塔损坏故障、舞动致跳闸故障；雷击闪络故障有4个二级故障：感应雷过电压故障、反击雷故障、绕击雷故障、避雷线档距中央雷击故障；外力破坏故障有6个二级故障：外力异物短路故障、吊车碰线故障、违章施工故障、烟火短路故障、山火故障、盗窃破坏故障；风害故障有3个二级故障：风致倒塔断线故障、风偏闪络故障、风致异物短路故障；鸟害故障有4个二级故障：鸟巢异物故障、鸟类飞行短路故障、蛇类捕食诱发闪络故障、复合绝缘子鸟啄损伤故障；污闪故障有4个二级故障：积污污闪故障、瓷玻璃绝缘子劣化故障、复合绝缘子憎水性丧失闪络故障、覆冰（雪）绝缘子污闪故障。\n合计二级故障映射26条。\n\n  规则：\n 输出要求：\n  只输出一个 JSON 对象，且只能有这个键：\n  {\"故障二级节点\":\"已知目录中的一个二级故障\"}\n\n  现在开始匹配并输出结果。",
+        "extractResult": {
+          "故障二级节点": "外力异物短路故障"
+        },
+        "contextTotalLen": 2,
+        "id": "euriIBXwPoT8ABbI",
+        "nodeId": "bEGyTijQYXiijgkL",
+        "runningTime": 2.26
+      },
+      {
+        "moduleName": "下游节点获取",
+        "moduleType": "httpRequest468",
+        "moduleLogo": "core/workflow/template/httpRequest",
+        "totalPoints": 0,
+        "body": {
+          "space": "llmkg_transmission_line",
+          "ngql": "MATCH (s:entity)-[:rel*1..5]->(m:entity) WHERE s.entity.lvl == 2 AND s.entity.name == \"外力异物短路故障\" RETURN DISTINCT m.entity.lvl AS lvl, m.entity.name AS name, m.entity.node_desc AS node_desc ORDER BY lvl, name;"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpResult": {
+          "ok": true,
+          "duration_ms": 4923,
+          "return_code": 0,
+          "errors": [],
+          "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 889µs/1.138018ms)\n\nWed, 15 Apr 2026 15:43:17 UTC\n\n(root@nebula) [llmkg_transmission_line]> +-----+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| lvl | name                        | node_desc                                                                                                                                                                                |\n+-----+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| 3   | \"外力异物短路故障-应对措施\" | \"应重点做好外破隐患排查和档案建立，加强日常巡视与特巡，充分发动沿线农电员、护线员、信息员和群众掌握现场情况，并配合移动视频监控预警装置、线路通道整治和护线宣传教育，降低异物短路风险。\" |\n| 3   | \"外力异物短路故障-故障原因\" | \"具有一定导电性的异物将相间或相地之间连接，或短接部分空气间隙，使绝缘强度不能满足要求；高空抛物以及漂浮悬挂的气球、风筝等异物挂线都可能引发该故障。\"                                     |\n| 4   | \"外力异物短路故障-安全风险\" | \"在通道清理、异物拆除和现场核查过程中，主要存在触电/电击伤害风险、人员伤亡风险和设备损坏风险；若异物已引起停运，还伴随停电损失风险。\"                                                    |\n| 4   | \"外力异物短路故障-应急资源\" | \"主要需要抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需开展持续监控和预警，还应配置监测设备和应急电源。\"                                                                     |\n| 4   | \"外力异物短路故障-故障后果\" | \"异物导电或短接空气间隙后，会造成线路闪络，进一步引发线路跳闸、停运和局部设备损伤。\"                                                                                                     |\n| 4   | \"外力异物短路故障-故障现象\" | \"主要表现为相间或相地之间被异物连接，或空气间隙被异物短接，最终出现线路闪络。\"                                                                                                           |\n+-----+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\nGot 6 rows (time spent 4.641ms/5.127773ms)\n\nWed, 15 Apr 2026 15:43:17 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:43:17 UTC\n\n",
+          "stderr": "",
+          "meta": {
+            "docker_network": "nebula-docker-compose_nebula-net",
+            "nebula_host": "graphd",
+            "nebula_port": 9669
+          }
+        },
+        "id": "wA0FXbIDerOCVW7K",
+        "nodeId": "rpJznDcYzR74Wijw",
+        "runningTime": 4.93
+      },
+      {
+        "moduleName": "下游节点数据清洗",
+        "moduleType": "code",
+        "moduleLogo": "core/workflow/template/codeRun",
+        "customInputs": {
+          "httpRawResponse": {
+            "ok": true,
+            "duration_ms": 4923,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\nWelcome!\n\n(root@nebula) [(none)]> Execution succeeded (time spent 889µs/1.138018ms)\n\nWed, 15 Apr 2026 15:43:17 UTC\n\n(root@nebula) [llmkg_transmission_line]> +-----+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| lvl | name                        | node_desc                                                                                                                                                                                |\n+-----+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| 3   | \"外力异物短路故障-应对措施\" | \"应重点做好外破隐患排查和档案建立，加强日常巡视与特巡，充分发动沿线农电员、护线员、信息员和群众掌握现场情况，并配合移动视频监控预警装置、线路通道整治和护线宣传教育，降低异物短路风险。\" |\n| 3   | \"外力异物短路故障-故障原因\" | \"具有一定导电性的异物将相间或相地之间连接，或短接部分空气间隙，使绝缘强度不能满足要求；高空抛物以及漂浮悬挂的气球、风筝等异物挂线都可能引发该故障。\"                                     |\n| 4   | \"外力异物短路故障-安全风险\" | \"在通道清理、异物拆除和现场核查过程中，主要存在触电/电击伤害风险、人员伤亡风险和设备损坏风险；若异物已引起停运，还伴随停电损失风险。\"                                                    |\n| 4   | \"外力异物短路故障-应急资源\" | \"主要需要抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需开展持续监控和预警，还应配置监测设备和应急电源。\"                                                                     |\n| 4   | \"外力异物短路故障-故障后果\" | \"异物导电或短接空气间隙后，会造成线路闪络，进一步引发线路跳闸、停运和局部设备损伤。\"                                                                                                     |\n| 4   | \"外力异物短路故障-故障现象\" | \"主要表现为相间或相地之间被异物连接，或空气间隙被异物短接，最终出现线路闪络。\"                                                                                                           |\n+-----+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\nGot 6 rows (time spent 4.641ms/5.127773ms)\n\nWed, 15 Apr 2026 15:43:17 UTC\n\n(root@nebula) [llmkg_transmission_line]> \n\nBye root!\nWed, 15 Apr 2026 15:43:17 UTC\n\n",
+            "stderr": "",
+            "meta": {
+              "docker_network": "nebula-docker-compose_nebula-net",
+              "nebula_host": "graphd",
+              "nebula_port": 9669
+            }
+          }
+        },
+        "customOutputs": {
+          "result": "当前二级故障：外力异物短路故障。故障原因：外力异物短路故障-故障原因：具有一定导电性的异物将相间或相地之间连接，或短接部分空气间隙，使绝缘强度不能满足要求；高空抛物以及漂浮悬挂的气球、风筝等异物挂线都可能引发该故障。。应对措施：外力异物短路故障-应对措施：应重点做好外破隐患排查和档案建立，加强日常巡视与特巡，充分发动沿线农电员、护线员、信息员和群众掌握现场情况，并配合移动视频监控预警装置、线路通道整治和护线宣传教育，降低异物短路风险。。故障现象：外力异物短路故障-故障现象：主要表现为相间或相地之间被异物连接，或空气间隙被异物短接，最终出现线路闪络。。故障后果：外力异物短路故障-故障后果：异物导电或短接空气间隙后，会造成线路闪络，进一步引发线路跳闸、停运和局部设备损伤。。安全风险：外力异物短路故障-安全风险：在通道清理、异物拆除和现场核查过程中，主要存在触电/电击伤害风险、人员伤亡风险和设备损坏风险；若异物已引起停运，还伴随停电损失风险。。应急资源：外力异物短路故障-应急资源：主要需要抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需开展持续监控和预警，还应配置监测设备和应急电源。。其他相关节点：无。"
+        },
+        "codeLog": "",
+        "id": "wyUqfzykSPF4Xbld",
+        "nodeId": "fmRLeRT0lvkngtJQ",
+        "runningTime": 0.01
+      },
+      {
+        "moduleName": "最终生成",
+        "moduleType": "chatNode",
+        "moduleLogo": "core/workflow/template/aiChat",
+        "totalPoints": 0,
+        "model": "gpt-5.4",
+        "inputTokens": 744,
+        "outputTokens": 428,
+        "query": "通道附近异物悬挂导线，造成外力破坏并触发线路跳闸。",
+        "reasoningText": "",
+        "historyPreview": [
+          {
+            "obj": "System",
+            "value": " 你是“电力设备故障解释与处置助手”，面向一线运维人员回答。\n\n  你会收到输入：用户原问题和，设备判断结果和检索清洗结果当前二级故障：外力异物短路故障。故障原因：外力异物短路故障-故障原因：具有一定导电性的异物将相间或相地之间连接，或短接部分空气间隙，使绝缘强度不能满足要求；高空抛物以及漂浮悬挂的气球、风筝等异物挂线都可能引发该故障。。应对措施：外力异物短路故障-应对措施：应重点做好外破隐患排查和档案建立，加强日常巡视与特巡，充分发动沿线农电员、护线员、信息员和群众掌握现场情况，并配合移动视频监控预警装置、线路通道整治和护线宣传教育，降低异物短路风险。。故障现象：外力异物短路故障-故障现象：主要表现为相间或相地之间被异物连接，或空气间隙被异物短接，最终出现线路闪络。。故障后果：外力异物短路故障-故障后果：异物导电或短接空气间隙后，会造成线路闪络，进一步引发线路跳闸、停运和局部设备损伤。。安全风险：外力异物短路故障-安全风险：在通道清理、异物拆除和现场核查过程中，主要存在触电/电击伤害风险、人员伤亡风险和设备损坏风险；若异物已引起停运，还伴随停电损失风险。。应急资源：外力异物短路故障-应急资源：主要需要抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需开展持续监控和预警，还应配置监测设备和应急电源。。其他相关节点：无。\n\n  你的任务：\n1. 只基于“检索清洗结果”作答，不得编造。\n2. 先给出故障判断，再给出依据、处理建议、风险提示、应急资源。\n3. 回答要口语化、简洁、可执行。\n4. “有理有据”要求：必须给出2~4条依据，并引用检索结果中的关键信息（用「」包住短句）。\n5. 若某项是“未检索到”，明确写“该项暂无数据”。\n\n  输出格式（严格按此顺序）：\n当前故障设备是...\n  【故障判断】\n- 一句话说明当前最可能故障。\n\n  【判断依据】\n1. ...\n2. ...\n3. ...\n\n  【处理建议（按先后）】\n1. ...\n2. ...\n3. ...\n\n  【风险提示】\n- ...\n\n  【应急资源】\n- ...\n\n  风格约束：\n- 不要输出JSON。\n- 不要复述整段原始字符串。\n- 不要出现“作为AI”等表述。"
+          },
+          {
+            "obj": "Human",
+            "value": "通道附近异物悬挂导线，造成外力破坏并触发线路跳闸。"
+          },
+          {
+            "obj": "AI",
+            "value": "当前故障设备是...\n  【故障判断】\n- 当前最可能是外力异物短路故障，异物悬挂导线后引发线路闪络，进而导致跳闸。\n\n  【判断依据】\n1. 检索信息提到故障原因是「具有一定导电性的异物将相间或相地之间连接」，而且「气球、风筝等异物挂线都可能引发该故障」。\n2. 现场描述是通道附近异物悬挂导线，与故障现象中的「相间或相地之间被异物连接」和「空气间隙被异物短接」一致。\n3. 该类故障后果明确包括「造成线路闪络」，并会「进一步引发线路跳闸、停运和局部设备损伤」，与当前跳闸现象吻合。\n\n  【处理建议（按先后）】\n1. 先开展现场核查和异物隐患排查，重点确认异物是否仍挂在线路上、是否存在继续短接风险。\n2. 组织抢修力量进行异物拆除和通道清理，并落实绝缘工具和安全防护措施后再开展处置。\n3. 后续加强日常巡视与特巡，做好外破隐患排查和档案建立，配合「移动视频监控预警装置」、通道整治和护线宣传，降低再次发生风险。\n\n  【风险提示】\n- 处置过程中重点防范「触电/电击伤害风险、人员伤亡风险和设备损坏风险」；如果已经引起停运，还存在「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需持续监控和预警，还应配置监测设备和应急电源。"
+          }
+        ],
+        "contextTotalLen": 3,
+        "finishReason": "stop",
+        "llmRequestIds": [
+          "_ZxCJtNZFSfmPliv"
+        ],
+        "id": "uRvwvHrCBWGiuhm7",
+        "nodeId": "j5U22AiVe7XSNPFG",
+        "runningTime": 11.24
+      },
+      {
+        "moduleName": "指定回复",
+        "moduleType": "answerNode",
+        "moduleLogo": "core/workflow/template/reply",
+        "textOutput": "当前故障设备是...\n  【故障判断】\n- 当前最可能是外力异物短路故障，异物悬挂导线后引发线路闪络，进而导致跳闸。\n\n  【判断依据】\n1. 检索信息提到故障原因是「具有一定导电性的异物将相间或相地之间连接」，而且「气球、风筝等异物挂线都可能引发该故障」。\n2. 现场描述是通道附近异物悬挂导线，与故障现象中的「相间或相地之间被异物连接」和「空气间隙被异物短接」一致。\n3. 该类故障后果明确包括「造成线路闪络」，并会「进一步引发线路跳闸、停运和局部设备损伤」，与当前跳闸现象吻合。\n\n  【处理建议（按先后）】\n1. 先开展现场核查和异物隐患排查，重点确认异物是否仍挂在线路上、是否存在继续短接风险。\n2. 组织抢修力量进行异物拆除和通道清理，并落实绝缘工具和安全防护措施后再开展处置。\n3. 后续加强日常巡视与特巡，做好外破隐患排查和档案建立，配合「移动视频监控预警装置」、通道整治和护线宣传，降低再次发生风险。\n\n  【风险提示】\n- 处置过程中重点防范「触电/电击伤害风险、人员伤亡风险和设备损坏风险」；如果已经引起停运，还存在「停电损失风险」。\n\n  【应急资源】\n- 需要准备抢修队伍、交通工具、绝缘工具、安全防护用品和通信设备；如需持续监控和预警，还应配置监测设备和应急电源。",
+        "id": "tdaouKkdcAzs6tpp",
+        "nodeId": "ai8Jn4Wx4O1ZD8TE",
+        "runningTime": 0
+      }
+    ]
+  }
+}
