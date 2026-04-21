@@ -1,0 +1,1243 @@
+第 50 卷 第 6 期
+2025 年 6 月
+Vol.50 No.6
+Jun. 2025
+武汉大学学报（信息科学版）
+Geomatics and Information Science of Wuhan University
+地震灾害应急预案的生成式编制方法
+姚立伟
+1 
+任
+福
+1 
+王双燕
+2 
+王
+勇
+3 
+张浡聪
+1 
+盛兆阳
+1 
+杜清运
+1
+1 
+武汉大学资源与环境科学学院，湖北 
+武汉，430079
+2 
+中共中央党校（国家行政学院），北京，100091
+3 
+中国测绘科学研究院，北京，100036
+摘 
+要：地震灾害应急预案的编制具有高度规范性，如何提升编制效率、适应不同情境、确保措施的可行性，仍是当前应
+急管理中的重要挑战。提出了一种面向标准化流程的智能预案生成方法，构建了由大模型、智能体与知识图谱协同驱动
+的多阶段工作流。该工作流包括4 个阶段：用户需求解析与结构化输入构建、智能体驱动的震后风险分析、知识增强的响
+应措施生成、大模型驱动的格式优化与质量评估，支持从需求理解到预案输出的全流程自动化。为支撑工作流运行，研
+究设计了省、市、县3 级地震应急预案模板体系，并构建了一个包含117 915 个节点与182 586 条关系的应急知识图谱，系
+统整合了应急响应场景下的风险类型、应对措施、资源配置与职责划分等核心知识。实验部分选取了20 份市县级地震应
+急预案作为参考样本，设计6 个维度的评估指标体系，通过对比分析工作流生成方法与直接大语言模型生成方法的表现，
+验证了所提方法在全面性、可行性与合理性等核心指标上的优势。评估结果显示，工作流生成在多个维度上得分更高，
+结构更加规范，逻辑更为清晰，内容更具操作性。同时，案例分析进一步展示了工作流方法在资源列举准确性、结构优化
+与内容一致性方面的提升，表明该方法更能满足实战场景下的应急预案需求。并开发了交互式预案编制工具，整合工作
+流方法用于辅助实际预案生成，具备良好的实用性与推广价值。
+关键词：工作流；智能体；地震应急预案；地震应急知识图谱；大语言模型；知识增强；智能生成
+中图分类号：P208 
+ 
+ 
+ 
+ 
+文献标识码：A
+收稿日期：2025⁃04⁃29
+DOI：10.13203/j.whugis20250127
+文章编号：1671⁃8860（2025）06⁃1159⁃16
+A Generative Method for Earthquake Emergency Plans
+YAO Liwei 
+1 
+REN Fu 
+1 
+WANG Shuangyan 
+2 
+WANG Yong 
+3 
+ZHANG Bocong 
+1 
+SHENG Zhaoyang 
+1 
+DU Qingyun 
+1
+1 
+School of Resource and Environmental Sciences, Wuhan University, Wuhan 430079, China
+2 
+Party School of the Central Committee of C.P.C (National Academy of Governance), Beijing 100091, China
+3 
+Chinese Academy of Surveying and Mapping, Beijing 100036, China
+Abstract： Objectives: The formulation of earthquake emergency response plans is a highly standardized 
+task that demands both procedural rigor and contextual adaptability. Existing methods often struggle to balance 
+consistency with the need for situational specificity and actionable detail. This study aims to address these 
+challenges by proposing an intelligent workflow for the automated generation of earthquake emergency 
+plans. The objectives are threefold: (1) To enhance generation efficiency through automation. (2) To ensure 
+procedural compliance and logical consistency; and (3) to improve the contextual relevance and implement 
+ability of generated plans. Methods: To achieve these goals, we propose a four-stage intelligent emergency 
+plan generation framework that integrates large language models (LLM), intelligent agents, and knowledge 
+graph. The workflow consists of four sequential stages: User intent parsing and structured input construc⁃
+tion, agent-driven post-earthquake risk analysis, knowledge-enhanced response strategy generation, and 
+基金项目：国家重点研发计划（2022YFC3005704）；智慧中原地理信息技术河南省协同创新中心和时空感知与智能处理自然资源部重点
+实验室基金（231201）。
+第一作者：姚立伟，博士生，主要从事自然灾害应急相关研究。yaoliweiylw@163.com
+通信作者：杜清运，博士，教授。qydu@whu.edu.cn
+引文格式：姚立伟,任福,王双燕，等. 地震灾害应急预案的生成式编制方法[J]. 武汉大学学报（信息科学版）,2025,50(6):1159-
+1174.DOI:10.13203/j.whugis20250127
+Citation：YAO Liwei,REN Fu,WANG Shuangyan,et al.A Generative Method for Earthquake Emergency Plans[J].Geomatics 
+and Information Science of Wuhan University,2025,50(6):1159-1174.DOI:10.13203/j.whugis20250127
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+LLM-driven format optimization and quality evaluation, enabling end-to-end automated plan generation. 
+To support this workflow, we design a three-tier emergency plan template system covering provincial, mu⁃
+nicipal, and county levels, and construct a comprehensive emergency knowledge graph containing 117 915 
+nodes and 182 586 edges, representing key entities such as risk types, response measures, resource configura⁃
+tions, and organizational responsibilities. Results: Experiments were conducted using 20 city- and county-
+level earthquake emergency plans as reference cases. A six-dimensional evaluation framework was de⁃
+signed to compare the proposed workflow method against direct LLM generation. Results demonstrate that 
+the workflow method significantly outperforms direct LLM generation in key metrics such as complete⁃
+ness, feasibility, and coherence, producing more structured, logical, and actionable outputs. Further case 
+analysis highlights the workflow's advantages in resource detailing, paragraph structuring, and content con⁃
+sistency, underscoring its effectiveness in real-world scenarios. Conclusions: We present a novel, knowledge-
+augmented and agent-assisted framework for intelligent emergency plan generation, offering a practical and 
+scalable solution to a traditionally manual process. By combining structured template, semantic knowledge 
+graphs, intelligent agent reasoning, and LLM-based generation and evaluation, the proposed workflow en⁃
+sures both procedural compliance and real-world applicability. An interactive planning tool has been developed 
+to facilitate real-time use by emergency management practitioners, enabling customizable, region-specific, 
+and ready-to-implement emergency plans. Future work will extend the system's capabilities to other disas⁃
+ter types and integrate predictive analytics for dynamic risk evolution modeling.
+Key words： workflow； agent； earthquake emergency plan； earthquake emergency knowledge graph； large 
+language model； knowledge enhancement； intelligent generation
+近年来，新质生产力正在推动应急管理体系
+向智能化方向发展，以科技创新为核心的现代化
+应急管理模式逐步形成
+［1-2］。中国工程院院士范
+维澄指出，要以技术革命推动应急管理能力现代
+化，以生产要素创新配置推动应急管理模式转
+型，强调科技创新在提升国家应急管理能力建设
+中的关键作用
+［3］。而中国共产党第二十次全国代
+表大会报告提出“坚持安全第一、预防为主，建立
+大安全大应急框架，完善公共安全体系，推动公
+共安全治理模式向事前预防转型”，进一步明确
+了应急管理向前置化、智能化方向发展的趋势
+［4］。
+应急预案编制作为事前防灾的核心环节，目的是
+建立统一、快速、协调、高效的灾害应急处置机
+制，其科学性、针对性和可执行性直接影响震后
+应急响应的效率与救援工作的有序展开
+［5］。
+应急预案的编写涉及对突发事件演化的推
+理及面对不同风险的决策问题，传统的应急预案
+通常基于历史应急经验编制，针对常规灾害事件
+制定详细的应对措施
+［6］。为了提升应急决策的智
+能化水平，多种智能决策方法被应用于应急预案
+的生成和优化，包括群体决策
+［7］、D-S 证据理论
+［8］、
+多目标决策
+［9］、基于决策树的模型
+［10］、前景理
+论
+［11］、进化博弈
+［12］及基于故障树分析方法
+［13］等。
+在这些方法中，基于案例推理的应急决策得到了
+广泛应用。该方法通过检索、重用、修正和保留4
+步循环，模拟人类推理过程，使系统能够基于历
+史案例快速匹配当前突发事件的应对方案
+［14］。
+基于案例推理的应急决策已被应用于多个领域，
+如交通应急管理
+［15］、环境突发事件响应
+［16］、突发
+公共卫生事件应急预案预生成
+［14］、地质灾害应急
+预案优化
+［17］以及基于空间案例推理的滑坡风险
+评估
+［18］。
+尽管基于案例推理的应急决策方法在应急
+决策领域的研究取得了诸多进展，但仍面临着检
+索精度低、检索步骤复杂、响应时间长等挑战
+［19］。
+大语言模型（large language model，LLM）的快速
+发展为智能化应急预案生成提供了新的方法，其
+强大的自然语言理解和知识整合能力能够自动
+分析地震灾害信息、智能匹配应对策略，并动态
+填充预案内容
+［20-21］。然而，单纯依赖LLM 仍然存
+在生成幻觉、不稳定性、缺乏可控性等问题
+［22-23］，
+特别是在应急管理领域，LLM 如何确保生成的应
+急预案因地制宜，所提出的应急措施更加可靠且
+具有实际操作性，仍是当前研究所面临的挑战。
+已有研究表明，结合知识库的信息约束可以提高
+LLM 生成的稳定性和可控性，使其在应急决策制
+定、预案生成等领域展现出较大的潜力
+［20， 24-25］。
+然而，现有方法主要侧重于静态知识的增强，仍
+然缺乏足够的动态适应能力，难以应对实时灾害
+情境下的多变需求。近年来，智能体与工作流技
+1160
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+术的发展为提升LLM 的决策可控性和任务执行
+效率提供了新的路径。智能体是一种具备自主
+感知、推理决策与任务执行能力的智能系统，能
+够根据环境变化灵活调整响应策略，而工作流则
+是一种预定义的任务执行链条，通过多次且分阶
+段地与LLM 进行交互及持续的反馈循环来实现
+对复杂任务的处理，从而得到更好的性能和结
+果
+［26］。在知识增强的基础上，引入智能体并嵌入
+标准化的预案生成工作流，有助于提升任务的响
+应灵活性与模块间的协同效率。
+综上，本文围绕地震灾害应急预案自动生成
+的核心目标，提出并构建了一套融合知识库与智
+能体的应急预案一键式生成工作流。通过明晰
+的任务分工与信息共享机制，工作流中的不同模
+块在统一流程中高效协作，实现从风险识别、知
+识检索、措施生成到质量评估的闭环式处理，从
+而增强预案生成过程的实时适应能力与整体可
+控性。核心突破点包括：（1）如何在预案制定阶
+段准确研判震后面临的主要风险，涵盖地震直接
+灾害、次生灾害及社会经济影响等多种风险类
+型；（2）如何确保所生成的应急处置措施和保障
+措施具有针对性和可操作性，即根据风险匹配科
+学合理的应对方案，并确保措施与措施执行机构
+和所需资源的协调性。这些问题的解决不仅关
+系到预案的科学性和有效性，也决定了灾害发生
+后应急响应的精准度和执行力。
+1　地震应急预案生成式编制方法
+1.1　方法总体框架设计
+参考传统预案编制流程，结合LLM、智能体、
+知识库与模板库，形成一套完整的智能预案生成
+框架。整体框架如图1 所示，包含5 个核心阶段：
+（1）预案生成需求解析：利用LLM 解析预案的层
+级、类型及地理位置，提取关键信息；（2）风险识
+别：基于解析出的地理位置，智能体通过制定关
+键词从互联网查询该地区的地震灾害相关信息，
+并分析潜在风险类型；
+（3）可用资源获取：根据预
+案层级、类型及风险类型，从知识库检索适用的
+保障措施及资源；
+（4）预案生成与优化：匹配合适
+的预案模板，结合知识库检索到的应对措施进行
+动态内容的填充，最终生成预案；（5）质量评估：
+采用LLM 及提示词对生成的预案进行评估，并
+提供优化建议。为支撑该流程的实施，框架还构
+建了相应的地震应急知识库（存储风险类型、保
+障措施、资源需求及资源提供机构）和预案模板
+库（提供结构化预案模板）。
+图1　地震应急预案智能生成工具整体框架图
+Fig. 1　Framework for Intelligent Generation of Earthquake Emergency Plans
+1161
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+1.2　应急预案体系梳理及模板库构建
+1.2.1　预案体系梳理
+地震应急预案作为专项应急预案的一部分，
+是各级政府和相关机构针对地震灾害制定的标
+准化响应方案，旨在确保灾害发生时能够迅速、
+高效、有序地展开应急行动。中国的地震应急预
+案体系按照行政层级进行划分，包括国家、省、
+市、县（区）、乡（镇）、街道基层等不同级别，各层
+级预案之间既存在指导与约束关系，又需要在执
+行过程中保持协调
+［27-28］。其中，国家级地震应急
+预案主要负责制定总体性方针和跨区域应急机
+制，强调统筹指挥、资源调度与政策支持，并为下
+级预案提供框架性指导；省级地震应急预案结合
+区域特征，对国家级预案进行细化，并负责协调
+省内各市县的地震应对，关注区域联动、重点防
+护区域和灾害情境适配；市级地震应急预案进一
+步结合城市基础设施和社会资源，制定更加细致
+的响应方案，涉及紧急避难、医疗救助、交通保障
+等方面；县级及以下地震应急预案则着眼于基层
+执行，强调快速响应、社区动员和本地资源调配，
+确保救援行动能够迅速覆盖受灾区域。
+各级预案之间通过信息共享、资源调度与指
+挥体系的联动形成一体化的响应网络，上级预案
+为下级提供决策支持，而下级预案则需要结合本
+地情况适应调整，以形成既符合宏观战略，又具
+有针对性的应急行动方案。在这一体系下，不同
+级别的预案在结构、内容、执行方式上存在差异，
+国家级和省级预案侧重战略规划与跨区域协调，
+而市级和县级预案更强调具体行动方案和本地
+化适配，使得应急响应既符合国家法规，又具有
+针对性和可操作性。
+另外，相较于火灾、地质灾害等突发事件，地
+震灾害预案具有突发性强、波及范围广、次生灾
+害多、预警时间短等突出特点，因此在编制过程
+中更加强调“情景构建–响应联动–资源统筹”
+的一体化设计思路。例如，地震预案往往需综合
+考虑余震、山体滑坡、建筑物次生坍塌、电力中断
+等复杂风险链条，远高于一般灾种所要求的单一
+风险应对能力。这种复杂性也导致其对响应协
+同机制、资源多级调配与跨系统联动提出更高
+要求。
+1.2.2　模板设计
+模板设计的基本思路是通过人工分析不同
+层级的地震应急预案，提取其核心要素，构建适
+用于不同层级的通用框架，并基于实际应用需求
+对各部分内容进行分类，明确哪些内容是固定的
+静态信息，哪些内容需要根据灾害情境进行动态
+填充，同时识别部分需要人工干预的内容，以确
+保预案的准确性和可操作性。
+在静态部分，模板涵盖法律法规依据、应急
+指挥体系、灾害应急响应等通用信息，以保证预
+案符合国家政策和行业标准；在动态部分，模板
+需要根据地震造成的风险、预案层级、资源需求
+等要素进行实时填充，因此必须结合知识库进行
+智能匹配，以生成符合灾情的应急措施与行动方
+案。此外，部分信息如预案负责人、指挥机构具
+体人员名单、联络方式、任务分工等内容由于涉
+及人员调整、职能划分等因素，无法通过系统自
+动填充，仍需人工输入和审核，以保证信息的时
+效性和准确性。
+模板的结构化存储采用JSON 格式，以便于
+解析和动态填充，模板中的动态字段将由工作流
+根据知识库进行填充，而人工填写字段则通过交
+互界面由相关人员录入，如指挥单位的负责人、
+应急联络员、物资调度负责人等关键角色信息均
+需由管理部门确认。通过这一模板设计思路，地
+震应急预案的自动生成能够实现标准化、灵活性
+和人工监督的结合，使预案既符合不同级别政府
+的应急管理要求，又能根据具体灾害情境进行优
+化，确保智能生成的预案能够与实际执行需求相
+匹配，提高应急响应的有效性和可靠性。
+1.3　基于知识图谱的地震应急知识库构建
+1.3.1　知识图谱本体设计
+地震应急知识库的核心是基于知识图谱的
+本体结构，该结构用于存储地震灾害应急预案的
+关键信息，包括风险类型、应对与保障措施、资源
+需求等信息。知识库采用实体-关系-实体的方式
+进行建模，通过构建各实体节点及其关系，实现
+预案相关知识的系统化表达和结构化存储。所
+设计的知识图谱本体结构如表1 所示，其中包含4
+个主要概念类别。风险类别与措施之间的关系
+定义了在不同灾害情境下适用的响应与保障措
+施，措施与资源需求之间的关系明确了执行应急
+行动所需的具体物资与人力支持，资源与机构之
+间的关系则保障了资源的可获取性与分配优化，
+进一步提升了应急响应的效率与可持续性。
+1.3.2　知识抽取方法
+为了构建地震应急知识库，采用基于LLM
+提示词的知识抽取方法，从已有的地震应急预案
+文本中提取关键信息，并结构化存储至知识图谱
+1162
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+中。具体而言，通过设计一组针对不同知识类别
+的提示词，让LLM 自动抽取符合本体结构的信
+息，并将结果以三元组的形式输出为JSON
+格式
+［29］。
+1.3.3　知识检索与匹配规则制定
+地震应急知识库的核心应用是支持基于语
+义匹配和规则推理的智能检索。本文利用知识
+图谱的语义匹配与规则推理方法，实现从已知风
+险类型到保障措施及资源配置的智能检索。在
+知识图谱中，不同的知识实体通过有向关系进行
+关联，使得能够基于已知的灾害风险自动推理出
+相应的应对措施、所需资源及可用的供应机构。
+可以表示为：
+其中，R 表示风险类型（如建筑倒塌、供水中断）；
+M 表示保障措施（如紧急救援、交通疏导）；S 表示
+资源需求（如救援设备、医疗物资）；I 表示提供机
+构或供应商（如政府应急部门）。
+1.4　模拟标准化流程的预案生成智能工作流设计
+1.4.1　标准化预案流程建模与工作流映射策略
+地震灾害应急预案的编制高度依赖制度流
+程与规范标准，通常涵盖预案类别及级别确定、
+风险识别、资源调查、内容撰写与征求意见等关
+键步骤。该流程在国家及地方各级应急管理规
+范中具有明确制度依据，是确保预案合法合规、
+逻辑完整、上下衔接的必要前提。
+为了实现智能化预案自动生成方法的设计
+合规性与系统可行性，本文以该标准流程为建模
+基础，对编制环节进行抽象提炼，并构建了一套
+面向语义任务解耦的智能工作流。图2 展示了本
+文提出的标准化预案编制流程与智能工作流之
+间的映射关系，从流程逻辑、任务功能与信息输
+入输出3 个层面，逐一对应构建内容与目标。
+具体而言，
+“预案类别及级别确定”对应工作
+流中的用户需求解析阶段，由LLM 识别并标准
+化输入字段，为任务启动提供统一语义接口；
+“风
+险识别”对应风险分析阶段，借助具备推理能力
+的智能体从互联网提取区域性风险信息；
+“资源
+调查”映射到知识图谱查询阶段，依托语义图谱
+表1　知识图谱本体设计
+Table 1　Knowledge Graph Ontology Design
+概念类别
+风险
+措施
+资源
+机构
+主要内容
+地震后可能发生的各类风险，如建筑倒塌、供水中断
+具体应急行动，如紧急救援、医疗救助、交通疏导
+应急所需的物资与人力资源，如帐篷、食品、医疗设备、救援人员、医疗队伍
+负责应急保障的政府部门、社会组织
+核心关系
+应对→措施
+需要资源→资源
+由→机构，可采购于→供应商
+提供资源
+图2　地震应急预案标准化与智能化生成流程对比图
+Fig.  2　Comparison Between Standardized and AI-Assisted Workflows for Earthquake Emergency Plan Generation
+1163
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+匹配措施与资源实体；
+“预案撰写”对应模板驱动
+的生成阶段，以结构化模板和模型生成组合实现
+规范性输出；
+“征求意见”与质量控制阶段形成对
+照，由LLM 评估生成内容的合理性与完整性，辅
+助决策优化。这种映射机制不仅在功能维度上
+与专家操作流程保持一致，还充分利用LLM 与
+智能体技术在语义解析、信息检索与内容生成方
+面的优势，具备较强的系统集成可行性与流程闭
+环性。其设计逻辑为后续工作流实现预案生成
+提供结构性基础，确保整个方法符合实际预案编
+制规范，且可落地执行。
+1.4.2　工作流执行阶段划分与智能任务编排机制
+在阶段映射的基础上，进一步提出了一套提
+示词驱动的智能任务编排机制，如图3 所示。该
+机制以“语义解析–知识调用–文本生成–质量
+反馈”为主线，将整个地震应急预案的编制过程
+拆解为4 个串行执行的阶段性任务单元，每一阶
+段通过结构化提示词配置实现与智能体或LLM
+的有效协同，确保系统在信息处理、逻辑组织和
+文本生成等环节具备连续性与可追踪性。
+1）用户需求解析与结构化输入构建阶段。
+该阶段主要完成从“非结构化输入”到“结构化表
+达”的语义转换。通过精设的系统提示词，引导
+LLM 自动提取预案类别、适用级别与目标区域等
+关键信息，并封装为标准化JSON 数据结构，为后
+续任务模块提供统一输入接口。该过程相当于
+人工任务单的自动生成，确保了任务分配的明确
+性与规范性。
+2）智能体驱动的震后风险分析阶段。本文
+采用具备推理能力的智能体工具OpenManus
+（https：//github.
+com/mannaandpoem/OpenMa⁃
+nus），模拟人类专家的研判行为，自动制定检索关
+键词并调用浏览器插件访问互联网资源，获取特
+定区域在历史地震中可能面临的次生灾害及风
+险信息，并结合预设风险本体进行分类、结构化
+建模，输出情境感知的灾后风险清单。
+3）知识增强的响应措施生成阶段。根据识
+别出的风险类型，系统通过Cypher 查询从应急知
+识图谱中抽取相关的应急处置措施、保障措施、
+执行机构信息与所需资源信息。结合模板结构
+与生成目标，进一步采用链式提示词引导LLM
+完成段落重构与语义扩展，输出具备场景适配性
+与语体规范性的预案核心内容。该阶段实现了
+知识调用与生成控制的有效结合。
+4）LLM 驱动的格式优化与质量评估阶段。
+在内容生成完成后，采用结构化控制策略，引导
+LLM 对文本进行文档级重构，完成段落划分、编
+号校验、术语标准化等编辑任务。同时引入6 维
+质量评估指标（准确性、清晰性、全面性、可行性、
+一致性、合理性），利用LLM 对文本草稿进行辅
+图3　应急预案线性生成链各阶段提示词配置与响应路径
+Fig. 3　Prompt Design and Response Flow of Each Module in Emergency Plan Generation Chain
+1164
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+助打分，并输出优化建议，构建生成—评估—优
+化的闭环。
+综上所述，图3 所示的线性生成链展示了提
+示词配置与响应路径的完整映射逻辑，该机制使
+得各阶段任务既具执行独立性，又可通过中间结
+果无缝衔接，保障了整个智能工作流的可控性、
+扩展性与实际落地性。
+1.5　性能评估
+为验证所提出工作流生成方法的有效性与
+科学性，本文设计了一套基于对比实验的性能评
+估方案。实验所用的参考数据集包含20 份公开
+发布的市级与县级地震应急预案，主要来源于地
+方政府官网与应急管理平台。这些预案代表了
+不同区域和行政层级在预案编制上的实际表达
+方式，具有一定的代表性与实用性。
+在构建评价基准时，从每份真实预案中提取
+出应急处置措施和应急保障措施两个关键部分，
+这些内容通常需要在生成过程中由知识库与
+LLM 协同填充，具有高度结构化与语义清晰的特
+点，因而被选作对比评价的核心内容。随后，在
+同一模板框架下构建两种生成方案并进行对比：
+（1）由LLM 直接根据模板结构进行内容生成；
+（2）由本文提出的多阶段工作流方法完成生成，
+包括需求解析、风险识别、措施生成、质量优化等
+环节。为保障评估的客观性与可复现性，引入一
+个独立的LLM 作为评分模型，对比每种生成结
+果与对应真实参考内容之间的一致程度，并分别
+从6 个维度进行打分。每个维度的评分范围为
+1~10 分，分值越高表示该维度在表达与内容层
+面更优，且更接近真实预案表达标准。
+2　地震灾害应急预案生成实验与
+分析
+2.1　模板库构建
+为适应不同层级政府在地震灾害应急管理
+中的需求，研究构建了省、市、县3 级地震应急预
+案模板库。图4 展示了县级地震应急预案的结构
+框架及对应的JSON 模板。其中，预案的章节结
+构由固定框架组成，并通过静态内容与动态内容
+的划分实现标准化管理。静态内容并非在省、
+市、县各级完全一致，而是针对不同层级分别设
+定的；动态内容进一步细分为需要人工交互的部
+分（如负责人信息）和需要LLM 填充的部分（如
+应急处置措施、资源调配方案等），例如，编制依
+据和组织指挥体系内容受行政层级影响，在模板
+中设置为需人工交互补充的字段，以保证预案的
+上下衔接，并且符合实际情况。
+图4　多层级标准化应急预案模板
+Fig. 4　Template for a Multi-level Standardized Emergency Plan
+1165
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+在模板构建过程中，通过不同预案层级的结
+构特点，发现县级预案侧重于应急处置，而省、市
+级预案在应急准备与支持部分增加了保障计划
+的内容，需要结合知识库进行智能生成。此外，
+在应急处置部分，特别是临震应急、强有感地震、
+地震谣传及外地地震波及事件，各层级均需要针
+对具体的地震情境制定相应的应急措施，这些内
+容在JSON 模板中均进行了动态标记。
+为进一步量化模板库的结构特点，对预案各
+部分的内容类型进行标注，区分静态内容、人工
+交互动态内容和LLM 填充动态内容。结果表
+明，地震应急处置和资源调配是最依赖LLM 动
+态填充的部分，而预案组织指挥体系及职责内容
+涉及较多的人工决策，需要人工交互确认。此
+外，省、市级预案的保障计划部分同样需要结合
+知识库自动生成，以匹配实际的区域防灾规划。
+2.2　知识库构建
+2.2.1　实验数据获取及预处理
+通过网页爬取与关键词匹配的方法，收集与
+地震应急相关的应急预案文档，共计获取2 934
+份预案。数据以省、市、县3 级政府发布的地震应
+急预案为主，同时为考虑地震引发次生灾害（如
+地质灾害、工业事故、学校建筑安全风险等）应急
+处置的需求，适度补充了医疗、教育、工业安全、
+地质灾害等相关领域的专项预案作为参考。
+为保证数据质量，去除重复及无效文档，最
+终筛选出2 580 份具备唯一性的应急预案，用于
+知识抽取任务。为提升知识抽取的准确性，对数
+据进行标准化预处理，包括格式转换、文本分割
+和无效文本过滤。首先，采用开源工具MinerU
+将所有文档统一转换为Markdown 格式，以提高
+结构化解析的可行性；然后，将文本块按照段落
+进行分块划分，以保证语义完整性，并去除少于
+50 个中文字符或仅包含英文字符和数字的无效
+块；最后，共计获得37 353 个文本块。
+2.2.2　知识抽取及表示
+为构建地震应急知识库，本文利用LLM 从
+预处理后的文本块中提取关键知识。具体而言，
+通过设计一个知识抽取的提示词，设定了标准化
+的三元组抽取规则，确保数据结构符合知识图谱
+的存储需求。抽取的核心信息包括地震风险、应
+对措施、所需资源及提供机构，并按照风险→措
+施→需要资源→资源所属机构这一完整链条进
+行存储。
+从预处理后的文本块中抽取了43 853 条措
+施节点（包括应对措施与保障措施）、28 421 条资
+源提供机构节点（涵盖政府机构、社会组织等）、
+26 498 条风险节点（涉及建筑倒塌、交通中断等地
+震相关风险），以及19 145 条资源节点（包括医疗
+设备、救援工具、应急物资等），基于这些实体，共
+构建了87 564 条“应对方式”关系、55 100 条“需要
+资源”关系和39 932 条“由机构提供”关系，最终
+形成的地震应急知识图谱被存入Neo4j 图数据
+库，图5 展示了部分该图谱。结果表明，应对措施
+和保障措施的数量最多，表明该类信息在地震应
+急预案中的核心地位，同时资源提供机构的抽取
+量较大，反映了地震救援涉及的多方协作关系。
+2.3　应急预案自动生成工作流的分阶段实现
+2.3.1　用户需求解析与结构化输入构建
+本阶段由LLM 与结构化提示词协同完成，
+旨在将用户输入的自然语言请求转化为机器可
+识别的结构化信息。系统通过语义理解，自动提
+取预案编制所需的核心要素，包括预案类型、适
+用层级与地理位置等关键信息。例如，针对用户
+输入“我需要为四川省都江堰市编制一个针对地
+震的应急预案，请你帮助我完成”，系统可识别出
+预案类型为“ 地震应急预案”，适用层级为“ 市
+级”，目标区域为“四川省都江堰市”。上述结果
+最终被封装为如下JSON 格式，用于作为后续任
+务执行的标准输入接口：
+｛“plan_type”： “地震应急预案”，
+“plan_level”： “市级”，
+“location”： “四川省都江堰市”｝
+这一结构化表达方式为后续的风险分析与
+知识匹配阶段提供了统一数据支撑，有效提升了
+流程间的协同效率与任务接口的一致性。实验
+验证表明，该阶段具备良好的语义解析能力与结
+构映射准确性，能够实现用户意图的精准捕捉与
+格式规范化表达。
+2.3.2　智能体驱动的震后风险分析
+OpenManus 是一种最新开发的智能体框架，
+该框架结合ReAct 机制（即推理+动作）、工具调
+用、规划设计，实现了具备动态决策能力的智能
+化流程，其核心理念是“观察—思考—行动—再
+观察”的循环方式，使智能体在处理复杂任务时
+能够进行迭代优化。在本文中，OpenManus 被用
+于执行地震灾害的风险识别与分类研判任务。
+图6 展示了其在该任务中的响应流程，包括分析
+计划制定、关键词生成、外部数据检索与结果归
+纳等关键步骤。
+1166
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+流程起始于LLM 根据用户输入制定风险分
+析计划，明确分析内容的范围、目标与逻辑顺序，
+确保搜索任务具备完整性与可操作性。随后，智
+能体根据预设的提示结构自动生成搜索关键词，
+覆盖5 类风险类别（直接灾害、次生灾害、公共安
+全、震后长期影响、救援风险）以及6 个分析维度
+（社会经济状况、地质环境、水文条件、人口分布、
+基础设施脆弱性与历史灾情特征）。
+在信息获取阶段，智能体调用WebSearch 与
+BrowserUseTool 工具，模拟人工浏览行为，通过
+搜索引擎访问政府官网、学术数据库、行业报告
+等权威来源，同时记录搜索日志与访问路径，以
+保障搜索过程的可溯性与数据可信度。随后，智
+能体根据内容进行语义解析与风险分类，识别目
+标区域在震后可能面临的关键风险类型，并初步
+评估其严重程度与影响等级。
+图5　地震应急知识图谱（部分）
+Fig. 5　Earthquake Emergency Knowledge Graph (Partial)
+图6　风险分析智能体动态决策流程
+Fig. 6　Dynamic Decision-Making Process of Risk Analysis Agent
+1167
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+最终，该智能体生成结构化的风险识别结
+果，并作为输入传递至响应措施生成环节，支撑
+后续的应急方案匹配与文本生成。实验结果表
+明，该智能体能够有效整合外部数据，提高地震
+灾害风险评估的全面性和准确性，为后续预案自
+动生成提供可靠的数据支撑。
+2.3.3　知识增强的响应措施生成
+本阶段以“知识检索+内容生成”的混合方
+式构建响应策略，目标是根据前期识别的地震灾
+害风险，生成一套具有结构完整性、资源适配性
+与操作可行性的应急响应方案。整体流程结合
+Neo4j 知识库的结构化查询能力与LLM 的语言
+生成能力，旨在缓解模型独立生成带来的幻觉问
+题，提升内容的专业性与准确性。图7 展示了该
+方法的整体执行路径。
+任务起始于接收风险分析阶段的结构化输
+出信息，系统根据灾害类型、预案适用级别等关
+键信息，利用事先构建的Cypher 查询语句，在知
+识图谱中检索与特定风险情境相匹配的应急处
+置措施、保障策略、所需资源及相关资源提供机
+构。通过该查询过程，可实现高精度的知识召
+回，确保后续生成基于可靠知识基础，而非依赖
+语言模型的自由生成。
+在获取初步匹配结果后，调用语言模型对措
+施进行理解、归类与扩展，并按照预案模板中动
+态内容填充的结构化要求进行重构。例如，部分
+措施可能缺少具体资源描述或执行机构信息，系
+统将自动补全缺项，并生成符合章节逻辑的完整
+响应内容。每项风险均生成独立的应对子方案，
+覆盖灾害发生前、发生时及灾后恢复等不同阶
+段。为提升内容连贯性与整体一致性，系统在完
+成各子方案后，还将所有应对策略进行合并与优
+化。该合成过程由语言模型负责执行，重点在于
+整合重复资源项、统一保障手段，并通过语义优
+化确保段落间表达风格一致，结构协调。
+值得注意的是，该任务流程在匹配知识时引
+入了“实施级别”这一过滤条件，即同一类风险将
+根据预案适用范围（如省级、市级、县级）选取不
+同粒度的策略与资源配置方案，从而增强了生成
+结果的实际适应性与执行可行性。
+实验结果表明，该方法在整合知识图谱与语
+言模型方面具有较强的协同效果，既能保证内容
+的专业性与规范性，又能满足多级政府在不同场
+景下的应急编制需求，提升了预案在实际应用中
+的可操作性与决策支持价值。
+2.3.4　大模型驱动的格式优化与质量评估
+在智能预案自动生成的最后阶段，该工作流
+将对初步生成的预案文本进行结构性重构与质
+量控制，以进一步提升内容的规范性、清晰度与
+可执行性。
+图7　知识增强的响应措施生成流程
+Fig. 7　Knowledge-Enhanced Response Measures Generation
+1168
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+如图8 所示，该阶段任务可分为两个子流程：
+1）基于结构约束的格式优化；
+2）面向评估指标的内容质量打分与建议
+反馈。
+在格式优化过程中，通过结构化提示词引导
+LLM 对文本进行统一调整，包括段落划分、编号
+规范、术语标准化、条理结构重组等，确保生成内
+容在文档层面具备良好的整体布局与信息表达
+一致性。特别针对应急预案常见的“段落断裂”
+“编号混乱”与“术语使用不一致”等问题，该过程
+可实现自动识别与修复，从而提升文书合规性。
+质量评估部分则引入一组内容审查标准，包
+括准确性、清晰性、全面性、可行性、一致性与合
+理性6 个维度。具体而言，利用LLM 的评分与推
+理能力，对每个章节进行打分，并生成诊断性反
+馈。例如，在识别到某章节存在职责描述缺失
+时，系统会输出类似“应当补充具体执行标准和
+责任主体”的优化建议；若发现文本组织混乱，则
+提示“建议优化段落逻辑关系，确保前后衔接”。
+该阶段任务通过“优化—评估—反馈”的闭
+环机制，使生成预案不仅在语义内容上贴合实际
+场景，还在结构与风格上符合应急管理部门的标
+准化文书要求。整体结果表明，该策略显著增强
+了预案文本的规范性、可理解性与可落地性，为
+最终的发布审议与实战应用奠定坚实基础。
+2.4　性能评价
+2.4.1　评估结果
+表2 展示了各层级、各类型预案的具体得分
+情况与综合评估结果。从评估结果可以看出，在
+大多数评价维度上，工作流生成方法整体优于直
+接LLM 生成方法，尤其在全面性、可行性和合理
+性3 个关键指标上优势更加明显。具体而言，在
+市级预案中，工作流生成在清晰性（8.65 vs 
+8.55）、全面性（8.80 vs 7.40）和合理性（8.85 vs 
+8.40）上相较直接LLM 生成有明显提升；在县级
+预案中，工作流生成在全面性（9.00 vs 7.85）、可
+行性（8.45 vs 7.45）和合理性（8.75 vs 8.40）等方
+面同样表现出一定的优势。
+图8　大模型驱动的预案内容格式优化与质量评估流程
+Fig. 8　Format Optimization and Quality Assessment Workflow Powered by LLM
+1169
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+雷达图（图9）进一步直观展示了两种生成方
+法在6 个评估维度上的综合表现。可以清晰看
+出，工作流生成方法在6 个维度上均表现出更优
+的得分趋势，尤其在全面性、可行性与合理性3 个
+指标上的提升更为明显。在应急处置与救援中，
+工作流生成相比直接LLM 生成在全面性（8.90 
+vs 7.60）和可行性（8.15 vs 7.15）两个指标上有明
+显优势，表明其生成的应急处置措施覆盖更完
+整、实施性更强。在保障措施中，工作流生成同
+样在全面性、可行性、合理性指标上明显领先，反
+映出其在资源保障措施设计方面更符合应急管
+理的实际需要。在整体综合得分中，工作流生成
+在所有维度上均保持领先，显示出良好的规范
+性、连贯性和操作可行性。
+尽管工作流生成方法在整体上优于直接
+LLM 生成，但在不同预案层级下仍呈现出一定的
+评分差异。从表2 中可以看出，在准确性与清晰
+性维度上，市级与县级预案表现基本一致，均保
+持较高得分（准确性分别为8.10 和8.00，清晰性
+均为8.65），说明工作流方法在文本表达与术语规
+范方面具有较强的一致适应能力。在全面性方
+面，市级预案得分（9.00）略高于县级（8.80），这与
+市级预案在内容覆盖范围、职责体系与响应环节
+上的制度性描述更为丰富有关，生成系统在对中
+高层级结构化知识的表达上更具优势。而在可
+行性与合理性两个指标上，县级预案得分略高于
+市级（分别为8.70 vs 8.45、8.85 vs 8.75），表明工
+作流方法在处理县级场景时更能贴近基层操作
+实际。这主要归因于两个方面：（1）县级参考文
+本通常具备更强的“ 执行导向”，内容细节更明
+确，便于LLM 进行结构类比与补全；（2）图谱中
+与县级任务匹配的措施粒度更细，生成内容在资
+源调配、行动执行方面更具操作性。在一致性方
+面，市级略高于县级（8.70 vs 8.55），这是因为市
+表2　直接LLM 生成与工作流生成在不同预案层级和措施类型下的综合评价结果
+Table 2　Comparative Evaluation Results of Direct LLM Generation and Workflow Generation Across Different Plan 
+Levels and Measure Types
+预案
+层级
+市级
+县级
+全局
+措施
+类型
+应急处置措施
+应急保障措施
+综合得分
+应急处置措施
+应急保障措施
+综合得分
+应急处置措施
+应急保障措施
+综合得分
+准确性
+LLM
+8.40
+8.00
+8.20
+8.40
+8.70
+8.55
+8.40
+8.35
+8.38
+工作
+流
+8.00
+8.00
+8.00
+7.80
+8.40
+8.10
+7.90
+8.20
+8.05
+清晰性
+LLM
+8.30
+8.80
+8.55
+8.00
+8.90
+8.45
+8.15
+8.85
+8.50
+工作
+流
+8.70
+8.60
+8.65
+8.20
+9.10
+8.65
+8.45
+8.85
+8.65
+全面性
+LLM
+7.40
+7.40
+7.40
+7.80
+7.90
+7.85
+7.60
+7.65
+7.63
+工作
+流
+8.80
+8.80
+8.80
+9.00
+9.00
+9.00
+8.90
+8.90
+8.90
+可行性
+LLM
+7.30
+7.80
+7.55
+7.00
+7.90
+7.45
+7.15
+7.85
+7.50
+工作
+流
+8.40
+9.00
+8.70
+7.90
+9.00
+8.45
+8.15
+9.00
+8.58
+一致性
+LLM
+8.40
+8.20
+8.30
+8.60
+8.40
+8.50
+8.50
+8.30
+8.40
+工作
+流
+8.60
+8.50
+8.55
+8.50
+8.90
+8.70
+8.55
+8.70
+8.63
+合理性
+LLM
+8.60
+8.20
+8.40
+8.30
+8.50
+8.40
+8.45
+8.35
+8.40
+工作
+流
+8.80
+8.90
+8.85
+8.50
+9.00
+8.75
+8.65
+8.95
+8.80
+图9　不同生成方法的预案综合性能雷达图
+Fig. 9　Radar Charts of Comprehensive Plan Performance
+1170
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+级预案内容层级更分明，模板结构较为稳定，有
+利于模型保持段落间的逻辑连贯性。
+总体而言，不同层级预案的得分差异体现了
+源文档结构特性与生成任务复杂度之间的交互
+关系，也间接验证了所提出的工作流方法具备较
+强的层级适应能力与文本结构重构能力。
+2.4.2　案例比较
+以大同市为案例，比较了直接LLM 生成与
+工作流生成的预案在多个维度上的表现，如图10
+所示，参考文本来源于大同市政府官网（https：//
+www. dt. gov. cn/dtszf/yjyan/202301/c94d5a8ccb⁃
+be4b6bbc71681dd8e5890e.shtml）。
+首先，从图10 中可以看出，工作流生成的预
+案在各个评估维度上普遍优于直接LLM 生成的
+预案，尤其是在可行性、一致性和全面性方面。
+具体而言，工作流生成的预案在资源需求的列举
+上更加明确，能够详细列出所需的物资、人员和
+设备等资源类型，确保了预案的实施性和可操作
+性。而直接LLM 生成的预案则缺乏对资源细节
+的精确列举，表现出一定的信息模糊性。
+然后，结构化优化是工作流生成的另一大优
+势。工作流生成的预案在段落划分、内容逻辑性
+和条理性上都表现得更加规范，符合应急预案的
+标准结构要求。与此相比，直接LLM 生成的预
+案在结构上较为松散，缺乏清晰的逻辑性和层次
+感，这在实际应急响应阶段可能会影响决策者的
+快速理解与执行。
+此外，工作流生成的预案在一致性方面表现
+较好，得分较高，表明其生成内容在各个部分之
+间具有较强的内在连贯性，能够确保整个应急预
+案的完整性和协调性。相比之下，直接LLM 生
+成的预案在逻辑连贯性和前后内容的一致性方
+面略显不足，可能导致决策中出现不一致的
+判断。
+最后，图10 中的数据显示，尽管直接生成方
+法在某些情况下也能产生合理的结果，但整体而
+言，工作流生成方法在生成结果的可行性和合理
+性方面表现更为出色。工作流生成的预案不仅
+更加符合应急管理的实际要求，而且在面对实际
+灾害响应时，能够提供更为精细化和具体化的应
+图10　大同市应急预案生成案例比较
+Fig. 10　Comparison of Emergency Response Plan Generation Case for Datong City
+1171
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+对措施。
+3　交互式应急预案工具开发
+本文根据上述流程开发了一款交互式地震
+应急预案生成工具，支持一键式生成与交互式逐
+步生成两种模式，适用于不同使用场景（图11）。
+一键式生成模式适用于紧急情况下的快速预案
+生成，用户仅需输入基本需求，系统即可自动完
+成风险分析、知识库匹配、措施生成、格式优化及
+质量评估，并直接输出完整的应急预案。交互式
+逐步生成模式适用于精细化定制预案，用户可逐
+步调整每个环节的内容，包括修改风险分析结
+果、手动选择应对措施、调整资源配置等，以确保
+预案的精准性和适用性。该工具包含以下关键
+功能模块：
+1）需求分析：解析用户输入的预案需求，确
+定适用范围和层级。
+2）风险分析：利用OpenManus 进行风险检索
+和评估，获取地震灾害可能诱发的风险信息。
+3）知识库查询：从Neo4j 获取匹配的应对措
+施、保障措施、所需资源及执行机构，并对查询结
+果进行可视化。
+4）模板匹配：可通过预案级别匹配相应模
+板，同时支持对模板的交互修改。
+5）预案生成：调用LLM 自动填充预案模板，
+并支持用户对生成内容交互调整。
+6）格式优化：确保生成预案符合标准化要
+求，包括内容结构、语言规范等。
+7）质量评估：对预案进行评分，并提供相应
+的优化建议。
+该工具的设计充分考虑了地震应急预案编
+制的复杂性，结合知识库和LLM 生成能力，兼
+顾了自动化效率与人工干预的灵活性。未来，
+该工具可进一步优化知识库的更新机制，增强
+预案模板的适配性，并拓展至其他自然灾害的
+应急预案编制领域，以提升智能化应急管理的
+应用价值。
+图11　交互式预案生成工具示意及应用案例
+Fig. 11　Interactive Earthquake Emergency Plan Generation Tool Program and Case Display
+1172
+
+
+第 50 卷第 6 期
+姚立伟等：地震灾害应急预案的生成式编制方法
+4　结　语
+本文围绕地震场景下的灾害应急预案智能
+化编制需求，设计并实现了一套基于智能体、知
+识增强以及LLM 技术的预案智能生成工作流。
+该工作流模拟人类专家在预案编制过程中的标
+准路径，采用任务解耦与结构控制方式，构建了
+涵盖需求解析、风险识别、响应策略生成、内容优
+化与质量审查的串行执行机制，实现了从自然语
+言输入到结构化预案输出的全流程自动化生成。
+研究同步开发了交互式预案生成工具，支持一键
+生成与逐步生成两种使用方式，具备良好的操作
+性与推广潜力。结果表明，该方法能够基于预案
+模板自动识别地震灾害情境下的主要风险类型，
+匹配对应的应急处置与保障措施，并按照预案结
+构要求组织生成条理清晰、内容规范的文本段
+落，为地震灾害应急编制提供了可行的技术路径。
+尽管在智能化预案生成方面取得了一定进
+展，但仍存在以下局限性：
+（1）当前灾害风险分析
+主要依赖对互联网资料的检索与归纳构建风险
+库，该方法虽在预案制定阶段具有参考价值，但
+存在数据更新滞后、对新兴风险识别能力不足等
+问题，尤其在特定地区的细粒度风险覆盖上仍显
+不足，影响实际应急响应阶段的时效性与动态
+性；
+（2）语言模型的控制精度仍有待提升，尽管通
+过知识增强缓解了幻觉问题，但在生成复杂文本
+结构或应急策略链条时，仍可能偏离应急管理标
+准或实际应用需求；（3）知识资源的覆盖范围仍
+不够全面，目前主要依托历史应急预案，尚未充
+分整合灾害管理实践经验、国际案例以及最新技
+术手段，限制了系统应对多变情境的能力。
+未来研究可从3 个方向进一步拓展：
+（1）构建
+具备动态更新机制的知识体系，提升系统对突发
+事件中高频演化模式与新型风险的适应能力；
+（2）引入多模态数据（如遥感、社交媒体、传感器
+流等），增强模型对灾害情境的认知能力与推理
+能力；（3）将该流程推广至更广泛的自然灾害应
+急管理场景，如台风、洪涝、山体滑坡等，提升多
+灾种条件下的智能应急决策支持能力。
+参
+考
+文
+献
+［1］ 
+刘纪平， 王琢璐， 徐胜华，等.  人工智能时代下的应
+急测绘［J］.  武汉大学学报（信息科学版）， 2025， 
+DOI： 10. 13203/j. whugis20240300.
+LIU Jiping， WANG Zhuolu， XU Shenghua， et al.  
+Emergency Surveying and Mapping in the Era of Ar⁃
+tificial Intelligence［J］.  Geomatics and Information 
+Science of Wuhan University， 2025， DOI： 10.
+13203/j. whugis20240300.
+［2］ 
+刘纪平， 刘猛猛， 徐胜华， 等.  大数据时代下的一
+体化综合减灾技术综述［J］.  武汉大学学报（信息科
+学版）， 2020， 45（8）： 1107-1116.
+LIU Jiping， LIU Mengmeng， XU Shenghua， et al.  
+A Survey on Integrated and Comprehensive Disaster 
+Reduction Technology in the Era of Big Data［J］.  
+Geomatics and Information Science of Wuhan Uni⁃
+versity， 2020， 45（8）： 1107-1116.
+［3］ 
+范维澄，刘帅. 发展新质生产力推动中国应急管理
+体系和能力现代化［J］. 中国减灾，2025（1）：18-19.
+FAN Weicheng，LIU Shuai. Developing New Pro⁃
+ductive Forces to Promote the Modernization of Chi⁃
+na's Emergency Management System and Capabilities
+［J］. Disaster Reduction in China，2025（1）： 18-19.
+［4］ 
+范维澄.  落实总体国家安全观 推动应急管理体系
+和能力现代化［J］.  中国减灾， 2024（1）： 10-11.
+FAN Weicheng.  Implementing the Overall National 
+Security Concept and Promoting the Modernization 
+of Emergency Management System and Capacity
+［J］.  Disaster Reduction in China， 2024（1）： 10-11.
+［5］ 
+AI B，ZHANG D，JIA M X，et al. A Decision-Sup⁃
+port Model for the Generation of Marine Green Tide 
+Disaster Emergency Disposal Plans［J］. Journal of Ma⁃
+rine Science and Engineering， 2022， 10（12）： 1890.
+［6］ 
+NI W J，LIU T，CHEN S Y. Rapid Generation of 
+Emergency Response Plans for Unconventional Emer⁃
+gencies［J］. IEEE Access，2020，8：181036-181048.
+［7］ 
+YU L A， LAI K K.  A Distance-Based Group Deci⁃
+sion-Making Methodology for Multi-Person Multi-
+Criteria Emergency Decision Support［J］.  Decision 
+Support Systems， 2011， 51（2）： 307-315.
+［8］ 
+LI P， WEI C P.  An Emergency Decision-Making 
+Method Based on D-S Evidence Theory for Probabi⁃
+listic Linguistic Term Sets［J］.  International Journal 
+of Disaster Risk Reduction， 2019， 37： 101178.
+［9］ 
+ZHAO M， LIU X.  Development of Decision Sup⁃
+port Tool for Optimizing Urban Emergency Rescue 
+Facility Locations to Improve Humanitarian Logis⁃
+tics Management［J］.  Safety Science， 2018， 102： 
+110-117.
+［10］ Losada J， Sánchez S R， García M C， et al.  Rapid 
+Response to Large-Scale Emergencies： A Neural 
+Network Model and a Decision-Tree Algorithm［J］.  
+EMERGENCIAS， 2012， 24（3）： 175-180.
+［11］ WANG   L， ZHANG   Z X， WANG Y M.  A Pros⁃
+pect Theory-Based Interval Dynamic Reference 
+Point Method for Emergency Decision Making［J］.  
+1173
+
+
+武 汉 大 学 学 报  （信 息 科 学 版）
+2025 年6 月
+Expert Systems with Applications， 2015， 42（23）： 
+9379-9388.
+［12］ SHI W Q，WANG H Z，CHEN C，et al. Evolutionary 
+Game Analysis of Decision-Making Dynamics of Lo⁃
+cal Governments and Residents During Wildfires
+［J］.  International Journal of Disaster Risk Reduc⁃
+tion， 2021， 53： 101991.
+［13］ LIU Y， FAN Z P， YUAN Y， et al.  A FTA-Based 
+Method for Risk Decision-Making in Emergency Re⁃
+sponse ［J］.
+Computers & Operations Research， 
+2014， 42： 49-57.
+［14］ RU D Y，WEN H Y，ZHANG Y T. A Pre-Genera⁃
+tion of Emergency Reference Plan Model of Public 
+Health Emergencies with Case-Based Reasoning
+［J］.
+Risk Management and Healthcare Policy， 
+2022， 15： 2371-2388.
+［15］ ZHANG H， DAI G L.  Research on Traffic Deci⁃
+sion Making Method Based on Image Analysis Case 
+Based Reasoning［J］.  Optik， 2018， 158： 908-914.
+［16］ WANG D L， WAN K D， MA W X.  Emergency 
+Decision-Making Model of Environmental Emergen⁃
+cies Based on Case-Based Reasoning Method［J］.  
+Journal of Environmental Management， 2020， 262： 
+110382.
+［17］ YAO X， GUO H X， ZHU J， et al.  Dynamic Selec⁃
+tion of Emergency Plans of Geological Disaster 
+Based on Case-Based Reasoning and Prospect Theo⁃
+ry［J］. Natural Hazards， 2022，110（3）： 2249-2275.
+［18］ LI R， WANG J Q， WANG S L， et al.  Prediction 
+of Network Public Opinion Features in Urban Plan⁃
+ning Based on Geographical Case-Based Reasoning
+［J］.  International Journal of Digital Earth， 2022， 
+15（1）： 890-910.
+［19］ CHEN W L， WANG X L， WANG W， et al.  A 
+Heterogeneous GRA-CBR-Based Multi-attribute 
+Emergency Decision-Making Model Considering 
+Weight Optimization with Dual Information Correla⁃
+tion［J］.  Expert Systems with Applications， 2021， 
+182： 115208.
+［20］ CHEN M Z，TAO Z X，TANG W T，et al. Enhancing 
+Emergency Decision-Making with Knowledge Graphs 
+and Large Language Models［J］. International Jour⁃
+nal of Disaster Risk Reduction， 2024， 113： 104804.
+［21］ 王勇，韩遥遥，刘纪平，等. 应急救援地理空间情报：
+概念特征、生成技术及应用实践［J］.  武汉大学学报
+（信息科学版）， 2025， DOI： 10. 13203/j. whu⁃
+gis20240485.
+WANG Yong， HAN Yaoyao， LIU Jiping， et al.  
+Emergency Rescue Geospatial Intelligence： Concep⁃
+tual Characteristics， Generation Technologies， and 
+Application Practices［J］.  Geomatics and Informa⁃
+tion Science of Wuhan University，2025， DOI： 10.
+13203/j. whugis20240485.
+［22］ 车万翔， 窦志成， 冯岩松， 等.  大模型时代的自然
+语言处理： 挑战、机遇与发展［J］.  中国科学： 信息
+科学， 2023， 53（9）： 1645-1687.  
+CHE Wanxiang， DOU Zhicheng， FENG Yansong， 
+et al.  Towards a Comprehensive Understanding of 
+the Impact of Large Language Models on Natural 
+Language Processing： Challenges， Opportunities 
+and Future Directions［J］.  Scientia Sinica （Informa⁃
+tionis）， 2023， 53（9）： 1645-1687.
+［23］ 李源，马新宇，杨国利，等. 面向知识图谱和大语言
+模型的因果关系推断综述［J］. 计算机科学与探索， 
+2023， 17（10）： 2358-2376.
+LI Yuan，MA Xinyu，YANG Guoli，et al. Survey of 
+Causal Inference for Knowledge Graphs and Large 
+Language Models［J］. Journal of Frontiers of Com⁃
+puter Science and Technology，2023，17（10）： 2358-
+2376.
+［24］ ZHU Y Q， WANG X H， CHEN J， et al.  LLMS 
+for Knowledge Graph Construction and Reasoning： 
+Recent Capabilities and Future Opportunities［J］.  
+World Wide Web， 2024， 27（5）： 58.
+［25］ 吴昊，董福安，王雪飞，等. 基于大模型的应急指挥
+辅助决策系统设计［J］. 指挥与控制学报，2024，10
+（6）： 752-759.  
+WU Hao， DONG Fuan， WANG Xuefei， et al.  De⁃
+sign of Emergency Command Aided Decision-Mak⁃
+ing System Based on LLM［J］.  Journal of Com⁃
+mand and Control， 2024， 10（6）： 752-759 （）
+［26］ XI Z H， CHEN W X， GUO X， et al.  The Rise and 
+Potential of Large Language Model Based Agents： 
+A Survey［J］.  Science China Information Sciences， 
+2025， 68（2）： 121101.
+［27］ 邓云峰.  推动应急预案有效衔接［J］.  中国应急管
+理， 2024（3）： 33-35.  
+DENG Yunfeng.  Promote the Effective Conver⁃
+gence of Emergency Plans［J］.  China Emergency 
+Management， 2024（3）： 33-35.
+［28］ 吴宗之， 刘茂.  重大事故应急预案分级、分类体系
+及其基本内容［J］. 中国安全科学学报，2003，13
+（1）： 18-21.
+WU Zongzhi， LIU Mao.  Gradation and Categoriza⁃
+tion System of Emergency Plan for Major Accidents 
+and Their Main Contents［J］.  China Safety Science 
+Journal， 2003， 13（1）： 18-21.
+［29］ ZHONG L F，WU J，LI Q， et al. A Comprehensive 
+Survey on Automatic Knowledge Graph Construction
+［J］. ACM Computing Surveys， 2024， 56（4）： 1-62.
+1174
