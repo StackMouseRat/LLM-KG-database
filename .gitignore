@@ -7,3 +7,10 @@ Thumbs.db
 .claude/
 
 /有关文档/
+
+# Frontend generated artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.tmp/
+frontend/node_modules/.tmp/
