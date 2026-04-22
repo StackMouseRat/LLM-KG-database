@@ -10,6 +10,9 @@ SOURCE_DIR = Path("txt_rag_cases")
 OUTPUT_DIR = Path("txt_rag_cases_case_corpus")
 INDEX_FILE = OUTPUT_DIR / "index.tsv"
 README_FILE = OUTPUT_DIR / "README.md"
+KB_OUTPUT_DIR = Path("txt_rag_cases_kb_imports")
+KB_INDEX_FILE = KB_OUTPUT_DIR / "knowledge_bases.tsv"
+KB_README_FILE = KB_OUTPUT_DIR / "README.md"
 
 
 @dataclass(frozen=True)
@@ -108,6 +111,39 @@ RULES: dict[str, SourceRule] = {
     ),
 }
 
+SPACE_DEFINITIONS = {
+    "llmkg_transformer": {
+        "title": "变压器",
+    },
+    "llmkg_breaker": {
+        "title": "高压断路器",
+    },
+    "llmkg_mutual": {
+        "title": "互感器",
+    },
+    "llmkg_cable": {
+        "title": "电力电缆",
+    },
+    "llmkg_optical_cable": {
+        "title": "光缆",
+    },
+    "llmkg_ring_main_unit": {
+        "title": "环网柜",
+    },
+    "llmkg_surge_arrester": {
+        "title": "避雷器",
+    },
+    "llmkg_tower": {
+        "title": "杆塔",
+    },
+    "llmkg_transmission_line": {
+        "title": "输电线路",
+    },
+    "unmapped_not_in_device_table": {
+        "title": "未映射到现有设备表",
+    },
+}
+
 
 def compile_patterns(patterns: tuple[str, ...]) -> list[re.Pattern[str]]:
     return [re.compile(pattern) for pattern in patterns]
@@ -190,6 +226,75 @@ def clean_title(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
+def slugify_title(text: str, limit: int = 80) -> str:
+    text = clean_title(text)
+    text = text.replace("/", "_").replace("\\", "_").replace(":", "_")
+    text = text.replace("*", "_").replace("?", "_").replace('"', "_")
+    text = text.replace("<", "_").replace(">", "_").replace("|", "_")
+    text = text.replace("（", "(").replace("）", ")")
+    text = re.sub(r"\s+", "_", text)
+    text = re.sub(r"_+", "_", text).strip("._")
+    return text[:limit].rstrip("._") or "untitled_case"
+
+
+def classify_space(row: dict[str, str]) -> str:
+    source_file = row["source_file"]
+    source_section = row["source_section"]
+    case_title = row["case_title"]
+
+    if source_file in {
+        "220kV及以下变电站设备异常和故障典型案例分析_第一章_变压器.md",
+        "变电设备故障典型案例分析与预防措施_第二章_变压器运行异常及事故处理.md",
+        "电网设备故障典型案例_第1章_变压器（高压电抗器）故障典型案例.md",
+    }:
+        return "llmkg_transformer"
+
+    if source_file in {
+        "220kV及以下变电站设备异常和故障典型案例分析_第四章_断路器.md",
+        "电网设备故障典型案例_第2章_断路器（不含开关柜）故障典型案例.md",
+    }:
+        return "llmkg_breaker"
+
+    if source_file in {
+        "220kV及以下变电站设备异常和故障典型案例分析_第二章_电流互感器.md",
+        "220kV及以下变电站设备异常和故障典型案例分析_第三章_电压互感器.md",
+        "电网设备故障典型案例_第4章_互感器故障典型案例.md",
+    }:
+        return "llmkg_mutual"
+
+    if source_file == "配电网典型故障案例分析_第二章_配电电缆线路设备故障分析典型案例.md":
+        return "llmkg_cable"
+
+    if source_file == "光缆与光设备维护_5_3_典型案例分析_完整提取.md":
+        return "llmkg_optical_cable"
+
+    if source_file == "输电线路典型故障案例分析及预防_第一章_杆塔及基础.md":
+        return "llmkg_tower"
+
+    if source_file in {
+        "输变电设备典型故障_第一章.md",
+        "输电线路典型故障案例分析及预防_第二章_导线及地线.md",
+    }:
+        if "避雷器" in case_title:
+            return "llmkg_surge_arrester"
+        return "llmkg_transmission_line"
+
+    if source_file == "配电网典型故障案例分析_第一章_配电网架空线路设备故障分析典型案例.md":
+        if source_section == "第二节 配电变压器故障案例":
+            return "llmkg_transformer"
+        if source_section == "第四节 柱上电压互感器故障案例":
+            return "llmkg_mutual"
+        if source_section == "第五节 导线故障案例":
+            return "llmkg_transmission_line"
+        if source_section == "第六节 避雷器典型案例":
+            return "llmkg_surge_arrester"
+        if source_section == "第十节 户外环网柜典型故障案例":
+            return "llmkg_ring_main_unit"
+        return "unmapped_not_in_device_table"
+
+    return "unmapped_not_in_device_table"
+
+
 def nearest_section_heading(
     headings: list[tuple[int, int, str]],
     case_start: int,
@@ -263,12 +368,85 @@ def write_readme(
     README_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_kb_readme(
+    kb_counts: dict[str, int],
+    kb_source_counts: dict[str, dict[str, int]],
+) -> None:
+    lines = [
+        "# 按数据库设备空间分组的导入目录",
+        "",
+        "这个目录用于直接按数据库已有设备表/设备空间导入知识库。每个子目录对应一个设备空间。",
+        "",
+        "## 设备空间目录",
+        "",
+    ]
+    kb_rows = ["kb_dir\tkb_title\tcase_count\tsource_files"]
+    for kb_dir, meta in SPACE_DEFINITIONS.items():
+        title = meta["title"]
+        count = kb_counts.get(kb_dir, 0)
+        source_counts = kb_source_counts.get(kb_dir, {})
+        source_desc = ", ".join(
+            f"{name}({source_counts.get(name, 0)})"
+            for name in sorted(source_counts)
+        )
+        lines.append(f"- `{kb_dir}`: {title}，{count} 个案例")
+        if source_desc:
+            lines.append(f"  来源：{source_desc}")
+        kb_rows.append("\t".join([kb_dir, title, str(count), source_desc]))
+    KB_README_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    KB_INDEX_FILE.write_text("\n".join(kb_rows) + "\n", encoding="utf-8")
+
+
+def write_grouped_imports(rows: list[dict[str, str]]) -> None:
+    if KB_OUTPUT_DIR.exists():
+        shutil.rmtree(KB_OUTPUT_DIR)
+    KB_OUTPUT_DIR.mkdir(parents=True)
+
+    for kb_dir in SPACE_DEFINITIONS:
+        kb_path = KB_OUTPUT_DIR / kb_dir
+        kb_path.mkdir(parents=True, exist_ok=True)
+
+    kb_counts = {kb_dir: 0 for kb_dir in SPACE_DEFINITIONS}
+    kb_source_counts = {kb_dir: {} for kb_dir in SPACE_DEFINITIONS}
+    manifest_rows = {
+        kb_dir: ["case_id\timport_file\tsource_file\tsource_section\tcase_title"]
+        for kb_dir in SPACE_DEFINITIONS
+    }
+
+    for row in rows:
+        kb_dir = classify_space(row)
+        source_path = OUTPUT_DIR / row["output_file"]
+        import_name = f"{row['case_id']}__{slugify_title(row['case_title'])}.md"
+        target_path = KB_OUTPUT_DIR / kb_dir / import_name
+        shutil.copy2(source_path, target_path)
+        kb_counts[kb_dir] += 1
+        source_file = row["source_file"]
+        kb_source_counts[kb_dir][source_file] = kb_source_counts[kb_dir].get(source_file, 0) + 1
+        manifest_rows[kb_dir].append(
+            "\t".join(
+                [
+                    row["case_id"],
+                    import_name,
+                    source_file,
+                    row["source_section"],
+                    row["case_title"],
+                ]
+            )
+        )
+
+    for kb_dir, lines in manifest_rows.items():
+        (KB_OUTPUT_DIR / kb_dir / "manifest.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    write_kb_readme(kb_counts, kb_source_counts)
+
+
 def main() -> None:
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
     OUTPUT_DIR.mkdir(parents=True)
 
     rows = ["case_id\toutput_file\tsource_file\tsource_section\tcase_title"]
+    row_dicts: list[dict[str, str]] = []
     included_sources: dict[str, int] = {}
     excluded_sources: dict[str, str] = {}
 
@@ -327,6 +505,15 @@ def main() -> None:
                     ]
                 )
             )
+            row_dicts.append(
+                {
+                    "case_id": case_id,
+                    "output_file": output_name,
+                    "source_file": path.name,
+                    "source_section": section_title,
+                    "case_title": case_title,
+                }
+            )
 
         if case_count:
             included_sources[path.name] = case_count
@@ -339,6 +526,7 @@ def main() -> None:
         included_sources=included_sources,
         excluded_sources=excluded_sources,
     )
+    write_grouped_imports(row_dicts)
     print(f"generated {case_counter} case files in {OUTPUT_DIR}")
 
 
