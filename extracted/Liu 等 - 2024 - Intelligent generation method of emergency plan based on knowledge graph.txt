@@ -1,0 +1,1386 @@
+Intelligent generation method of emergency plan 
+based on knowledge graph 
+Ting Liu* 
+PowerChina Northwest Engineering Corporation Limited 
+Xi’an, China 
+*Corresponding author: liuting@nwh.cn 
+ 
+Mingjiang Wang  
+PowerChina Northwest Engineering Corporation Limited 
+Xi’an, China  
+ 
+Qun Zhang 
+PowerChina Northwest Engineering Corporation Limited 
+Xi’an, China  
+ 
+ 
+Bin Li  
+PowerChina Northwest Engineering Corporation Limited 
+Xi’an, China 
+Abstract—The traditional emergency response based on static 
+text is usually limited by the experience and ability of the 
+responders, which is low in emergency efficiency and easy to 
+cause omissions. In this study, a knowledge graph framework 
+based on artificial intelligence technology is constructed by 
+integrating multi-source data such as emergency regulation and 
+monitoring. On the basis of this framework, an entity extraction 
+method based on BERT-BILSTM-CRF hybrid model and a 
+relation extraction method based on piecewise convolutional 
+neural network (PCNN) and word segmentation technology are 
+proposed. Then combined with Neo4j graph database, the 
+semantic emergency plan knowledge base is constructed to 
+realize the intelligent storage and visualization of emergency plan. 
+Finally, the intelligent generating page of emergency plan is 
+developed by using computer technology, and the feasibility of 
+the research results is verified, which provides a new technical 
+means for improving the efficiency of emergency response. 
+Keywords-knowledge graph; artificial intelligence; entity 
+recognition; relationship extraction; deep learning; 
+I. INTRODUCTION 
+Knowledge graph is a knowledge representation method 
+proposed by Google in 2012, which can represent structured 
+relationships between entities and is currently an important 
+research direction in the field of artificial intelligence [1-3]. 
+Knowledge graphs are developed on the basis of traditional 
+knowledge bases, usually composed of "entity relationship 
+entity" or "entity relationship attribute" triplets[4, 5]. Compared 
+to traditional knowledge bases, knowledge graphs contain 
+fewer semantics and rich instances, are flexible in form, and 
+have higher scalability. In recent years, knowledge graph 
+technology has attracted many applications in academia and 
+industry, and various artificial intelligence related applications 
+use it as prior knowledge to search for optimal solutions or 
+encode real-world knowledge. 
+At present, the emergency response work mainly relies on 
+safety management personnel to manually search for 
+emergency plan text files. Although keyword search methods 
+can roughly search for the content of the plan text, the search 
+results are usually large in content and scope, making it 
+difficult to quickly find emergency response plans, resulting in 
+untimely formulation of emergency response plans and 
+reducing the efficiency of operation and maintenance 
+management. To cope with the complex emergency response 
+work, break through the traditional operational bottleneck of 
+relying on manual experience for emergency response, and 
+improve the intelligence level of operation and maintenance 
+management, it is necessary to use knowledge graph 
+technology to transform the scattered texts of emergency plans 
+into interrelated knowledge. Through the construction of 
+standardized, structured and semantic engineering emergency 
+plan knowledge base, the efficient storage, visual display and 
+quick retrieval of the emergency plan knowledge are realized, 
+and the intelligent level of on-site emergency management and 
+emergency disposal efficiency are improved. Therefore, 
+studying the application methods of knowledge graphs in the 
+field of emergency response has important theoretical 
+significance and practical value for improving the efficiency 
+of engineering operation and maintenance safety management. 
+Based on this, this study considers constructing a large-scale 
+semantic knowledge graph, transforming scattered text into 
+interrelated knowledge, providing timely and effective 
+auxiliary 
+information 
+for 
+emergency 
+decision-making, 
+achieving intelligent generation of emergency plans, and 
+improving the efficiency of safety management. 
+II. KNOWLEDGE GRAPH FRAMEWORK  
+The framework for constructing the knowledge graph of 
+emergency plans is shown in Fig.1. Firstly, analyze all 
+emergency plan text content and use a top-down approach to 
+construct the pattern layer of the knowledge graph. Then, 
+based on the pattern layer, unstructured text data such as 
+inspection data, accident descriptions, and emergency plans 
+are selected as objects. With the help of natural language 
+processing techniques, including knowledge extraction, 
+knowledge storage and visualization, and knowledge updates, 
+a knowledge graph data layer is constructed. 
+2024 4th International Conference on Neural Networks, Information and Communication Engineering (NNICE)
+979-8-3503-9437-5/24/$31.00 ©2024 IEEE
+1692
+2024 4th International Conference on Neural Networks, Information and Communication (NNICE) | 979-8-3503-9437-5/24/$31.00 ©2024 IEEE | DOI: 10.1109/NNICE61279.2024.10498620
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+bottom-
+up
+top-
+down
+danger event name
+define entity class
+define the entity 
+relationship type
+define text type
+inspection 
+text
+accident 
+text
+emergency plan 
+Text
+data acquisition and preprocessing
+knowledge extraction
+Knowledge storage and visualization
+knowledge application
+knowledge 
+retrieval
+intelligent 
+recommendation
+knowledge 
+update
+map
+Neo4j
+entity 
+extraction
+relation 
+extraction
+attribute  
+extraction
+ 
+Figure 1. Knowledge graph construction framework. 
+III.  METHOD  
+A. BERT-BiLSTM-CRF architecture 
+As shown in Fig.2, the proposed model architecture 
+consists of four main parts: (1) Preprocessing text data, 
+including text cleaning, stop word removal, and entity 
+annotation. (2) Introducing BERT as a vectorized feature 
+representation method for pre trained text, it uses a 
+bidirectional Transformer network structure as the encoder. (3) 
+Using BiLSTM as a language model with long-term sequence 
+information to generate semantic features of emergency plan 
+texts, the results of character vectorization representation in 
+the BERT layer are used as inputs to the BiLSTM layer. (4) 
+Use CRF model and Viterbi algorithm for decoding, and 
+output the final entity recognition result. 
+ 
+Figure 2. Knowledge graph construction framework.  
+B. Text preprocessing 
+The original text data often contains various noise 
+information that affects the accuracy of entity recognition. 
+Therefore, before inputting the emergency plan text into the 
+hybrid model, the following three steps need to be followed 
+for text preprocessing: 
+(1) Text cleaning refers to the removal of useless data such 
+as spaces, punctuation marks, and letters that interfere with 
+recognition performance during the training process. 
+(2) Splitting characters, dividing the input text data into 
+individual characters (E1, E2,..., EN), and then storing each 
+individual character as a vocabulary, meaning that each 
+character has a corresponding unique identifier (represented as 
+[Character: ID]). 
+1693
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+(3) Entity annotation, using BIO (B-begin, I-inside, O-
+outside) for different forms of emergency plan text, where B-
+X represents the beginning of entity X, I-X represents the end 
+of entity, and O represents not belonging to any entity type. 
+The hybrid model based on BERT BiLSTM CRF extends the 
+entity recognition categories from three categories (institution 
+name, person name, place name) to ten categories. The 
+specific annotation con-tent is shown in Table 1 to meet the 
+business needs in the emergency response scenario of 
+engineering. 
+TABLE I.  TEXT NAMED ENTITY ANNOTATION 
+Num 
+Entity type 
+Entity first 
+word 
+Entity non-
+first word 
+1 
+time 
+B-TIM 
+I-TIM 
+2 
+accident type 
+B-TYP 
+I-TYP 
+3 
+accident location 
+B-LOC 
+I-LOC 
+4 
+emergency personnel 
+B-PER 
+I-PER 
+5 
+emergency material 
+B-MAT 
+I-MAT 
+6 
+emergency equipment 
+B-EQU 
+I-EQU 
+7 
+emergency organization 
+B-ORG 
+I-ORG 
+8 
+accident level 
+B-LEV 
+I-LEV 
+9 
+accident reason 
+B-REA 
+I-REA 
+10 
+disposal measure 
+B-MEA 
+I-MEA 
+11 
+Nonphysical words or 
+punctuation marks 
+O 
+O 
+C. Text vectorization based on BERT 
+Google has provided two pre-trained BERT models: 
+BERTBASE and BERTLARGE. This research adopts the 
+BERTBASE model, with 12 hidden layers, 768 hidden layers, 12 
+attention heads, and 110 million model parameters[6, 7]. As 
+shown in Fig. 2, the input representation of BERT is the sum 
+of the token embedding vector and the position embedding 
+vector. In the BERT structure, the text is represented by a 
+single character 
+1
+2
+{
+,
+,
+,
+}
+
+N
+E E
+E
+ as the model input. After 
+extracting features through the bidirectional transformer 
+encoder, the text vectorized representation 
+1
+2
+{ ,
+,
+,
+}
+
+N
+T T
+T
+ is 
+output. 
+As shown in Fig.3, the transformer is the core structure of 
+BERT, which is used to convert input corpus into feature 
+vectors. Each Trm of the BERT structure in Fig.2 corresponds 
+to a Transformer Block on the right. Each Transformer Block 
+layer is composed of two sub-layers, namely a multi-head self-
+attention mechanism and a fully connected feed-forward 
+network. Each sub-layer adds residual connection and 
+normalization, so the out-put of the sub-layer can be expressed 
+as Eq. (1). 
+_
+(
+(
+( )))
+=
++
+sub layer
+Output
+LayerNorm x
+SubLayer x
+      (1) 
+In Transformer Block, the data will first pass through the 
+Multi-Head Attention module to get a weighted feature vector. 
+In the Attention mechanism, there are three different vectors 
+for each character, namely Query vector (Q), Key vector (K), 
+and Value vector (V), all of which are 64 in length.  
+Then the data is sent to the fully connected feed-forward 
+network module, which contains a two-layer structure. The 
+activation function of the first layer is ReLU, and the second 
+layer is a linear activation function, which can be summarized 
+as Eq. (2). 
+(0
+)
+FFN
+1
+1
+2
+2
+Output
+= max
+,W Y +b W +b           (2) 
+Where 
+1
+W  , 
+1b  are the weight and bias of the first layer 
+respectively, and 
+2
+W  , 
+2b   are the weight and bias of the 
+second layer respectively. 
+ 
+Figure 3. Illustration of BERT embedding. 
+D. Text mining based on BiLSTM 
+As shown in Figure 2, different from the simple weight 
+combination model of BERT and BiLSTM, this study uses the 
+character vector generated by BERT as the character 
+embedding layer in the upstream part, and BiLSTM as the 
+feature extractor in the midstream part to model and classify 
+accident reports. The combination of the two can obtain more 
+complex semantic features and construct more accurate 
+semantic representations. 
+LSTM can easily capture the order information of the text 
+due to its linear structure. BiLSTM is a combination of 
+forward LSTM and backward LSTM[8, 9]. As shown in Fig.4, 
+the LSTM model is composed of input character 
+t
+X  , cell state 
+t
+C , temporary cell state 
+t
+C  , hidden layer state 
+th , forget gate 
+tf , memory gate ti , and output gate 
+to   at the time t . It 
+conveys useful information for subsequent calculations by 
+discarding 
+useless 
+information 
+and 
+memorizing 
+new 
+information. The calculation process is divided into the 
+following four steps: The first is to calculate the forgetting 
+gate and select the information to be forgotten, as shown in Eq. 
+(3). The second step is to calculate the memory gate (Eq. (4)) 
+and the temporary cell state (Eq. (5)). The third is to calculate 
+the current cell state as shown in Eq. (6). Finally, calculate the 
+output gate (Eq. (7)) and the current state of the hidden layer 
+(Eq. (8)). 
+(
+)
+1,
+[
+]
+σ
+−
+=
+⋅
++
+t
+f
+t
+t
+f
+f
+W
+h
+x
+b
+                       (3) 
+(
+)
+1,
+[
+]
+σ
+−
+=
+⋅
++
+t
+i
+t
+t
+i
+i
+W
+h
+x
+b                           (4) 
+1694
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+(
+)
+1,
+tanh
+[
+]
+−
+=
+⋅
++
+
+t
+C
+t
+t
+C
+C
+W
+h
+x
+b
+                        (5) 
+1
+−
+=
+∗
++
+∗
+t
+t
+t
+t
+t
+C
+f
+C
+i
+C                             (6) 
+ 
+(
+)
+1,
+[
+]
+σ
+−
+=
+⋅
++
+t
+o
+t
+t
+o
+o
+W
+h
+x
+b
+                         (7) 
+(
+)
+tanh
+=
+∗
+t
+t
+t
+h
+o
+C
+                             (8) 
+where W and b respectively represent the weight and bias 
+in the neuron. The subscripts f, i, and c respectively represent 
+the forget gate, input gate, and output gate. 
+E. Label sequence output based on CRF 
+CRF can model the conditional probabilities of multiple 
+variables after a given value[10]. In this section, a linear chain 
+conditional random field is used, where  is the input variable, 
+represents the sequence to be labeled, and   represents the 
+vector of the i-th character of the input text;   is the output 
+sequence, representing the label sequence corresponding one-
+to-one to X. The conditional probability of a random variable 
+Y with a value of y is defined as: 
+(
+)
+( )
+(
+)
+(
+)
+(
+)
+1
+,
+,
+1
+exp
+,
+, ,
+, ,
+k
+k
+i
+i
+m
+m
+i
+i k
+i m
+p y x
+s
+y
+y x i
+d
+y x i
+Z x
+σ
+υ
+−
+=
++
+∑
+∑
+     (9) 
+( )
+(
+)
+(
+)
+(
+)
+1
+,
+,
+exp
+,
+, ,
+, ,
+k
+k
+i
+i
+m
+m
+i
+y
+i k
+i m
+Z x
+s
+y
+y x i
+d
+y x i
+σ
+υ
+−
+=
++
+∑
+∑
+∑
+   (10) 
+ks  and 
+m
+d  are respectively the feature functions of edges 
+and nodes in a probabilistic un-directed graph, known as 
+transition features and state features. 
+k
+σ  and 
+m
+υ  represent the 
+weights of the corresponding feature functions, while ( )
+z x  
+represents the normalization factor. Summation is performed 
+on all possible output sequences. 
+During training, the output of the BiLSTM layer is used as 
+the input of the CRF layer. The goal of the model is to 
+maximize (
+)
+P y x  , and the conditional probability 
+(
+)
+P y x
+
+ is 
+obtained 
+using 
+maximum 
+likelihood 
+estimation. 
+The 
+likelihood function during the training process is shown in 
+equation (11). When making the final prediction, output the 
+output sequence with the highest overall probability according 
+to equation (12). 
+   ( )
+(
+)
+(
+)
+,
+log
+P y x
+x y
+w
+L w
+P
+y x
+=
+∏
+
+                 (11) 
+(
+)
+(
+)
+*
+arg max
+,
+y Y
+y
+w G y x
+∈
+=
+⋅
+                   (12) 
+In the formula, w represents the weight vector, determined 
+by 
+k
+σ   and 
+m
+υ ;  
+(
+)
+,
+G y x  represents the global feature vector, 
+determined by 
+ks  and 
+m
+d ; Y represents all label sequences that 
+comply with BIO labeling rules. 
+F. Relation extraction method based on PCNN 
+Relationship extraction is usually based on entity 
+recognition. Given a sentence S, a triplet containing the head 
+entity v, relationship r, and tail entity t, <v, r, t>is extracted. 
+The structure of the constructed relationship extraction PCNN 
+network is shown in Figure 4. The model input is a certain 
+sentence, which is divided into four parts: embedding layer, 
+convolutional layer, pooling layer, and output layer. 
+ 
+Figure 4. PCNN network structure diagram. 
+The embedding layer consists of word embedding and 
+position embedding[11], followed by convolution operations. 
+Convolutional layers are used to automatically extract local 
+features of input text. For sentences with a length of l and a 
+word vector dimension of d, the dimension is l×d. The size of 
+the convolution kernel is set to w×d. When the remaining 
+length during the convolution process is less than w, 0 is used 
+to fill in, and the length of the convolution result is l+w-1. The 
+formula for the convolution operation is as follows: 
+l
+1
+1:
+c
+c
+w
+j
+j w
+j
+R
+wp
++
+−
+−
++
+∈
+
+=
+
+1
+1
+j
+l
+w
+≤
+≤+
+−             (13) 
+In order to capture different features, this section will use n 
+convolution kernels. The output of the convolution operation 
+is shown in equation (14). The range of values for  
+(
+)1
+C
+R
+n
+l w
+× + −
+∈
+ is 
+related to sentence length, and the number of convolution 
+kernels in Fig.4 is three. 
+1695
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+{
+}
+1
+i
+1:
+C
+,
+,
+c
+n
+j
+i
+j w
+j
+c
+c
+w p −
++
+
+=
+
+=
+
+
+      1
+i
+n
+≤≤
+                    (14) 
+ After convolution, max pooling is applied to each segment. 
+Compared to traditional max pooling, which can only obtain 
+one value from each convolution kernel, local max pooling 
+can more fully extract the feature information of sentences. 
+The output of each convolution kernel is divided into three 
+parts by two entities, and a vector with a maximum pooling 
+output length of 3 can be represented as equation (15). 
+         
+{
+}
+(
+)
+1
+2
+3
+i
+,
+,
+p
+max
+i
+i
+i
+i
+j
+ij
+p
+p
+p
+p
+c
+
+=
+
+=
+
+1
+i
+n
+≤≤， 1
+j
+3
+≤
+≤
+           (15) 
+Finally, the sentence features obtained from the 
+convolutional and pooling layers are integrated to achieve the 
+extraction of relationship types. The softmax classifier is used 
+to predict the conditional probability and generate the most 
+likely relationship, as shown in the following equation. y 
+represents the total category of relationship classification, and 
+r represents the final output result. 
+y 1
+i
+i
+m
+y
+e
+P
+e
+=
+= ∑
+                                (16) 
+i
+r=argmax (P )
+i
+
+                             (17) 
+G. Knowledge storage and visualization 
+A graph database is a non-relational database that 
+represents data in nodes and edges, with a comprehensive 
+query language and high query efficiency. This section uses 
+the Neo4j graph database to achieve knowledge storage and 
+visualization. 
+Neo4j database is a high-performance NoSQL graphical 
+database with advantages such as high availability, easy 
+scalability, and fast retrieval. The Neo4j database is developed 
+based on Java language and uses Cypher language for data 
+queries and updates. Construct a knowledge graph based on 
+the entities and relationships extracted from the triplets, where 
+the entities correspond to nodes in the knowledge graph and 
+the relationships corre-spond to edges in the knowledge graph. 
+The process of building an emergency plan knowledge graph 
+in Neo4j mainly involves three steps, as follows: (1) Import 
+entity files, create entity nodes, and add a unique index 
+(UNIQUE) to each entity; (2) Import relation-ship files, match 
+relationships between nodes, and generate relationship edges; 
+(3) Create a knowledge graph 
+IV.  MODEL VALIDATION 
+A. Experimental data and environment Settings 
+Entity extraction is a key step in constructing a knowledge 
+graph, and the accuracy of recognition results usually affects 
+the accuracy of subsequent relationship extraction and 
+knowledge storage. Therefore, analyzing and verifying it is 
+crucial to ensure the accura te construction of a knowledge 
+graph. The dataset used in the entity recognition verification 
+process is divided into two parts: one part is 1000 engineering 
+accidents that were self collected through network retrieval, 
+including the time, cause, and location of the accidents; Part of 
+it is the emergency plan system for a certain project. By using 
+text pre-processing to remove non textual data and segmenting 
+Chinese text into individual characters, the recognition 
+efficiency of subsequent models is improved. Next, the BIO 
+method is used for entity annotation. Randomly divide the 
+dataset into training and testing sets in an 8:2 ratio, with a total 
+of 1431 manually labeled entities. During the dataset 
+partitioning process, the ratio of sample class distribution for 
+each entity remains similar to the original ratio.  
+The 
+developed 
+BERT-BiLSTM-CRF 
+based 
+entity 
+extraction was performed on a server with an Intel(R) 
+Core(TM) i7-8700 CPU, and 16 GB RAM. For this research, 
+the Python 3.6 programming language was used. The Pytorch 
+1.6.0 deep learning framework and Keras 2.3.1 open-source 
+deep learning library were drawn upon.. 
+B. Evaluation index 
+To ensure the proposed model performance, four indicators 
+are used to evaluate the performance for the developed BERT-
+BiLSTM-CRF based text classification approach in this 
+research: (1) precision; (2) recall; (3) F1-score; and (4) 
+Average weighted F1-score, which are depended on the four 
+possible classification results of confusion matrix listed in 
+Table 2. 
+TABLE II.  
+POSSIBLE RESULT BETWEEN ACTUAL AND PREDICTED 
+CONDITION. 
+ 
+ 
+Predicted condition 
+ 
+ 
+Yes 
+No 
+Actual 
+condition 
+Yes 
+True Positive (TP) 
+False Negative (FN) 
+No 
+False Positive (FP) 
+True Negative (TN) 
+The evaluation criteria can be calculated as Eq. (18) to (21). 
+TP
+Precision
+TP
+FP
+=
++
+                           (18) 
+TP
+Recall
+TP+ FN
+=
+                             (19) 
+2(
+)
+1
+Precision Recall
+F
+Precision
+Recall
+∗
+=
++
+                  (20) 
+1
+1
+1
+n
+i
+weighted_avg
+i
+i
+S
+F
+F
+D
+=
+
+
+=
+∗
+
+
+
+
+∑
+                 (21) 
+where Si is the number of cases supported by label i, n is 
+the total number of labels in the dataset, and D is the total 
+number of the dataset. 
+C. Experimental results 
+The parameters adopted by the BERT-BiLSTM-CRF 
+model in this study are shown in Table 4. According to Table 
+3, the number of epochs determines the stopping condition. 
+Batch size is the number of information pieces processed by 
+BERT-BiLSTM-CRF. Pad size represents the length of each 
+sentence processed, if the number of ‘tokens’ for a piece of 
+data is less than pad size, <pad> is used to fill it, otherwise, it 
+1696
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+will be cut off. Learning rate determines how fast gradient to 
+descend. Hidden size represents the dimensions of Character 
+Embeddings. Dropout refers to the dropping possibility of 
+hidden nodes from BiLSTM. BiLSTM hidden determines how 
+many neurons in a single layer. Number of layers represents 
+the number of stacked BiLSTM units. The character vector 
+dimension represents the vector dimension in which the 
+character is processed into a machine recognition. 
+TABLE III.  
+BERT-BILSTM-CRF PARAMETER SETTING. 
+Parameter 
+Value 
+Parameter 
+Value 
+Number of epochs 
+5 
+Dropout 
+0.5 
+Batch size 
+64 
+BiLSTM hidden 
+128 
+Pad size 
+100 
+Number of layers 
+2 
+Learning rate 
+10-5 
+Character vector dimension 
+128 
+Hidden size 
+768 
+ 
+ 
+The weighted average F1 value is used as the standard to 
+measure the performance of the model, which depends on the 
+number of entities in each category. The accuracy, recall, F1 
+value, and weighted average F1 value of the model entity 
+recognition for each category of BERT-BiLSTM-CRF are 
+listed in Table 4. From the performance results of model 
+experiments, the BERT-BiLSTM-CRF hybrid model proposed 
+in this chapter provides a higher weighted average F1 value 
+for the testing process, with a weighted average F1 value of 
+0.89. The F1 value for all types of entity recognition is above 
+0.85, indicating good predictive performance between actual 
+and predicted labels, proving the accuracy and reliability of 
+this hybrid model in entity recognition tasks. 
+In order to further evaluate the performance of the 
+proposed hybrid model, it was compared with three 
+mainstream 
+advanced 
+models, 
+namely 
+BiLSTM-CRF, 
+IDCNN-CRF, 
+and 
+BiLSTM-Attention-CRF. 
+The 
+same 
+training and testing dataset, experimental environment, and 
+parameters as the BERT-BiLSTM-CRF model proposed in 
+this study were used in the comparative evaluation process. 
+The comparison results are shown in Table 4. The highest F1 
+value for each entity type in all models is highlighted in bold. 
+As shown in the table, the weighted average F1 value of the 
+BERT-BiLSTM-CRF model is the highest among all models, 
+at 0.89. The weighted average F1 value of the BiLSTM-CRF 
+model is the lowest, at 0.66. The F1 values of IDCNN-CRF 
+and BiLSTM-Attention-CRF models are 0.77 and 0.81, 
+respectively. Compared with the BiLSTM-CRF model, the 
+BERT-BiLSTM-CRF hybrid model increased the weighted 
+average F1 value from 0.66 to 0.89, an increase of 23%, 
+proving that incorporating a character level BERT pre-trained 
+language model has a reinforcing effect on entity recognition 
+of emergency texts. In summary, the BERT-BiLSTM-CRF 
+hybrid model is able to recognize each type of entity with a 
+high F1 value and performs best in entity type recognition, 
+while the F1 value of other deep learning algorithms is 
+relatively low. 
+TABLE IV.  
+PERFORMANCE COMPARISON RESULT 
+Entity type 
+time 
+BERT-BiLSTM-CRF 
+Number 
+of entities 
+P 
+R 
+F1 
+Accident type 
+0.88 
+0.85 
+0.86 
+48 
+Accident location 
+0.92 
+0.86 
+0.89 
+8 
+Emergency personnel 
+0.95 
+0.91 
+0.93 
+55 
+Emergency material 
+0.86 
+0.86 
+0.86 
+23 
+Emergency equipment 
+0.88 
+0.89 
+0.88 
+32 
+Emergency organization 
+0.87 
+0.90 
+0.88 
+28 
+Accident level 
+0.88 
+0.90 
+0.89 
+23 
+Accident reason 
+0.82 
+0.90 
+0.86 
+18 
+Disposal measure 
+0.96 
+1 
+0.98 
+11 
+Entity type 
+0.92 
+0.92 
+0.92 
+41 
+Weighted average 
+0.90 
+0.89 
+0.89 
+287 
+Entity type 
+time 
+IDCNN-CRF 
+Number 
+of entities 
+P 
+R 
+F1 
+Accident type 
+0.83 
+0.89 
+0.85 
+48 
+Accident location 
+0.88 
+0.89 
+0.88 
+8 
+Emergency personnel 
+0.59 
+0.81 
+0.68 
+55 
+Emergency material 
+0.86 
+0.81 
+0.83 
+23 
+Emergency equipment 
+0.82 
+0.78 
+0.80 
+32 
+Emergency organization 
+0.96 
+0.96 
+0.96 
+28 
+Accident level 
+0.83 
+0.57 
+0.68 
+23 
+Accident reason 
+0.92 
+0.95 
+0.93 
+18 
+Disposal measure 
+0.83 
+0.50 
+0.63 
+11 
+Entity type 
+0.87 
+0.82 
+0.62 
+41 
+Weighted average 
+0.81 
+0.82 
+0.77 
+287 
+Entity type 
+time 
+BiLSTM-Attention-CRF 
+Number 
+of entities 
+P 
+R 
+P 
+Accident type 
+0.86 
+0.93 
+0.89 
+48 
+Accident location 
+0.89 
+0.88 
+0.87 
+8 
+Emergency personnel 
+0.95 
+0.90 
+0.92 
+55 
+Emergency material 
+0.48 
+0.81 
+0.60 
+23 
+Emergency equipment 
+0.92 
+0.88 
+0.90 
+32 
+Emergency organization 
+0.93 
+0.93 
+0.93 
+28 
+Accident level 
+0.83 
+0.79 
+0.79 
+23 
+Accident reason 
+0.95 
+0.57 
+0.71 
+18 
+Disposal measure 
+0.58 
+0.91 
+0.71 
+11 
+Entity type 
+0.53 
+0.8 
+0.64 
+41 
+Weighted average 
+0.80 
+0.85 
+0.81 
+287 
+Entity type 
+time 
+BiLSTM-CRF 
+Number of 
+entities 
+P 
+R 
+P 
+Accident type 
+0.82 
+0.90 
+0.86 
+48 
+Accident location 
+0.69 
+0.65 
+0.67 
+8 
+Emergency personnel 
+0.79 
+0.77 
+0.78 
+55 
+Emergency material 
+0.56 
+0.63 
+0.59 
+23 
+Emergency equipment 
+0.74 
+0.66 
+0.70 
+32 
+Emergency 
+organization 
+0.94 
+0.74 
+0.83 
+28 
+Accident level 
+0.40 
+0.74 
+0.53 
+23 
+Accident reason 
+0.60 
+0.19 
+0.29 
+18 
+Disposal measure 
+0.83 
+0.50 
+0.63 
+11 
+Entity type 
+0.33 
+0.53 
+0.41 
+41 
+Weighted average 
+0.67 
+0.68 
+0.66 
+287 
+D. Knowledge graph application 
+The emergency knowledge graph application module is 
+based on the Windows 10 operating system, developed using 
+Python 3.6 programming language, Django development 
+framework, and Neo4j graph database. Among them, Django 
+is an open source web application framework written in 
+Python, which uses the MVT (Model View Template) 
+development pattern to retrieve and visualize entity and 
+relationship related subgraphs. 
+1697
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+The emergency knowledge graph application module 
+includes 
+three 
+functional 
+pages: 
+entity 
+recognition, 
+relationship query, and plan retrieval. By entering the 
+emergency plan text on the entity recognition page and 
+clicking submit, the entity recognition results can be 
+automatically generated and viewed. The relationship query 
+page can query relationship information by entering entities. 
+The emergency plan query page is shown in Fig.5. When the 
+question "What is the emergency response method for flood 
+disasters?" is entered, a corresponding emergency plan graph 
+demonstration can be generated. Viewing the graph, it can be 
+seen that flood disasters can lead to sudden accidents such as 
+"overtopping of flood embankments", "local landslides on 
+slopes", "instability at the foot of slopes", etc. Different 
+accidents correspond to different disposal measures. When 
+"instability at the foot of slopes" occurs, "throwing stones" can 
+be adopted measures such as using geotextile bags to press 
+feet. It can be seen that the plan retrieval provides a clear and 
+systematic response plan for emergency personnel, which can 
+effectively assist management personnel in making timely and 
+effective emergency decisions. 
+ 
+Figure 5. Intelligent genaration of emergency plan. 
+V.   CONCLUSIONS 
+This study proposes an intelligent generation method for 
+emergency plans based on knowledge graphs, and verifies the 
+effectiveness of the proposed entity recognition algorithm 
+through engineering examples. Finally, rapid generation of 
+emergency knowledge was achieved through the development 
+of application modules. This provides intelligent means to 
+improve the efficiency of emergency decision-making in 
+engineering and ensure the safe operation of the project in a 
+timely manner. 
+REFERENCES 
+[1] 
+KERTKEIDKACHORN 
+N, 
+NARARATWONG 
+R, 
+ICHISE 
+R. 
+UWKGM: A Modular Platform for Knowledge Graph Management [J]. 
+Cikm '20: Proceedings of the 29th Acm International Conference on 
+Information & Knowledge Management, 2020: 3421-4. 
+[2] 
+ROSPOCHER M, VAN ERP M, VOSSEN P, et al. Building event-
+centric knowledge graphs from news [J]. Journal of Web Semantics, 
+2016, 37-38: 132-51. 
+[3] 
+LEHMANN J, ISELE R, JAKOB M, et al. DBpedia - A large-scale, 
+multilingual knowledge base extracted from Wikipedia [J]. Semantic 
+Web, 2015, 6(2): 167-95. 
+[4] 
+ISMAIL A, STRUG B, SLUSARCZYK G. Building Knowledge 
+Extraction from BIM/IFC Data for Analysis in Graph Databases [J]. 
+Artificial Intelligence and Soft Computing (Icaisc 2018), Pt Ii, 2018, 
+10842: 652-64. 
+[5] 
+PAULHEIM H. Knowledge Graph Refinement: A Survey of 
+Approaches and Evaluation Methods [J]. Semantic Web, 2017, 8(3): 
+489-+. 
+[6] 
+WANG Q, MAO Z D, WANG B, et al. Knowledge Graph Embedding: 
+A Survey of Approaches and Applications [J]. Ieee Transactions on 
+Knowledge and Data Engineering, 2017, 29(12): 2724-43. 
+[7] 
+GUPTA B, PRAKASAM P, VELMURUGAN T. Integrated BERT 
+embeddings, BiLSTM-BiGRU and 1-D CNN model for binary sentiment 
+classification analysis of movie reviews [J]. Multimedia Tools and 
+Applications, 2022, 81(23): 33067-86. 
+[8] 
+JI S, FANGBI T. Emotion Analysis Model of MOOC Course Review 
+Based on BiLSTM [J]. International Journal of Emerging Technologies 
+in Learning, 2021, 16(8): 93-105. 
+[9] 
+WANG M, ZHOU T, WANG H H, et al. Chinese power dispatching text 
+entity recognition based on a double-layer BiLSTM and multi-feature 
+fusion [J]. Energy Reports, 2022, 8: 980-7. 
+[10] MIAO Y L, CHENG W F, JI Y C, et al. Aspect-based sentiment analysis 
+in Chinese based on mobile reviews for BiLSTM-CRF [J]. Journal of 
+Intelligent & Fuzzy Systems, 2021, 40(5): 8697-707. 
+[11] LI X W, NING H Y. Deep Pyramid Convolutional Neural Network 
+Integrated with Self-attention Mechanism and Highway Network for 
+Text Classification [J]. 4th International Conference on Artificial 
+Intelligence Applications and Technologies (Aiaat 2020), 2020, 1642. 
+ 
+1698
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:29:47 UTC from IEEE Xplore.  Restrictions apply. 
