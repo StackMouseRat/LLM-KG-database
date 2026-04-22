@@ -1,0 +1,950 @@
+{
+  "space": "llmkg_ring_main_unit",
+  "root": "环网柜",
+  "majors": [
+    "柜体绝缘与环境故障",
+    "电缆终端与连接故障",
+    "开关本体与机构故障",
+    "自动化与通信故障"
+  ],
+  "subtypes": [
+    "环网柜受潮故障",
+    "环网柜柜间插接母线爬电故障",
+    "环网柜电缆终端接触不良发热故障",
+    "环网柜电缆终端放电接地故障",
+    "环网柜密封失效故障",
+    "环网柜开关拒动故障",
+    "环网柜自动化信号异常故障"
+  ],
+  "detail_layers": [
+    "故障原因",
+    "故障现象",
+    "应对措施",
+    "故障后果",
+    "安全风险",
+    "应急资源"
+  ],
+  "nodes": [
+    {
+      "vid": "n_0",
+      "name": "环网柜",
+      "node_desc": "依据第一至第八层级梳理结果形成的环网柜故障知识图谱实体。",
+      "lvl": 0,
+      "source_id": 0,
+      "degree": 4,
+      "weight": 10,
+      "stroke": "#9A3412",
+      "typed_tag": "root_node",
+      "major": ""
+    },
+    {
+      "vid": "n_1",
+      "name": "柜体绝缘与环境故障",
+      "node_desc": "环网柜故障一级大类：柜体绝缘与环境故障。",
+      "lvl": 1,
+      "source_id": 1,
+      "degree": 3,
+      "weight": 9,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l1",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_2",
+      "name": "电缆终端与连接故障",
+      "node_desc": "环网柜故障一级大类：电缆终端与连接故障。",
+      "lvl": 1,
+      "source_id": 2,
+      "degree": 3,
+      "weight": 9,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l1",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_3",
+      "name": "开关本体与机构故障",
+      "node_desc": "环网柜故障一级大类：开关本体与机构故障。",
+      "lvl": 1,
+      "source_id": 3,
+      "degree": 3,
+      "weight": 9,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l1",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_4",
+      "name": "自动化与通信故障",
+      "node_desc": "环网柜故障一级大类：自动化与通信故障。",
+      "lvl": 1,
+      "source_id": 4,
+      "degree": 2,
+      "weight": 9,
+      "stroke": "#B91C1C",
+      "typed_tag": "fault_l1",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_5",
+      "name": "环网柜受潮故障",
+      "node_desc": "柜体绝缘与环境故障下的二级故障小类：环网柜受潮故障。",
+      "lvl": 2,
+      "source_id": 5,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_6",
+      "name": "环网柜受潮故障-故障原因",
+      "node_desc": "柜体密封不严、无加热去湿装置、分界室积水潮湿、夹层进潮、低温凝霜结露和长期锈蚀会导致内部绝缘件受潮。",
+      "lvl": 3,
+      "source_id": 6,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_7",
+      "name": "环网柜受潮故障-故障现象",
+      "node_desc": "绝缘电阻偏低、耐压不过、柜内凝露明显、金属部件锈蚀、母线支柱绝缘子出现放电烧蚀痕迹，严重时发展为绝缘击穿。",
+      "lvl": 4,
+      "source_id": 7,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_8",
+      "name": "环网柜受潮故障-应对措施",
+      "node_desc": "先隔离故障间隔，再开展绝缘和耐压试验，处理密封缺陷、加装除湿加热装置、清理积水和锈蚀部位，并对电缆孔和夹层封堵情况做专项检查。",
+      "lvl": 3,
+      "source_id": 8,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_9",
+      "name": "环网柜受潮故障-故障后果",
+      "node_desc": "会导致绝缘下降、相对地放电短路、保护动作跳闸和设备停运，严重时演化为绝缘击穿。",
+      "lvl": 4,
+      "source_id": 9,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_10",
+      "name": "环网柜受潮故障-安全风险",
+      "node_desc": "带缺陷运行可能突然击穿放电；潮湿环境检修存在触电和误判风险；若只处理放电点不处理潮气来源，故障容易复发。",
+      "lvl": 4,
+      "source_id": 10,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_11",
+      "name": "环网柜受潮故障-应急资源",
+      "node_desc": "需要绝缘电阻表、耐压试验设备、除湿加热装置、密封材料、备用绝缘子、封堵材料、检修与试验人员。",
+      "lvl": 4,
+      "source_id": 11,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_12",
+      "name": "环网柜柜间插接母线爬电故障",
+      "node_desc": "柜体绝缘与环境故障下的二级故障小类：环网柜柜间插接母线爬电故障。",
+      "lvl": 2,
+      "source_id": 12,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_13",
+      "name": "环网柜柜间插接母线爬电故障-故障原因",
+      "node_desc": "可扩展型开闭器柜间存在缝隙，插接母线密封结构简单、外绝缘爬电距离不足，在凝露季节易形成沿面爬电。",
+      "lvl": 3,
+      "source_id": 13,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_14",
+      "name": "环网柜柜间插接母线爬电故障-故障现象",
+      "node_desc": "故障集中发生于凝露季节，柜间插接母线部位重复发生类似缺陷，备用出线间隔更易暴露问题。",
+      "lvl": 4,
+      "source_id": 14,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_15",
+      "name": "环网柜柜间插接母线爬电故障-应对措施",
+      "node_desc": "加强超声波和地电波带电检测，改造柜间密封与防潮结构，对同型号设备开展专项排查。",
+      "lvl": 3,
+      "source_id": 15,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_16",
+      "name": "环网柜柜间插接母线爬电故障-故障后果",
+      "node_desc": "会形成重复性故障，造成间歇性放电、绝缘击穿和批量设备隐患。",
+      "lvl": 4,
+      "source_id": 16,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_17",
+      "name": "环网柜柜间插接母线爬电故障-安全风险",
+      "node_desc": "同型号设备可能群发，若未识别共性缺陷，后续运行风险会持续扩大。",
+      "lvl": 4,
+      "source_id": 17,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_18",
+      "name": "环网柜柜间插接母线爬电故障-应急资源",
+      "node_desc": "需要带电检测设备、结构改造方案、厂商技术支持、密封件与检修力量。",
+      "lvl": 4,
+      "source_id": 18,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "柜体绝缘与环境故障"
+    },
+    {
+      "vid": "n_19",
+      "name": "环网柜电缆终端接触不良发热故障",
+      "node_desc": "电缆终端与连接故障下的二级故障小类：环网柜电缆终端接触不良发热故障。",
+      "lvl": 2,
+      "source_id": 19,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l2",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_20",
+      "name": "环网柜电缆终端接触不良发热故障-故障原因",
+      "node_desc": "压线螺丝未紧固到位、垫片接触不实、施工质量差和长期虚接会导致接触电阻增大。",
+      "lvl": 3,
+      "source_id": 20,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_21",
+      "name": "环网柜电缆终端接触不良发热故障-故障现象",
+      "node_desc": "电缆终端压线处长期发热，护套烧熔、终端变色、局部放电，柜体表面可见熏黑。",
+      "lvl": 4,
+      "source_id": 21,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_22",
+      "name": "环网柜电缆终端接触不良发热故障-应对措施",
+      "node_desc": "停电检查各间隔压线情况，重新紧固或更换端子，对已烧蚀的终端和绝缘件进行更换处理。",
+      "lvl": 3,
+      "source_id": 22,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_23",
+      "name": "环网柜电缆终端接触不良发热故障-故障后果",
+      "node_desc": "会由发热发展为放电接地故障，触发零序或过流保护动作跳闸。",
+      "lvl": 4,
+      "source_id": 23,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_24",
+      "name": "环网柜电缆终端接触不良发热故障-安全风险",
+      "node_desc": "发热隐患具有累积性，容易在负荷高峰时突然恶化；检修时存在残余电荷和误送电风险。",
+      "lvl": 4,
+      "source_id": 24,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_25",
+      "name": "环网柜电缆终端接触不良发热故障-应急资源",
+      "node_desc": "需要力矩工具、电缆终端备件、测温设备、紧固件、停电检修票和现场检修人员。",
+      "lvl": 4,
+      "source_id": 25,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_26",
+      "name": "环网柜电缆终端放电接地故障",
+      "node_desc": "电缆终端与连接故障下的二级故障小类：环网柜电缆终端放电接地故障。",
+      "lvl": 2,
+      "source_id": 26,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l2",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_27",
+      "name": "环网柜电缆终端放电接地故障-故障原因",
+      "node_desc": "终端绝缘破坏、压线处烧蚀、受潮锈蚀或长期虚接发热后，会使电缆终端与柜体发生放电接地。",
+      "lvl": 3,
+      "source_id": 27,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_28",
+      "name": "环网柜电缆终端放电接地故障-故障现象",
+      "node_desc": "某一相终端烧蚀最严重，存在明显放电痕迹、导体裸露、护套烧毁，并伴随保护跳闸。",
+      "lvl": 4,
+      "source_id": 28,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_29",
+      "name": "环网柜电缆终端放电接地故障-应对措施",
+      "node_desc": "定位故障相和故障间隔，更换终端及绝缘附件，复查相邻间隔有无连带烧蚀影响。",
+      "lvl": 3,
+      "source_id": 29,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_30",
+      "name": "环网柜电缆终端放电接地故障-故障后果",
+      "node_desc": "可导致零序保护、速断保护动作，扩大为相间短路或整柜停运。",
+      "lvl": 4,
+      "source_id": 30,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_31",
+      "name": "环网柜电缆终端放电接地故障-安全风险",
+      "node_desc": "故障点往往位于柜内狭小空间，存在残弧、局部碳化和再次击穿风险。",
+      "lvl": 4,
+      "source_id": 31,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_32",
+      "name": "环网柜电缆终端放电接地故障-应急资源",
+      "node_desc": "需要终端附件、绝缘套管、接地与验电器具、测温与试验设备、应急检修人员。",
+      "lvl": 4,
+      "source_id": 32,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "电缆终端与连接故障"
+    },
+    {
+      "vid": "n_33",
+      "name": "环网柜密封失效故障",
+      "node_desc": "开关本体与机构故障下的二级故障小类：环网柜密封失效故障。",
+      "lvl": 2,
+      "source_id": 33,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l2",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_34",
+      "name": "环网柜密封失效故障-故障原因",
+      "node_desc": "本体密封结构缺陷、箱体密封不严、长期老化失效或振动损伤会导致潮气侵入和 SF6 泄漏，进而影响绝缘和机构状态。",
+      "lvl": 3,
+      "source_id": 34,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_35",
+      "name": "环网柜密封失效故障-故障现象",
+      "node_desc": "开关内部受潮、触头锈蚀、气压异常、绝缘性能下降，常伴随本体发热或局部放电风险上升。",
+      "lvl": 4,
+      "source_id": 35,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_36",
+      "name": "环网柜密封失效故障-应对措施",
+      "node_desc": "停运后检查密封结构、气压状态和泄漏点，更换密封件，按条件补气或更换缺陷部件，并处理内部锈蚀。",
+      "lvl": 3,
+      "source_id": 36,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_37",
+      "name": "环网柜密封失效故障-故障后果",
+      "node_desc": "会进一步引起内部放电、触头损伤、机构异常甚至开关失效。",
+      "lvl": 4,
+      "source_id": 37,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_38",
+      "name": "环网柜密封失效故障-安全风险",
+      "node_desc": "若密封失效与带压运行叠加，易形成隐蔽缺陷；误判为单纯接线问题会遗漏本体风险。",
+      "lvl": 4,
+      "source_id": 38,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_39",
+      "name": "环网柜密封失效故障-应急资源",
+      "node_desc": "需要密封件、检漏工具、补气装置、气体处理设备、绝缘检测设备、防护用品、厂家检修支持。",
+      "lvl": 4,
+      "source_id": 39,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_40",
+      "name": "环网柜开关拒动故障",
+      "node_desc": "开关本体与机构故障下的二级故障小类：环网柜开关拒动故障。",
+      "lvl": 2,
+      "source_id": 40,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l2",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_41",
+      "name": "环网柜开关拒动故障-故障原因",
+      "node_desc": "操动机构异常、开关本体卡涩、机械部件损坏或控制回路问题都可能导致开关拒动。",
+      "lvl": 3,
+      "source_id": 41,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_42",
+      "name": "环网柜开关拒动故障-故障现象",
+      "node_desc": "在故障隔离或负荷转供中，主站发出分合闸命令但开关动作失败，需扩大隔离范围。",
+      "lvl": 4,
+      "source_id": 42,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_43",
+      "name": "环网柜开关拒动故障-应对措施",
+      "node_desc": "先确保故障已隔离，再核查机构状态、控制回路和机械卡阻原因，对拒动开关停役检修。",
+      "lvl": 3,
+      "source_id": 43,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_44",
+      "name": "环网柜开关拒动故障-故障后果",
+      "node_desc": "会扩大停电范围、终止馈线自动化动作、降低故障处置效率。",
+      "lvl": 4,
+      "source_id": 44,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_45",
+      "name": "环网柜开关拒动故障-安全风险",
+      "node_desc": "误判拒动状态并重复遥控，可能造成误操作或扩大事故范围。",
+      "lvl": 4,
+      "source_id": 45,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_46",
+      "name": "环网柜开关拒动故障-应急资源",
+      "node_desc": "需要遥控与就地操作记录、机构检修工器具、备用开关设备、现场运维与调控配合。",
+      "lvl": 4,
+      "source_id": 46,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "开关本体与机构故障"
+    },
+    {
+      "vid": "n_47",
+      "name": "环网柜自动化信号异常故障",
+      "node_desc": "自动化与通信故障下的二级故障小类：环网柜自动化信号异常故障。",
+      "lvl": 2,
+      "source_id": 47,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#B91C1C",
+      "typed_tag": "fault_l2",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_48",
+      "name": "环网柜自动化信号异常故障-故障原因",
+      "node_desc": "DTU 离线、未完成主站调试、通信中断、保护动作信息未上传、错误上送分闸/保护信号、检修状态管理异常等都会导致自动化判断失真。",
+      "lvl": 3,
+      "source_id": 48,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_49",
+      "name": "环网柜自动化信号异常故障-故障现象",
+      "node_desc": "主站收不到环网柜动作和告警信息，或收到错误信号，进而误判故障区间、错误控分控合、扩大停电范围。",
+      "lvl": 4,
+      "source_id": 49,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_50",
+      "name": "环网柜自动化信号异常故障-应对措施",
+      "node_desc": "恢复通信链路，补齐信号上传和联调验证，复核主站判断逻辑与现场动作信息，完善检修状态管理和信号可信度校验。",
+      "lvl": 3,
+      "source_id": 50,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_51",
+      "name": "环网柜自动化信号异常故障-故障后果",
+      "node_desc": "会直接影响馈线自动化判断、转供策略和故障隔离精度，导致非故障区用户停电、反复跳闸或处置链条中断。",
+      "lvl": 4,
+      "source_id": 51,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_52",
+      "name": "环网柜自动化信号异常故障-安全风险",
+      "node_desc": "自动化误动作类问题影响范围广，且容易被误认为现场一次设备真实故障。",
+      "lvl": 4,
+      "source_id": 52,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "自动化与通信故障"
+    },
+    {
+      "vid": "n_53",
+      "name": "环网柜自动化信号异常故障-应急资源",
+      "node_desc": "需要 DTU 调试工具、通信链路检测工具、主站事件记录、故障录波、遥控执行日志、调控与自动化专业人员。",
+      "lvl": 4,
+      "source_id": 53,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "自动化与通信故障"
+    }
+  ],
+  "links": [
+    {
+      "src": "n_0",
+      "dst": "n_1",
+      "relation": "发生"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_5",
+      "relation": "包含"
+    },
+    {
+      "src": "n_5",
+      "dst": "n_6",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_6",
+      "dst": "n_7",
+      "relation": "表现"
+    },
+    {
+      "src": "n_5",
+      "dst": "n_8",
+      "relation": "处置"
+    },
+    {
+      "src": "n_6",
+      "dst": "n_9",
+      "relation": "导致"
+    },
+    {
+      "src": "n_8",
+      "dst": "n_10",
+      "relation": "存在"
+    },
+    {
+      "src": "n_8",
+      "dst": "n_11",
+      "relation": "需要"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_12",
+      "relation": "包含"
+    },
+    {
+      "src": "n_12",
+      "dst": "n_13",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_13",
+      "dst": "n_14",
+      "relation": "表现"
+    },
+    {
+      "src": "n_12",
+      "dst": "n_15",
+      "relation": "处置"
+    },
+    {
+      "src": "n_13",
+      "dst": "n_16",
+      "relation": "导致"
+    },
+    {
+      "src": "n_15",
+      "dst": "n_17",
+      "relation": "存在"
+    },
+    {
+      "src": "n_15",
+      "dst": "n_18",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_2",
+      "relation": "发生"
+    },
+    {
+      "src": "n_2",
+      "dst": "n_19",
+      "relation": "包含"
+    },
+    {
+      "src": "n_19",
+      "dst": "n_20",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_20",
+      "dst": "n_21",
+      "relation": "表现"
+    },
+    {
+      "src": "n_19",
+      "dst": "n_22",
+      "relation": "处置"
+    },
+    {
+      "src": "n_20",
+      "dst": "n_23",
+      "relation": "导致"
+    },
+    {
+      "src": "n_22",
+      "dst": "n_24",
+      "relation": "存在"
+    },
+    {
+      "src": "n_22",
+      "dst": "n_25",
+      "relation": "需要"
+    },
+    {
+      "src": "n_2",
+      "dst": "n_26",
+      "relation": "包含"
+    },
+    {
+      "src": "n_26",
+      "dst": "n_27",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_27",
+      "dst": "n_28",
+      "relation": "表现"
+    },
+    {
+      "src": "n_26",
+      "dst": "n_29",
+      "relation": "处置"
+    },
+    {
+      "src": "n_27",
+      "dst": "n_30",
+      "relation": "导致"
+    },
+    {
+      "src": "n_29",
+      "dst": "n_31",
+      "relation": "存在"
+    },
+    {
+      "src": "n_29",
+      "dst": "n_32",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_3",
+      "relation": "发生"
+    },
+    {
+      "src": "n_3",
+      "dst": "n_33",
+      "relation": "包含"
+    },
+    {
+      "src": "n_33",
+      "dst": "n_34",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_34",
+      "dst": "n_35",
+      "relation": "表现"
+    },
+    {
+      "src": "n_33",
+      "dst": "n_36",
+      "relation": "处置"
+    },
+    {
+      "src": "n_34",
+      "dst": "n_37",
+      "relation": "导致"
+    },
+    {
+      "src": "n_36",
+      "dst": "n_38",
+      "relation": "存在"
+    },
+    {
+      "src": "n_36",
+      "dst": "n_39",
+      "relation": "需要"
+    },
+    {
+      "src": "n_3",
+      "dst": "n_40",
+      "relation": "包含"
+    },
+    {
+      "src": "n_40",
+      "dst": "n_41",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_41",
+      "dst": "n_42",
+      "relation": "表现"
+    },
+    {
+      "src": "n_40",
+      "dst": "n_43",
+      "relation": "处置"
+    },
+    {
+      "src": "n_41",
+      "dst": "n_44",
+      "relation": "导致"
+    },
+    {
+      "src": "n_43",
+      "dst": "n_45",
+      "relation": "存在"
+    },
+    {
+      "src": "n_43",
+      "dst": "n_46",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_4",
+      "relation": "发生"
+    },
+    {
+      "src": "n_4",
+      "dst": "n_47",
+      "relation": "包含"
+    },
+    {
+      "src": "n_47",
+      "dst": "n_48",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_48",
+      "dst": "n_49",
+      "relation": "表现"
+    },
+    {
+      "src": "n_47",
+      "dst": "n_50",
+      "relation": "处置"
+    },
+    {
+      "src": "n_48",
+      "dst": "n_51",
+      "relation": "导致"
+    },
+    {
+      "src": "n_50",
+      "dst": "n_52",
+      "relation": "存在"
+    },
+    {
+      "src": "n_50",
+      "dst": "n_53",
+      "relation": "需要"
+    }
+  ],
+  "counts": {
+    "nodes": 54,
+    "links": 53,
+    "groups": 4,
+    "group_members": 53
+  }
+}
