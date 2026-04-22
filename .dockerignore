@@ -1,0 +1,9 @@
+.git
+**/.DS_Store
+**/__pycache__
+**/.pytest_cache
+**/node_modules
+nebula-docker-compose/data
+nebula-docker-compose/logs
+docs/project_changes
+fastGPT_json/backups
