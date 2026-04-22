@@ -1,0 +1,692 @@
+{
+  "space": "llmkg_tower",
+  "root": "杆塔",
+  "majors": [
+    "塔身姿态与结构失稳故障",
+    "基础与地基失效故障",
+    "构件制造与材料缺陷故障"
+  ],
+  "subtypes": [
+    "杆塔倾倒故障",
+    "杆塔倾斜故障",
+    "杆塔移位故障",
+    "杆塔基础损伤故障",
+    "杆塔构件制造缺陷故障"
+  ],
+  "detail_layers": [
+    "故障原因",
+    "故障现象",
+    "应对措施",
+    "故障后果",
+    "安全风险",
+    "应急资源"
+  ],
+  "nodes": [
+    {
+      "vid": "n_0",
+      "name": "杆塔",
+      "node_desc": "依据第一至第八层级梳理结果形成的杆塔故障知识图谱实体。",
+      "lvl": 0,
+      "source_id": 0,
+      "degree": 3,
+      "weight": 10,
+      "stroke": "#4D7C0F",
+      "typed_tag": "root_node",
+      "major": ""
+    },
+    {
+      "vid": "n_1",
+      "name": "塔身姿态与结构失稳故障",
+      "node_desc": "杆塔故障一级大类：塔身姿态与结构失稳故障。",
+      "lvl": 1,
+      "source_id": 1,
+      "degree": 4,
+      "weight": 9,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l1",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_2",
+      "name": "基础与地基失效故障",
+      "node_desc": "杆塔故障一级大类：基础与地基失效故障。",
+      "lvl": 1,
+      "source_id": 2,
+      "degree": 2,
+      "weight": 9,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l1",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_3",
+      "name": "构件制造与材料缺陷故障",
+      "node_desc": "杆塔故障一级大类：构件制造与材料缺陷故障。",
+      "lvl": 1,
+      "source_id": 3,
+      "degree": 2,
+      "weight": 9,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l1",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_4",
+      "name": "杆塔倾倒故障",
+      "node_desc": "塔身姿态与结构失稳故障下的二级故障小类：杆塔倾倒故障。",
+      "lvl": 2,
+      "source_id": 4,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_5",
+      "name": "杆塔倾倒故障-故障原因",
+      "node_desc": "超设计大风横向荷载、持续暴雨冲刷、山体滑坡、洪水长期浸泡、泥石杂物撞击以及塔材或焊接缺陷都会导致杆塔整体失稳并发生倾倒。",
+      "lvl": 3,
+      "source_id": 5,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_6",
+      "name": "杆塔倾倒故障-故障现象",
+      "node_desc": "现场可见杆塔整体倒伏、塔材螺栓孔撕裂或主材弯曲，导地线严重受损，线路跳闸且重合失败，故障点附近存在明显倒塔痕迹。",
+      "lvl": 4,
+      "source_id": 6,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_7",
+      "name": "杆塔倾倒故障-应对措施",
+      "node_desc": "立即停电隔离故障区段，启动现场处置方案，组织应急抢修塔、吊装与更换塔材作业，恢复导地线连接并复核受损区段稳定性。",
+      "lvl": 3,
+      "source_id": 7,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_8",
+      "name": "杆塔倾倒故障-故障后果",
+      "node_desc": "会造成线路跳闸停运、导地线严重损伤、重要用户失电，严重时压覆周边道路、房屋或交叉跨越设施。",
+      "lvl": 4,
+      "source_id": 8,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_9",
+      "name": "杆塔倾倒故障-安全风险",
+      "node_desc": "存在倒塔砸落、导线摆落、跨越物受损和抢修现场次生坍塌风险，容易危及周边人员、交通和邻近设备安全。",
+      "lvl": 4,
+      "source_id": 9,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_10",
+      "name": "杆塔倾倒故障-应急资源",
+      "node_desc": "需要应急抢修塔、吊装车辆、塔材与金具备件、导地线材料、停电调度支持、现场抢修和安全监护人员。",
+      "lvl": 4,
+      "source_id": 10,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_11",
+      "name": "杆塔倾斜故障",
+      "node_desc": "塔身姿态与结构失稳故障下的二级故障小类：杆塔倾斜故障。",
+      "lvl": 2,
+      "source_id": 11,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_12",
+      "name": "杆塔倾斜故障-故障原因",
+      "node_desc": "基础局部冲刷外露、地基承载力下降、杆塔局部塔材变形、长期受风受水耦合作用以及周边地质松动都会造成杆塔偏斜。",
+      "lvl": 3,
+      "source_id": 12,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_13",
+      "name": "杆塔倾斜故障-故障现象",
+      "node_desc": "杆塔塔身向单侧偏斜，基础局部外露或悬空，横担和主材出现变形，倾斜角度明显增大，巡视中可见周边土体冲刷或沉陷痕迹。",
+      "lvl": 4,
+      "source_id": 13,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_14",
+      "name": "杆塔倾斜故障-应对措施",
+      "node_desc": "先控制运行风险并组织特巡，对倾斜塔实施临时支护、抱杆抬升、基础夯实和加固处理，必要时停电校正塔身并更换受损构件。",
+      "lvl": 3,
+      "source_id": 14,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_15",
+      "name": "杆塔倾斜故障-故障后果",
+      "node_desc": "会持续削弱塔身稳定裕度，进一步发展为倒塔、断线或大范围停电事故，并增加后续抢修难度。",
+      "lvl": 4,
+      "source_id": 15,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_16",
+      "name": "杆塔倾斜故障-安全风险",
+      "node_desc": "带缺陷运行可能在后续风雨荷载下突然失稳，检修过程中也存在杆身二次倾覆、坠落和误判风险。",
+      "lvl": 4,
+      "source_id": 16,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_17",
+      "name": "杆塔倾斜故障-应急资源",
+      "node_desc": "需要抱杆、千斤顶、夯实和回填材料、基础加固物资、测斜与测量工具、巡视及抢修人员。",
+      "lvl": 4,
+      "source_id": 17,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_18",
+      "name": "杆塔移位故障",
+      "node_desc": "塔身姿态与结构失稳故障下的二级故障小类：杆塔移位故障。",
+      "lvl": 2,
+      "source_id": 18,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_19",
+      "name": "杆塔移位故障-故障原因",
+      "node_desc": "山体滑坡、洪水冲刷、基础滑移、拉线盘松动和地基整体位移会使杆塔沿线路或横线路方向偏移，严重时进一步诱发断线或横担受损。",
+      "lvl": 3,
+      "source_id": 19,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_20",
+      "name": "杆塔移位故障-故障现象",
+      "node_desc": "杆塔整体向大号侧或横线路方向位移，塔位明显偏离原设计位置，常伴随拉线盘外露松动、横担连接异常，严重时进一步出现导线或地线断裂。",
+      "lvl": 4,
+      "source_id": 20,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_21",
+      "name": "杆塔移位故障-应对措施",
+      "node_desc": "封锁危险区并停运线路，查明滑移范围和基础状态，实施杆塔回位或重建处理，同步修复横担和校核相邻杆塔受力；若已断线，再补充开展导地线更换。",
+      "lvl": 3,
+      "source_id": 21,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_22",
+      "name": "杆塔移位故障-故障后果",
+      "node_desc": "会导致塔位失准、相邻杆塔受力异常和线路长时间停运，严重时进一步发展为导地线断裂、跨越区事故或多基杆塔连锁失稳。",
+      "lvl": 4,
+      "source_id": 22,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_23",
+      "name": "杆塔移位故障-安全风险",
+      "node_desc": "地质继续滑移时可能引发连锁断线和多基杆塔失稳，抢修区存在山体二次滑坡、落石、跨越区触碰和交通阻断风险。",
+      "lvl": 4,
+      "source_id": 23,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_24",
+      "name": "杆塔移位故障-应急资源",
+      "node_desc": "需要地质勘查支持、回位或重建工器具、测量定位设备、横担和拉线备件、道路清障设备、应急施工和监护力量。",
+      "lvl": 4,
+      "source_id": 24,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "塔身姿态与结构失稳故障"
+    },
+    {
+      "vid": "n_25",
+      "name": "杆塔基础损伤故障",
+      "node_desc": "基础与地基失效故障下的二级故障小类：杆塔基础损伤故障。",
+      "lvl": 2,
+      "source_id": 25,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l2",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_26",
+      "name": "杆塔基础损伤故障-故障原因",
+      "node_desc": "暴雨洪水冲刷、长期浸泡、山洪夹杂石块树木撞击、特殊地质下承载力差异、基础设计不合理、插入式角钢加工偏差以及混凝土选材或养护不当，都会造成基础外露、下沉、偏位、开裂或强度不足。",
+      "lvl": 3,
+      "source_id": 26,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_27",
+      "name": "杆塔基础损伤故障-故障现象",
+      "node_desc": "基础周边土石被冲刷流失，塔基外露、悬空、开裂或局部破裂，拉线盘松动，一侧基础明显下沉，基础尺寸或塔脚位置与设计不符，现场可见河道冲沟、沉陷和受力异常痕迹。",
+      "lvl": 4,
+      "source_id": 27,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_28",
+      "name": "杆塔基础损伤故障-应对措施",
+      "node_desc": "复测基础尺寸、强度和地质条件，对受冲刷基础及时回填夯实、修筑护坡或防护坝，对下沉或开裂基础补设底盘、补强或返工重建，校正塔脚位置，并对同区段同型基础开展专项复查。",
+      "lvl": 3,
+      "source_id": 28,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_29",
+      "name": "杆塔基础损伤故障-故障后果",
+      "node_desc": "会造成基础承载力下降、塔脚受力异常和结构寿命缩短，进一步诱发杆塔倾斜、移位或倾倒；在建设阶段则可能导致返工重建并延误工程投运。",
+      "lvl": 4,
+      "source_id": 29,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_30",
+      "name": "杆塔基础损伤故障-安全风险",
+      "node_desc": "若仅处理表面冲沟或裂纹而未恢复基础承载力，后续强降雨或长期荷载下易再次失稳；现场还存在涉水、塌方、开挖坍塌和机械作业风险。",
+      "lvl": 4,
+      "source_id": 30,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_31",
+      "name": "杆塔基础损伤故障-应急资源",
+      "node_desc": "需要基础复测和地基检测工具、砂石和混凝土材料、护坡护坝物资、抽排水设备、补强底盘、返工模板、钢筋材料以及土建检修人员。",
+      "lvl": 4,
+      "source_id": 31,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "基础与地基失效故障"
+    },
+    {
+      "vid": "n_32",
+      "name": "杆塔构件制造缺陷故障",
+      "node_desc": "构件制造与材料缺陷故障下的二级故障小类：杆塔构件制造缺陷故障。",
+      "lvl": 2,
+      "source_id": 32,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l2",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_33",
+      "name": "杆塔构件制造缺陷故障-故障原因",
+      "node_desc": "非标采购、主材规格偏小、材质不达标、插入式角钢尺寸加工错误、钢管塔法兰盘虚焊或焊缝间隙等制造质量问题，会削弱杆塔或基础构件强度并诱发变形、断裂和倾倒。",
+      "lvl": 3,
+      "source_id": 33,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_34",
+      "name": "杆塔构件制造缺陷故障-故障现象",
+      "node_desc": "现场可见主材规格与设计不符、塔材和横担异常挠曲、屈服点偏低、塔脚板受拉受压变形，或钢管塔法兰盘存在裂缝、虚焊点和断裂痕迹，部分缺陷会在较小荷载下提前暴露。",
+      "lvl": 4,
+      "source_id": 34,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_35",
+      "name": "杆塔构件制造缺陷故障-应对措施",
+      "node_desc": "立即核对设计图纸、招标资料和供货证明，对主材规格、插入角钢和法兰焊缝进行复检与无损检测，停运更换不合格构件，并对同线路同厂家同批次杆塔开展排查、加固或整体更换。",
+      "lvl": 3,
+      "source_id": 35,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_36",
+      "name": "杆塔构件制造缺陷故障-故障后果",
+      "node_desc": "会导致杆塔或基础构件强度储备不足，形成群发性弯曲、开裂、断裂和倾倒风险，严重影响整段线路运行可靠性、设备寿命和工程质量。",
+      "lvl": 4,
+      "source_id": 36,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_37",
+      "name": "杆塔构件制造缺陷故障-安全风险",
+      "node_desc": "同批次不合格塔材、插入角钢或焊接缺陷具有群发性和隐蔽性，若只处理单基问题而未全线排查，后续运行和施工阶段都存在较高结构失效风险。",
+      "lvl": 4,
+      "source_id": 37,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "构件制造与材料缺陷故障"
+    },
+    {
+      "vid": "n_38",
+      "name": "杆塔构件制造缺陷故障-应急资源",
+      "node_desc": "需要设计图纸和招标资料、材质检验与无损检测设备、合格塔材和钢管塔替换件、加固材料、厂家技术支持以及施工检修队伍。",
+      "lvl": 4,
+      "source_id": 38,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "构件制造与材料缺陷故障"
+    }
+  ],
+  "links": [
+    {
+      "src": "n_0",
+      "dst": "n_1",
+      "relation": "发生"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_4",
+      "relation": "包含"
+    },
+    {
+      "src": "n_4",
+      "dst": "n_5",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_5",
+      "dst": "n_6",
+      "relation": "表现"
+    },
+    {
+      "src": "n_4",
+      "dst": "n_7",
+      "relation": "处置"
+    },
+    {
+      "src": "n_5",
+      "dst": "n_8",
+      "relation": "导致"
+    },
+    {
+      "src": "n_7",
+      "dst": "n_9",
+      "relation": "存在"
+    },
+    {
+      "src": "n_7",
+      "dst": "n_10",
+      "relation": "需要"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_11",
+      "relation": "包含"
+    },
+    {
+      "src": "n_11",
+      "dst": "n_12",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_12",
+      "dst": "n_13",
+      "relation": "表现"
+    },
+    {
+      "src": "n_11",
+      "dst": "n_14",
+      "relation": "处置"
+    },
+    {
+      "src": "n_12",
+      "dst": "n_15",
+      "relation": "导致"
+    },
+    {
+      "src": "n_14",
+      "dst": "n_16",
+      "relation": "存在"
+    },
+    {
+      "src": "n_14",
+      "dst": "n_17",
+      "relation": "需要"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_18",
+      "relation": "包含"
+    },
+    {
+      "src": "n_18",
+      "dst": "n_19",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_19",
+      "dst": "n_20",
+      "relation": "表现"
+    },
+    {
+      "src": "n_18",
+      "dst": "n_21",
+      "relation": "处置"
+    },
+    {
+      "src": "n_19",
+      "dst": "n_22",
+      "relation": "导致"
+    },
+    {
+      "src": "n_21",
+      "dst": "n_23",
+      "relation": "存在"
+    },
+    {
+      "src": "n_21",
+      "dst": "n_24",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_2",
+      "relation": "发生"
+    },
+    {
+      "src": "n_2",
+      "dst": "n_25",
+      "relation": "包含"
+    },
+    {
+      "src": "n_25",
+      "dst": "n_26",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_26",
+      "dst": "n_27",
+      "relation": "表现"
+    },
+    {
+      "src": "n_25",
+      "dst": "n_28",
+      "relation": "处置"
+    },
+    {
+      "src": "n_26",
+      "dst": "n_29",
+      "relation": "导致"
+    },
+    {
+      "src": "n_28",
+      "dst": "n_30",
+      "relation": "存在"
+    },
+    {
+      "src": "n_28",
+      "dst": "n_31",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_3",
+      "relation": "发生"
+    },
+    {
+      "src": "n_3",
+      "dst": "n_32",
+      "relation": "包含"
+    },
+    {
+      "src": "n_32",
+      "dst": "n_33",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_33",
+      "dst": "n_34",
+      "relation": "表现"
+    },
+    {
+      "src": "n_32",
+      "dst": "n_35",
+      "relation": "处置"
+    },
+    {
+      "src": "n_33",
+      "dst": "n_36",
+      "relation": "导致"
+    },
+    {
+      "src": "n_35",
+      "dst": "n_37",
+      "relation": "存在"
+    },
+    {
+      "src": "n_35",
+      "dst": "n_38",
+      "relation": "需要"
+    }
+  ],
+  "counts": {
+    "nodes": 39,
+    "links": 38,
+    "groups": 3,
+    "group_members": 38
+  }
+}
