@@ -1,0 +1,445 @@
+The Research on Current Status of Digital
+Technology System of Electric Power Emergency
+Plan
+Cheng Guan
+Department of Electrical Emergency Response
+Grid Intelligent Power Grid Research Institute
+Beijing, China
+guancheng2009@126.com
+Diange Fang
+Department of Electrical Emergency Response
+Grid Intelligent Power Grid Research Institute
+Beijing, China
+695467928@qq.com
+Tao Li
+Department of Electricity Management
+Grid Corporation of China
+Beijing, China
+tao-li@sgcc.com.cn
+Xun Zhang, Feng Wei and Hong Zhao
+Department of Electrical Emergency Response
+Grid Gansu Electric Power Scientific Research Institute
+Gansu, China
+695977928@qq.com
+Abstract—Based on the knowledge system of electric power
+emergency command, study the digitalization technology based
+on the theories of natural language processing, knowledge
+mapping,
+scenario-coping,
+etc.,
+realize
+the
+autonomous
+recognition, categorization, disassembly and optimization of the
+text of the emergency plan, establish the ontology model of the
+plan by using the knowledge mapping, study the scenario-coping
+technology, set up the relational network model, and establish the
+digitalization technology system of electric power emergency plan
+by combining the above theoretical studies. The above theories
+are combined to establish a digital technology system for electric
+power emergency plans.
+Keywords-emergency planning digitization; natural language
+processing; knowledge mapping; scenario-response
+I.
+INTRODUCTION
+The electric power industry has initially realized the
+structured disassembly of a single text in the form of "manual
+marking + automatic disassembly" with the special emergency
+plan as the basic data, constructed the text database and map
+database of the special emergency plan for strong convection
+and typhoon disasters, and computerized automatic structured
+disassembly of the strong convection and typhoon plans of part
+of the province and its subordinate municipalities and counties
+at the three levels. Structured automatic disassembly. The
+formation
+of
+a
+four-in-one
+emergency
+plan
+digitization
+technology system of "disassembling-association-matching-
+application" is a realistic demand for the construction of the
+energy Internet and a strategic choice for the transformation
+and upgrading of electric power companies.
+This paper uses the methods of literature analysis and
+systematic knowledge construction to study the disassembling
+technology, storage technology, and application technology of
+electric power emergency plans, and to provide theoretical
+guidance for constructing a digital plan model and a chained
+task instruction template.
+II.
+CONNOTATION AND CURRENT STATUS OF
+RESEARCH ON DIGITIZATION OF EMERGENCY
+PREPAREDNESS
+A.
+Research and Analysis on the Digitization of China's
+Emergency Preparedness Plan
+Promoting the digitization of emergency plans is an
+inevitable requirement for strengthening the construction of the
+emergency plan system and strengthening the comprehensive
+coordination and articulation functions of the emergency
+management department for various types of plans. As a key
+technical system to improve the ability to assist emergency
+decision-making and command and disposal, the emergency
+plan digitization platform can not only connect or take over the
+static
+"emergency
+plan
+a
+map"
+and
+other
+static
+data
+management, but also realize the digitization of various
+emergency response rule systems under emergency conditions,
+which is a powerful hand to realize the unified, scientific and
+efficient management of various types of emergency plans at
+various levels and will promote a significant shift in the way of
+plan
+management
+and
+the
+concept
+of
+emergency
+plan
+management. It is a powerful hand for realizing the unified
+scientific and efficient management of various types of
+emergency plans at all levels, and will promote a major change
+in the way and concept of plan management[1]. It is a powerful
+tool to realize the unified scientific and efficient management
+of various types of emergency plans at all levels, and will
+promote a major change in the way and concept of plan
+management.
+The first stage is the electronicization of the emergency
+plan, the second stage is the structuring of the emergency plan,
+the third stage is the visualization of the emergency plan, and
+the fourth stage is the intelligence of the emergency plan.
+979-8-3503-6189-6/24/$31.00©2024 IEEE
+288
+2024 IEEE 14th International Conference on Electronics Information and Emergency Communication (ICEIEC) | 979-8-3503-6189-6/24/$31.00 ©2024 IEEE | DOI: 10.1109/ICEIEC61773.2024.10561800
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:31:25 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+China's electric power emergency plan digitization is in the
+transition from the second stage to the third stage, and the basic
+theory of the emergency plan digitization system is built
+through natural language processing technology, knowledge
+mapping technology, scenario-coping technology, and multi-
+source information fusion technology, as shown in Figure 1.
+Figure 1.
+Technical system framework of digital power emergency plan
+B.
+Summary of Research on Digitization of International
+Emergency Preparedness
+Since the research on emergency management theory and
+technology in developed countries such as the United States,
+Britain and France began in the 1980s of the last century. At
+present, they have generally established a relatively complete
+emergency
+management
+application
+system,
+effectively
+integrating risk management, accident simulation, prediction
+and
+early
+warning,
+decision-making
+support,
+material
+management and other functions, so that it is very easy to
+develop a digital planning system on this basis, and their digital
+planning technology has been relatively mature. The digital
+planning technology of the United States, the United Kingdom
+and other countries has even been applied to hospitals, schools,
+residential
+communities
+and
+other
+micro-emergency
+management areas[2] The digital planning technology has even
+been applied to micro emergency management areas such as
+hospitals, schools and residential communities.
+III.
+THEORETICAL STUDY ON THE
+DIGITALIZATION STAGE OF ELECTRICITY
+EMERGENCY PREPAREDNESS PLAN
+A.
+Natural Language Processing for Power Emergency
+Preparedness
+The text disassembly of the emergency plan is mainly done
+through chapter convergence and event extraction[3]. The main
+framework structure of emergency plan text disassembly is
+constructed by chapter aggregation and event extraction. Then,
+according to the rule-based Chinese lexicon and statistical
+Chinese lexicon, combined with the power plan dictionary, a
+large number of special emergency plans are trained for
+lexicon. Then a large amount of experimental data of
+traditional machine learning[4] In addition, we propose the
+disassembly step of "word-sentence-segmentation" for the
+power emergency plan, construct the joint extraction model at
+document level, and further process the text with neural
+network, combining with the research method of feature
+extraction[5]. Combined with the research method of feature
+extraction, it reduces the data dimension of the emergency
+response plan, organizes the existing data features, completes
+the theme recognition, segmentation and clauses, semantic
+recognition and additional information acquisition of the plan,
+extracts the text entities, and forms a digitalized set of
+instructions based on the instructions of the emergency
+response plan, which provides effective data support for the
+construction of the electric power knowledge graph.
+Figure 2.
+Natural language processing technology system
+B.
+Electricity Emergency Planning Knowledge Graph
+Construction
+Knowledge Graph[6] The construction process is the
+process of extracting knowledge elements (facts) from raw data
+and depositing them in a knowledge base. Knowledge graph
+construction is iterative, and each iteration consists of three
+major processes: information extraction, knowledge fusion, and
+knowledge processing.
+1)
+Information extraction
+Information
+extraction
+is
+an
+automated
+process
+of
+extracting structured information such as entities, relationships,
+and entity attributes from semi-structured and unstructured data,
+and the key technologies involved include: entity extraction,
+relationship extraction, and attribute extraction.
+2)
+Knowledge integration
+Knowledge fusion consists of two main components: entity
+linking and knowledge merging. Knowledge fusion ensures the
+quality of knowledge by removing ambiguities in concepts and
+eliminating redundancies and misconceptions.
+3)
+Knowledge processing
+Facts themselves are not equal to knowledge, and to finally
+obtain a structured and networked knowledge system, it is
+necessary to go through the process of knowledge processing.
+Knowledge processing mainly includes three aspects: ontology
+construction, knowledge reasoning and quality assessment. The
+updating of knowledge map includes two aspects: one is the
+addition of new knowledge; the other is the change of existing
+knowledge. At present, there are fewer discussions on the
+updating of knowledge graph, mostly from the perspective of
+database updating. Although there are many similarities
+between the update of knowledge base and the update of
+database, the real-time requirement of knowledge base for
+knowledge update is higher in comparison. At present, the
+updating method of knowledge base is divided into three
+categories: one is based on the updating of knowledge base
+construction personnel; the second is based on the updating of
+spatio-temporal information of knowledge base; and the third is
+289
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:31:25 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+the complete reconstruction of knowledge base. The first way
+is more accurate, but there is the disadvantage of consuming a
+lot of manual work; the second way is mostly updated by the
+knowledge base itself, with less manual intervention, but there
+is the problem of low accuracy; the third way does not require
+any manual intervention, but it takes a long time, especially
+when the size of the knowledge base is very large, so there is
+also the problem of inefficiency and high consumption.
+Figure 3.
+Overall framework of knowledge mapping
+C.
+Power Emergency Planning Scenarios - Response
+Technology Development
+The "scenario - response" type of emergency response in
+the field of emergency response is mainly proposed for non-
+conventional
+sudden-onset
+disasters
+and
+accidents,
+non-
+conventional sudden-onset disasters and accidents due to the
+low probability of occurrence, the evolution process is complex,
+the path of evolution is not clear and other characteristics, the
+previous "prediction - response" type of emergency response
+for conventional sudden-onset disasters and accidents is
+ineffective. The "prediction-response" type of emergency
+response previously proposed for conventional emergencies is
+ineffective.
+"Scenario-coping"
+can
+dynamically
+generate
+emergency decision-making programs to cope with non-
+conventional sudden-onset disaster accidents according to their
+current and constantly evolving scenarios, which is in essence a
+change
+in
+decision-making
+concepts[7].
+Analyzed
+the
+evolution process of non-conventional sudden-onset disaster
+accidents, and proposed the inherent law of the evolution
+mechanism of such accidents; Pomerol[8] Pomerol et al.
+proposed a network expression of scenario evolution and
+established an analytical process of scenario evolution of
+unconventional disaster accidents; He Jing et al. constructed a
+model of evolution of unconventional sudden-onset disaster
+accidents; Ahmed et al[9]. Analyzed the steps and methods of
+scenario construction; Yuan et al[10]. Constructed a scenario
+evolution analysis model of unconventional sudden disaster
+accidents based on PSR and Bayesian network.
+"Scenario-Response" Smart Grid
+Development
+Trends
+Toward
+Cloud
+Modeling
+and
+Situational
+Awareness.
+Literature[11-12] The application of situational awareness
+technology in smart distribution grids is carefully analyzed
+from
+three
+aspects:
+situational
+awareness,
+situational
+understanding, and situational prediction. Literature[13] An
+overview of the system framework of situational awareness
+technology in automatic intelligent dispatching of power grids
+is presented.
+IV.
+TRENDS IN THE DIGITIZATION OF
+EMERGENCY PREPAREDNESS
+A.
+Exploration of Multi-source Information Fusion
+Technology for Electric Power Emergency Plan
+The key to multi-source information fusion technology is
+data correlation, which is to reorder the observations of a set of
+trajectories to reflect the real motion of the target, as shown in
+Fig. 4. Data correlation is usually carried out before state
+estimation, only to obtain accurate data correlation processing
+results, in order to ensure the correctness of the subsequent
+processing, there are generally probabilistic data correlation,
+Bayesian network, graphical modeling and other research
+methods. Combined with the structured disassembly of power
+grid emergency plan, there are four main fusion research
+directions: text information estimation fusion, monitoring
+image fusion, asynchronous emergency information fusion and
+heterogeneous emergency information fusion.
+Figure 4.
+Schematic diagram of data association
+B.
+Recommendations for the Digital Development of
+Electricity Emergency Planning
+The key to the digital disassembly of emergency response
+plans lies in digital disassembly, while the current traditional
+method mainly focuses on how to disassemble text-based plans,
+starting from the response mechanism, plan structure, etc., to
+carry out logical or structured layer-by-layer disassembly, and
+to study and control the disassembly structure and granularity,
+while applying simple combinations in specific applications.
+The research on the digitization of emergency plans is biased
+towards the application of information technology system
+platforms, and the research on the structured disassembly of the
+plan itself is insufficient, with a low degree of intelligence,
+poor disassembly effect, and insufficient applicability for the
+emergency response work of on-site personnel; in addition, the
+research on the current event extraction and entity linking is
+mainly concentrated in the general field, the financial field, and
+other non-electricity fields, and relevant research in the field of
+electricity is still in the exploratory stage. in the power field is
+still in the exploratory stage.
+V.
+CONCLUSION
+This paper combines the practical foundation of power grid
+emergency plan digitization and combs the theoretical system
+of plan digitization: natural language processing technology,
+knowledge mapping technology, scenario-coping technology,
+and multi-source information fusion technology, to provide
+theoretical basis and logical framework for the digitization and
+disassembly of the emergency plan.
+290
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:31:25 UTC from IEEE Xplore.  Restrictions apply. 
+
+
+On the basis of the theoretical system proposed by, it is
+suggested that the electric power industry should focus on the
+digital disassembly mechanism of the plan itself, improve the
+electric power emergency knowledge map, and develop the
+automatic generation system of the on-site emergency plan by
+combining with the front-line emergency response work of the
+electric power industry. Accelerate the product landing of the
+feasibility study results and develop the social benefits and
+economic output of the results.
+REFERENCES
+[1]
+LI Yingshun,REN Jing,WANG Jingjing. Discussion on the development
+direction and
+path of
+digitization
+of
+emergency
+plan[J].
+China
+Emergency Management,2022(09):20-31.
+[2]
+ZHANG Chao, PEI Yuqi, QIU Hua. Development status and trend of
+digital emergency planning technology at home and abroad[J]. China
+Production Safety Science and Technology,2010,6(05):154-158.
+[3]
+Qiang Chen. A convergent model of natural language understanding
+process for chapter processing and its application to intelligent
+instrument design[D]. Xi'an University of Electronic Science and
+Technology.
+[4]
+H. Ji and R.Grishman. Refining event extraction through crossdocument
+inference[C]. 46th Annual Meeting of the Association for Computational
+Linguistics: Human Language Technologies, 2008:254-262.
+[5]
+Gao Lizheng, Zhou Gang, Luo Junyong,et al. A review of meta-event
+extraction research[J]. Computer Science,2019,46(08):9-15.
+[6]
+Zhang Jixiang, Zhang Xiangsen, Wu Changxu et al. A review of
+knowledge
+graph
+construction
+techniques[J].
+Computer
+Engineering,2022,48(03):23-37.
+[7]
+Mahmoud M, Liu Y O ,Hartmann H, et al. A formal frameworkfor
+scenario development in support of environmental decision-making [J].
+Environmental Modeling & Software, 2009, 24( 7) : 798 - 808.
+[8]
+Pomerol J-C. Scenario development andpractical decisionmaking under
+uncertainty [J]. Decision Support Systems ,2001 ,31: 197 -204.
+[9]
+Ahmed D M, Sundaram D, Piramuthu S. Knowledge-basedprocess and
+support [J]. Decisionscenario managementSupport Systems ,2010 ,49:
+507 - 520.
+[10] YUAN Xiaofang, TIAN Shuicheng, WANG Li. Scenario Analysis of
+Unconventional Emergencies Based on PSR and Bayesian Networks
+Gang[J]. Chinese Journal of Safety Science,2011,21(1) : 171 - 176.
+[11] YE Qiong, LI Shaoqian, ZHANG Youhua,SHU Xingwang,NI Dongping.
+A review of cloud modeling and applications[J]. Computer Engineering
+and Computing,2011,32(12):4198-4201..
+[12] WANG Shouxiang, LIANG Dong, GE Leijiao. Key technology of smart
+distribution network situational awareness and situational awareness[J].
+Power System Automation,2016,40(12).
+[13] YANG Shengchun, TANG Biqiang, YAO Jianguo,et al. Automatic
+intelligent scheduling architecture and key technologies for power grid
+based on situational awareness[J]. Grid Technology, 2014,38(1):33-39.
+291
+Authorized licensed use limited to: HUNAN UNIVERSITY. Downloaded on March 10,2026 at 07:31:25 UTC from IEEE Xplore.  Restrictions apply. 
