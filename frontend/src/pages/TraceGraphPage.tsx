@@ -20,6 +20,7 @@ const NODE_COLOR_MAP: Record<TraceNode['type'], string> = {
   emergency_resource: '#14b8a6',
   unknown: '#64748b'
 };
+const LEVEL3_RADIAL_OFFSET_STEP = 10;
 
 function getNodeSize(node: TraceNode): [number, number] {
   if (node.type === 'root_node') {
@@ -166,19 +167,56 @@ function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number)
     .filter((node): node is TraceNode => Boolean(node));
 
   const fullCircle = Math.PI * 2;
-  const ringConfigs: Array<{ nodes: TraceNode[]; radius: number }> = [
-    { nodes: level1, radius: 180 },
-    { nodes: level2, radius: 540 },
-    { nodes: level3, radius: 760 },
-    { nodes: level4, radius: 980 }
-  ];
+  const l1Radius = 180;
+  const l2Radius = 540;
+  const l3Radius = 760;
+  const l4Radius = 1470;
 
-  ringConfigs.forEach(({ nodes, radius }) => {
-    nodes.forEach((node, index) => {
-      const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, nodes.length);
-      positions[node.id] = polarToCartesian(centerX, centerY, radius, angle);
+  level1.forEach((node, index) => {
+    const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, level1.length);
+    positions[node.id] = polarToCartesian(centerX, centerY, l1Radius, angle);
+    visibleNodeIds.add(node.id);
+  });
+
+  level2.forEach((node, index) => {
+    const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, level2.length);
+    positions[node.id] = polarToCartesian(centerX, centerY, l2Radius, angle);
+    visibleNodeIds.add(node.id);
+  });
+
+  for (const l1Node of level1) {
+    const l2Children = (outgoing.get(l1Node.id) || [])
+      .map((id) => nodeMap.get(id))
+      .filter((node): node is TraceNode => Boolean(node && node.type === 'fault_l2'));
+
+    const level3Branch = level3
+      .filter((node) => {
+        const parentL2 = [...outgoing.entries()].find(([, targets]) => targets.includes(node.id))?.[0] || '';
+        return l2Children.some((child) => child.id === parentL2);
+      })
+      .sort((a, b) => {
+        const aParent = [...outgoing.entries()].find(([, targets]) => targets.includes(a.id))?.[0] || '';
+        const bParent = [...outgoing.entries()].find(([, targets]) => targets.includes(b.id))?.[0] || '';
+        const aIndex = level2.findIndex((node) => node.id === aParent);
+        const bIndex = level2.findIndex((node) => node.id === bParent);
+        return aIndex - bIndex;
+      });
+
+    level3Branch.forEach((node, index) => {
+      const globalIndex = level3.findIndex((item) => item.id === node.id);
+      const angle = -Math.PI / 2 + ((globalIndex + 0.5) * fullCircle) / Math.max(1, level3.length);
+      const distanceFromStart = index;
+      const distanceFromEnd = level3Branch.length - 1 - index;
+      const layerOffset = Math.min(distanceFromStart, distanceFromEnd) * LEVEL3_RADIAL_OFFSET_STEP;
+      positions[node.id] = polarToCartesian(centerX, centerY, l3Radius + layerOffset, angle);
       visibleNodeIds.add(node.id);
     });
+  }
+
+  level4.forEach((node, index) => {
+    const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, level4.length);
+    positions[node.id] = polarToCartesian(centerX, centerY, l4Radius, angle);
+    visibleNodeIds.add(node.id);
   });
 
   return { positions, visibleNodeIds };
