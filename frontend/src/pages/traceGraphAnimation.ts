@@ -1,5 +1,5 @@
 import type { PlanTrace, TraceEdge, TraceNode } from '../types/plan';
-import { buildVisibleTraceGraphData } from './traceGraphScene';
+import { buildVisibleTraceGraphData, computeTraceLayout } from './traceGraphScene';
 
 type BranchPlan = {
   l1Id: string;
@@ -102,6 +102,14 @@ function delay(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function easeOutCubic(value: number) {
+  return 1 - (1 - value) ** 3;
+}
+
+function lerp(start: number, end: number, progress: number) {
+  return start + (end - start) * progress;
+}
+
 export function buildTraceAnimationPlans(trace: PlanTrace) {
   const { nodeMap, outgoing } = buildGraphIndexes(trace);
   const root = trace.graph.nodes.find((node) => node.type === 'root_node');
@@ -149,39 +157,124 @@ export function createTraceAnimationController(params: {
 }) {
   const { trace, graph, darkMode, width, height } = params;
   const { rootId, focusHitPlan, focusRemainderPlan, clockwisePlans } = buildTraceAnimationPlans(trace);
+  const { positions } = computeTraceLayout(trace, width, height);
+  const { incoming } = buildGraphIndexes(trace);
 
   const visibleNodeIds = new Set<string>(rootId ? [rootId] : []);
   const visibleEdgeIds = new Set<string>();
   const ghostNodeIds = new Set<string>();
+  const nodePositionOverrides = new Map<string, { x: number; y: number }>();
+  const nodeOpacityOverrides = new Map<string, number>();
+  const edgeOpacityOverrides = new Map<string, number>();
+  const edgeLabelOpacityOverrides = new Map<string, number>();
   let stopped = false;
   const timers: number[] = [];
+  let renderChain = Promise.resolve();
+
+  const EDGE_GROW_DURATION = 96;
+  const NODE_FADE_DURATION = 72;
+  const FRAME_INTERVAL = 16;
 
   const flush = async () => {
     if (stopped) return;
-    graph.setData(buildVisibleTraceGraphData(trace, darkMode, width, height, visibleNodeIds, visibleEdgeIds, ghostNodeIds));
-    await graph.render();
+    const nextData = buildVisibleTraceGraphData(trace, darkMode, width, height, visibleNodeIds, visibleEdgeIds, {
+      ghostNodeIds,
+      nodePositionOverrides,
+      nodeOpacityOverrides,
+      edgeOpacityOverrides,
+      edgeLabelOpacityOverrides
+    });
+    renderChain = renderChain.then(async () => {
+      if (stopped) return;
+      graph.setData(nextData);
+      await graph.render();
+    });
+    await renderChain;
   };
 
   const playBranch = async (plan: BranchPlan | null, onAfterLevel2?: () => void) => {
     if (!plan || stopped) return;
     for (let index = 0; index < plan.edgeLevels.length; index += 1) {
-      for (const nodeId of plan.nodeLevels[index]) {
-        if (!visibleNodeIds.has(nodeId)) {
-          ghostNodeIds.add(nodeId);
+      const nextNodeIds = plan.nodeLevels[index].filter((nodeId) => !visibleNodeIds.has(nodeId));
+      const nextEdgeIds = plan.edgeLevels[index].filter((edgeId) => !visibleEdgeIds.has(edgeId));
+
+      const startPositions = new Map<string, { x: number; y: number }>();
+      for (const nodeId of nextNodeIds) {
+        const parentId = incoming.get(nodeId)?.[0]?.source || rootId;
+        const parentPos = nodePositionOverrides.get(parentId) || positions[parentId] || positions[rootId];
+        if (!parentPos) continue;
+        startPositions.set(nodeId, parentPos);
+        ghostNodeIds.add(nodeId);
+        nodePositionOverrides.set(nodeId, { ...parentPos });
+        nodeOpacityOverrides.set(nodeId, 0);
+      }
+
+      for (const edgeId of nextEdgeIds) {
+        visibleEdgeIds.add(edgeId);
+        edgeOpacityOverrides.set(edgeId, 1);
+        edgeLabelOpacityOverrides.set(edgeId, 0);
+      }
+
+      await flush();
+
+      const growFrames = Math.max(2, Math.round(EDGE_GROW_DURATION / FRAME_INTERVAL));
+      for (let frame = 1; frame <= growFrames; frame += 1) {
+        if (stopped) return;
+        const progress = easeOutCubic(frame / growFrames);
+        for (const nodeId of nextNodeIds) {
+          const start = startPositions.get(nodeId);
+          const end = positions[nodeId];
+          if (!start || !end) continue;
+          nodePositionOverrides.set(nodeId, {
+            x: lerp(start.x, end.x, progress),
+            y: lerp(start.y, end.y, progress)
+          });
+        }
+        await flush();
+        if (frame < growFrames) {
+          await delay(FRAME_INTERVAL);
         }
       }
-      for (const edgeId of plan.edgeLevels[index]) visibleEdgeIds.add(edgeId);
-      await flush();
-      await delay(160);
-      for (const nodeId of plan.nodeLevels[index]) {
+
+      for (const nodeId of nextNodeIds) {
         ghostNodeIds.delete(nodeId);
         visibleNodeIds.add(nodeId);
+        if (positions[nodeId]) {
+          nodePositionOverrides.set(nodeId, positions[nodeId]);
+        }
+        nodeOpacityOverrides.set(nodeId, 0);
       }
       await flush();
+
       if (index === 1 && onAfterLevel2) {
         onAfterLevel2();
       }
-      await delay(140);
+
+      const fadeFrames = Math.max(2, Math.round(NODE_FADE_DURATION / FRAME_INTERVAL));
+      for (let frame = 1; frame <= fadeFrames; frame += 1) {
+        if (stopped) return;
+        const progress = frame / fadeFrames;
+        for (const nodeId of nextNodeIds) {
+          nodeOpacityOverrides.set(nodeId, progress);
+        }
+        for (const edgeId of nextEdgeIds) {
+          edgeLabelOpacityOverrides.set(edgeId, progress);
+        }
+        await flush();
+        if (frame < fadeFrames) {
+          await delay(FRAME_INTERVAL);
+        }
+      }
+
+      for (const nodeId of nextNodeIds) {
+        nodeOpacityOverrides.delete(nodeId);
+        nodePositionOverrides.delete(nodeId);
+      }
+      for (const edgeId of nextEdgeIds) {
+        edgeOpacityOverrides.delete(edgeId);
+        edgeLabelOpacityOverrides.delete(edgeId);
+      }
+      await flush();
     }
   };
 

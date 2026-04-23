@@ -90,7 +90,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
           nodes: [],
           edges: []
         },
-        animation: true,
+        animation: false,
         node: {
           type: 'rect',
           style: {
@@ -125,8 +125,8 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
             labelFill: (d: any) => (d.data?.isHit ? (darkMode ? '#f8fafc' : '#334155') : darkMode ? '#94a3b8' : '#64748b'),
             labelBackground: true,
             labelBackgroundFill: darkMode ? '#0f172a' : '#ffffff',
-            labelOpacity: (d: any) => (d.data?.isHit ? 1 : 0.78),
-            opacity: (d: any) => (d.data?.isHit ? 1 : 0.72)
+            labelOpacity: (d: any) => d.data?.labelOpacity ?? (d.data?.isHit ? 1 : 0.78),
+            opacity: (d: any) => d.data?.strokeOpacity ?? (d.data?.isHit ? 1 : 0.72)
           }
         } as any,
         behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'] as any
