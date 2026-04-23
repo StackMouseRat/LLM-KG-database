@@ -3,6 +3,7 @@ import { Card, Empty, Spin, Tag, Typography } from 'antd';
 import { fetchTraceSubgraph } from '../services/planApi';
 import type { PipelineRunResponse, PlanTrace, TraceNode } from '../types/plan';
 import { buildTraceGraphData } from './traceGraphScene';
+import { createTraceAnimationController } from './traceGraphAnimation';
 
 interface TraceGraphPageProps {
   pipeline: PipelineRunResponse | null;
@@ -71,12 +72,13 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
     if (!trace?.graph?.nodes?.length) return;
     let cancelled = false;
     let currentGraph: any = null;
+    let animationController: { start: () => Promise<void>; stop: () => void } | null = null;
 
     void import('@antv/g6').then(async ({ Graph }) => {
       if (cancelled || !graphContainerRef.current) return;
       const width = graphContainerRef.current.clientWidth || 1680;
       const height = graphContainerRef.current.clientHeight || 1080;
-      const { graphData, visibleNodeIds } = buildTraceGraphData(trace, darkMode, width, height);
+      const { graphData } = buildTraceGraphData(trace, darkMode, width, height);
       setGraphViewport({ width, height });
 
       const graph = new Graph({
@@ -84,7 +86,11 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
         width,
         height,
         autoFit: 'center',
-        data: graphData,
+        data: {
+          nodes: [],
+          edges: []
+        },
+        animation: true,
         node: {
           type: 'rect',
           style: {
@@ -140,10 +146,19 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       }
       currentGraph = graph;
       graphRef.current = graph;
+      animationController = createTraceAnimationController({
+        trace,
+        graph,
+        darkMode,
+        width,
+        height
+      });
+      void animationController.start();
     });
 
     return () => {
       cancelled = true;
+      animationController?.stop();
       if (currentGraph) {
         currentGraph.destroy();
       }

@@ -238,7 +238,42 @@ export function buildTraceGraphData(trace: PlanTrace, darkMode: boolean, width: 
             isHit: Boolean(edge.isHit),
             stroke: edge.isHit ? (darkMode ? '#94a3b8' : '#64748b') : darkMode ? '#334155' : '#cbd5e1'
           }
-        }))
+      }))
     }
+  };
+}
+
+export function buildVisibleTraceGraphData(
+  trace: PlanTrace,
+  darkMode: boolean,
+  width: number,
+  height: number,
+  visibleNodeIds?: Set<string>,
+  visibleEdgeIds?: Set<string>,
+  ghostNodeIds?: Set<string>
+) {
+  const { graphData } = buildTraceGraphData(trace, darkMode, width, height);
+
+  return {
+    nodes: visibleNodeIds || ghostNodeIds
+      ? graphData.nodes
+          .filter((node: any) => visibleNodeIds?.has(String(node.id)) || ghostNodeIds?.has(String(node.id)))
+          .map((node: any) => {
+            if (ghostNodeIds?.has(String(node.id)) && !visibleNodeIds?.has(String(node.id))) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  lineWidth: 0,
+                  labelColor: 'rgba(0,0,0,0)'
+                }
+              };
+            }
+            return node;
+          })
+      : graphData.nodes,
+    edges: visibleEdgeIds
+      ? graphData.edges.filter((edge: any) => visibleEdgeIds.has(String(edge.id)))
+      : graphData.edges
   };
 }
