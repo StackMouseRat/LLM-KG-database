@@ -21,7 +21,7 @@ const NODE_COLOR_MAP: Record<TraceNode['type'], string> = {
   unknown: '#64748b'
 };
 const LEVEL3_RADIAL_OFFSET_STEP = 30;
-const LEVEL4_RADIAL_OFFSET_STEP = 30;
+const LEVEL4_RADIAL_OFFSET_STEP = 50;
 
 function getNodeSize(node: TraceNode): [number, number] {
   if (node.type === 'root_node') {
@@ -122,10 +122,17 @@ function getDisplayLabel(node: TraceNode, focusFaultName: string) {
 }
 
 function getEdgeDisplayLabel(label: string) {
-  return String(label || '')
-    .replace(/故障/g, '')
-    .replace(/应对措施/g, '应对')
-    .replace(/安全风险/g, '风险');
+  const mapping: Record<string, string> = {
+    发生: '发生',
+    包含: '包含',
+    故障原因: '原因',
+    故障现象: '现象',
+    故障后果: '后果',
+    应对措施: '应对',
+    安全风险: '风险',
+    应急资源: '资源'
+  };
+  return mapping[String(label || '')] || String(label || '').slice(0, 2);
 }
 
 function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number) {
@@ -177,8 +184,8 @@ function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number)
   const fullCircle = Math.PI * 2;
   const l1Radius = 180;
   const l2Radius = 540;
-  const l3Radius = 720;
-  const l4Radius = 950;
+  const l3Radius = 680;
+  const l4Radius = 900;
 
   level1.forEach((node, index) => {
     const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, level1.length);
@@ -213,9 +220,8 @@ function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number)
     level3Branch.forEach((node, index) => {
       const globalIndex = level3.findIndex((item) => item.id === node.id);
       const angle = -Math.PI / 2 + ((globalIndex + 0.5) * fullCircle) / Math.max(1, level3.length);
-      const distanceFromStart = index;
-      const distanceFromEnd = level3Branch.length - 1 - index;
-      const layerOffset = Math.min(distanceFromStart, distanceFromEnd) * LEVEL3_RADIAL_OFFSET_STEP;
+      const layerIndex = index === 0 ? 0 : Math.min(index, level3Branch.length - index);
+      const layerOffset = layerIndex * LEVEL3_RADIAL_OFFSET_STEP;
       positions[node.id] = polarToCartesian(centerX, centerY, l3Radius + layerOffset, angle);
       visibleNodeIds.add(node.id);
     });
@@ -239,9 +245,8 @@ function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number)
     level4Branch.forEach((node, index) => {
       const globalIndex = level4.findIndex((item) => item.id === node.id);
       const angle = -Math.PI / 2 + ((globalIndex + 0.5) * fullCircle) / Math.max(1, level4.length);
-      const distanceFromStart = index;
-      const distanceFromEnd = level4Branch.length - 1 - index;
-      const layerOffset = Math.min(distanceFromStart, distanceFromEnd) * LEVEL4_RADIAL_OFFSET_STEP;
+      const layerIndex = index === 0 ? 0 : Math.min(index, level4Branch.length - index);
+      const layerOffset = layerIndex * LEVEL4_RADIAL_OFFSET_STEP;
       positions[node.id] = polarToCartesian(centerX, centerY, l4Radius + layerOffset, angle);
       visibleNodeIds.add(node.id);
     });
