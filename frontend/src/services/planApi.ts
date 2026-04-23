@@ -3,7 +3,8 @@ import type {
   PipelineRunResponse,
   PipelineChapter,
   PipelineCaseSearchResult,
-  PipelineCaseSearchCard
+  PipelineCaseSearchCard,
+  PlanTrace
 } from '../types/plan';
 
 function parseBasicInfo(raw: any) {
@@ -223,4 +224,33 @@ export async function runPipelineStream(
   if (buffer.trim()) {
     flushEvent(buffer);
   }
+}
+
+export async function fetchTraceSubgraph(payload: {
+  question: string;
+  faultScene?: string;
+  graphMaterial?: string;
+}): Promise<PlanTrace> {
+  const response = await fetch('/api/trace/subgraph', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+
+  return {
+    device: data?.device ? String(data.device) : undefined,
+    fault: data?.fault ? String(data.fault) : undefined,
+    graph: {
+      nodes: Array.isArray(data?.graph?.nodes) ? data.graph.nodes : [],
+      edges: Array.isArray(data?.graph?.edges) ? data.graph.edges : []
+    },
+    rawDetail: data?.rawDetail
+  } as PlanTrace;
 }

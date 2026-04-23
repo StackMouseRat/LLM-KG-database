@@ -16,6 +16,12 @@ body {
     linear-gradient(135deg, #f8fafc 0%, #eef4f8 48%, #e6edf3 100%);
 }
 
+body.theme-dark {
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.12), transparent 32rem),
+    linear-gradient(135deg, #0b1220 0%, #111827 48%, #172033 100%);
+}
+
 .app-shell {
   min-height: 100vh;
   background: transparent;
@@ -53,6 +59,18 @@ body {
   background: rgba(148, 163, 184, 0.12);
   border: 1px solid rgba(191, 219, 254, 0.22);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.app-user-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-user-toggle__label.ant-typography {
+  margin: 0;
+  color: #dbeafe;
+  font-size: 13px;
 }
 
 .app-user-bar .ant-tag {
@@ -333,12 +351,33 @@ body {
 
 .trace-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1.7fr);
+  gap: 16px;
+}
+
+.trace-side-column {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
 .trace-card {
   min-height: 360px;
+}
+
+.trace-graph-card .ant-card-body {
+  height: calc(100% - 57px);
+}
+
+.trace-graph-container {
+  width: 100%;
+  height: 100%;
+  min-height: 980px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(239, 246, 255, 0.92) 100%),
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 26rem);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .trace-json {
@@ -350,6 +389,110 @@ body {
   background: rgba(15, 23, 42, 0.06);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.trace-node-desc {
+  white-space: pre-wrap;
+  line-height: 1.72;
+  color: #334155;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.trace-loading-card .ant-card-body {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell--dark {
+  color: #e2e8f0;
+}
+
+.app-shell--dark .app-content {
+  color: #e2e8f0;
+}
+
+.app-shell--dark .panel-card,
+.app-shell--dark .case-search-card {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.96) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 16px 48px rgba(2, 6, 23, 0.34);
+}
+
+.app-shell--dark .panel-card .ant-card-head,
+.app-shell--dark .panel-card .ant-card-body,
+.app-shell--dark .panel-card .ant-typography,
+.app-shell--dark .panel-card,
+.app-shell--dark .case-search-card,
+.app-shell--dark .case-search-card__title,
+.app-shell--dark .chapter-meta,
+.app-shell--dark .template-field__value,
+.app-shell--dark .trace-node-desc,
+.app-shell--dark .chapter-template-text {
+  color: #e2e8f0;
+}
+
+.app-shell--dark .template-field__value,
+.app-shell--dark .trace-node-desc,
+.app-shell--dark .chapter-template-text,
+.app-shell--dark .template-field__value--long {
+  background: rgba(51, 65, 85, 0.5);
+}
+
+.app-shell--dark .ant-input,
+.app-shell--dark .ant-input-affix-wrapper,
+.app-shell--dark .ant-input-outlined,
+.app-shell--dark .ant-select-selector,
+.app-shell--dark .ant-collapse,
+.app-shell--dark .ant-collapse > .ant-collapse-item > .ant-collapse-header,
+.app-shell--dark .ant-collapse-content {
+  background: rgba(15, 23, 42, 0.72) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.24) !important;
+}
+
+.app-shell--dark .ant-input::placeholder,
+.app-shell--dark .ant-input textarea::placeholder,
+.app-shell--dark .ant-input-affix-wrapper input::placeholder {
+  color: #94a3b8;
+}
+
+.app-shell--dark .render-h1,
+.app-shell--dark .render-h2,
+.app-shell--dark .render-h3,
+.app-shell--dark .render-h4,
+.app-shell--dark .render-line {
+  color: #e2e8f0;
+}
+
+.app-shell--dark .login-card__desc.ant-typography,
+.app-shell--dark .app-subtitle,
+.app-shell--dark .ant-typography.ant-typography-secondary {
+  color: #94a3b8;
+}
+
+.app-shell--dark .trace-graph-container {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%),
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 24rem);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.app-shell--dark .app-user-bar,
+.app-shell--dark .app-mode-toggle,
+.app-shell--dark .app-route-tab,
+.app-shell--dark .app-user-bar .ant-btn {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.app-shell--dark .app-route-tab--active {
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #0f172a;
 }
 
 .template-card-grid {

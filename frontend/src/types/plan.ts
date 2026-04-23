@@ -92,6 +92,8 @@ export interface TraceNode {
     | 'unknown';
   desc?: string;
   source?: 'KG' | 'GEN';
+  isFocus?: boolean;
+  isHit?: boolean;
 }
 
 export interface TraceEdge {
@@ -99,4 +101,5 @@ export interface TraceEdge {
   source: string;
   target: string;
   label: string;
+  isHit?: boolean;
 }

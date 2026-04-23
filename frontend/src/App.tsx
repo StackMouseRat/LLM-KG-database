@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Switch, Tag, Typography } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
 import { RichTextRenderer } from './components/RichTextRenderer';
 import { LoginPage } from './pages/LoginPage';
-import { TraceGraphPage } from './pages/TraceGraphPage';
-import { QualityReviewPage } from './pages/QualityReviewPage';
-import { TemplateViewPage } from './pages/TemplateViewPage';
 import { fetchCurrentUser, login, logout } from './services/authApi';
 import { runPipelineStream } from './services/planApi';
 import { downloadText } from './utils/download';
@@ -17,11 +14,20 @@ const { TextArea } = Input;
 const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
 const MODE_TAGS_VISIBLE_KEY = 'llmkg_mode_tags_visible_v1';
 const COMPACT_LAYOUT_KEY = 'llmkg_compact_layout_v1';
+const DARK_MODE_KEY = 'llmkg_dark_mode_v1';
 
 type RouteKey = 'plan' | 'trace' | 'quality' | 'template';
 type AppRoute = RouteKey | 'login';
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
 type UserGroup = 'admin' | 'user';
+
+const TraceGraphPage = lazy(() => import('./pages/TraceGraphPage').then((module) => ({ default: module.TraceGraphPage })));
+const QualityReviewPage = lazy(() =>
+  import('./pages/QualityReviewPage').then((module) => ({ default: module.QualityReviewPage }))
+);
+const TemplateViewPage = lazy(() =>
+  import('./pages/TemplateViewPage').then((module) => ({ default: module.TemplateViewPage }))
+);
 
 const routeItems: Array<{ key: RouteKey; label: string; path: string }> = [
   { key: 'plan', label: '预案生成', path: '/plan' },
@@ -337,6 +343,13 @@ function loadCompactLayout() {
   return raw === '1';
 }
 
+function loadDarkMode() {
+  if (typeof window === 'undefined') return false;
+  const raw = window.localStorage.getItem(DARK_MODE_KEY);
+  if (raw == null) return false;
+  return raw === '1';
+}
+
 function saveSnapshot(question: string, pipeline: PipelineRunResponse) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(
@@ -368,6 +381,7 @@ export default function App() {
   const [loginErrorMessage, setLoginErrorMessage] = useState('');
   const [showModeTags, setShowModeTags] = useState(loadModeTagsVisible);
   const [showCompactLayout, setShowCompactLayout] = useState(loadCompactLayout);
+  const [darkMode, setDarkMode] = useState(loadDarkMode);
   const [question, setQuestion] = useState(savedSnapshot?.question || pickRandomPresetQuestion());
   const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(savedSnapshot?.pipeline || null);
   const [stage, setStage] = useState<PipelineStage>(savedSnapshot?.pipeline ? 'done' : 'idle');
@@ -413,6 +427,12 @@ export default function App() {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(COMPACT_LAYOUT_KEY, showCompactLayout ? '1' : '0');
   }, [showCompactLayout]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(DARK_MODE_KEY, darkMode ? '1' : '0');
+    document.body.classList.toggle('theme-dark', darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -900,7 +920,7 @@ export default function App() {
   );
 
   return (
-    <Layout className="app-shell">
+    <Layout className={`app-shell ${darkMode ? 'app-shell--dark' : ''}`}>
       <Header className="app-header">
         <div className="app-header__inner">
           <div>
@@ -911,6 +931,10 @@ export default function App() {
           {authStatus === 'authenticated' ? (
             <div className="app-header__controls">
               <div className="app-user-bar">
+                <div className="app-user-toggle">
+                  <Typography.Text className="app-user-toggle__label">夜间模式</Typography.Text>
+                  <Switch size="small" checked={darkMode} onChange={setDarkMode} />
+                </div>
                 <Tag color="blue">
                   当前用户：{currentUsername} · 用户组：{currentUserGroup}
                 </Tag>
@@ -956,16 +980,42 @@ export default function App() {
           <LoginPage loading={loginLoading} errorMessage={loginErrorMessage} onSubmit={handleLogin} />
         ) : null}
         {authStatus === 'authenticated' && route === 'plan' ? renderPlanPage() : null}
-        {authStatus === 'authenticated' && route === 'trace' ? <TraceGraphPage trace={null} /> : null}
+        {authStatus === 'authenticated' && route === 'trace' ? (
+          <Suspense
+            fallback={
+              <Card className="panel-card chapter-empty-card auth-wait-card">
+                <Typography.Text type="secondary">正在加载图谱溯源页面，请稍候。</Typography.Text>
+              </Card>
+            }
+          >
+            <TraceGraphPage pipeline={pipeline} darkMode={darkMode} />
+          </Suspense>
+        ) : null}
         {authStatus === 'authenticated' && route === 'quality' ? (
-          <QualityReviewPage
-            currentUserGroup={currentUserGroup}
-            showModeTags={showModeTags}
-            compactLayout={showCompactLayout}
-          />
+          <Suspense
+            fallback={
+              <Card className="panel-card chapter-empty-card auth-wait-card">
+                <Typography.Text type="secondary">正在加载格式优化与质量评估页面，请稍候。</Typography.Text>
+              </Card>
+            }
+          >
+            <QualityReviewPage
+              currentUserGroup={currentUserGroup}
+              showModeTags={showModeTags}
+              compactLayout={showCompactLayout}
+            />
+          </Suspense>
         ) : null}
         {authStatus === 'authenticated' && route === 'template' ? (
-          <TemplateViewPage currentUserGroup={currentUserGroup} />
+          <Suspense
+            fallback={
+              <Card className="panel-card chapter-empty-card auth-wait-card">
+                <Typography.Text type="secondary">正在加载模板查看页面，请稍候。</Typography.Text>
+              </Card>
+            }
+          >
+            <TemplateViewPage currentUserGroup={currentUserGroup} />
+          </Suspense>
         ) : null}
       </Content>
     </Layout>
