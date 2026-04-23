@@ -1,0 +1,932 @@
+{
+  "space": "llmkg_surge_arrester",
+  "root": "避雷器",
+  "majors": [
+    "外绝缘与表面闪络故障",
+    "阀片与本体绝缘故障",
+    "安装结构与连接故障"
+  ],
+  "subtypes": [
+    "鸟粪污染造成避雷器闪络故障",
+    "密封不良造成避雷器阀片侧闪故障",
+    "交界面气隙造成避雷器阀片侧闪故障",
+    "积雪冰棱导致避雷器沿面侧闪故障",
+    "雷击造成避雷器阀片击穿故障",
+    "安装不规范导致避雷器失效故障",
+    "安装不规范导致避雷器脱落接地故障"
+  ],
+  "detail_layers": [
+    "故障原因",
+    "故障现象",
+    "应对措施",
+    "故障后果",
+    "安全风险",
+    "应急资源"
+  ],
+  "nodes": [
+    {
+      "vid": "n_0",
+      "name": "避雷器",
+      "node_desc": "依据第一至第八层级梳理结果形成的避雷器故障知识图谱实体。",
+      "lvl": 0,
+      "source_id": 0,
+      "degree": 3,
+      "weight": 10,
+      "stroke": "#9A3412",
+      "typed_tag": "root_node",
+      "major": ""
+    },
+    {
+      "vid": "n_1",
+      "name": "外绝缘与表面闪络故障",
+      "node_desc": "避雷器故障一级大类：外绝缘与表面闪络故障。",
+      "lvl": 1,
+      "source_id": 1,
+      "degree": 5,
+      "weight": 9,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l1",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_2",
+      "name": "阀片与本体绝缘故障",
+      "node_desc": "避雷器故障一级大类：阀片与本体绝缘故障。",
+      "lvl": 1,
+      "source_id": 2,
+      "degree": 2,
+      "weight": 9,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l1",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_3",
+      "name": "安装结构与连接故障",
+      "node_desc": "避雷器故障一级大类：安装结构与连接故障。",
+      "lvl": 1,
+      "source_id": 3,
+      "degree": 3,
+      "weight": 9,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l1",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_4",
+      "name": "鸟粪污染造成避雷器闪络故障",
+      "node_desc": "外绝缘与表面闪络故障下的二级故障小类：鸟粪污染造成避雷器闪络故障。",
+      "lvl": 2,
+      "source_id": 4,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_5",
+      "name": "鸟粪污染造成避雷器闪络故障-故障原因",
+      "node_desc": "主要由大型鸟类停留在线路塔头或避雷器上方，排泄物缩短空气间隙并引起局部电场畸变，在潮湿或雷雨条件下诱发闪络。",
+      "lvl": 3,
+      "source_id": 5,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_6",
+      "name": "鸟粪污染造成避雷器闪络故障-故障现象",
+      "node_desc": "表现为线路跳闸、重合闸成功或失败，塔头周边可见大量鸟粪、导线或避雷器挂点放电痕迹，且常伴随鸟类活动迹象。",
+      "lvl": 4,
+      "source_id": 6,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_7",
+      "name": "鸟粪污染造成避雷器闪络故障-应对措施",
+      "node_desc": "应立即开展线路巡视、核查放电点、清理污染区域，在避雷器上方及关键挂点增设防鸟刺、防鸟挡板，并加强鸟害高发区季节性巡检。",
+      "lvl": 3,
+      "source_id": 7,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_8",
+      "name": "鸟粪污染造成避雷器闪络故障-故障后果",
+      "node_desc": "会造成线路闪络跳闸、重复故障、供电可靠性下降，并可能扩大为多次瞬时停电或绝缘子、导线附属件受损。",
+      "lvl": 4,
+      "source_id": 8,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_9",
+      "name": "鸟粪污染造成避雷器闪络故障-安全风险",
+      "node_desc": "存在高空巡视、雨天登塔、带电邻近作业及鸟害高发区域反复放电风险，易引发触电、坠落和误判故障点等危险。",
+      "lvl": 4,
+      "source_id": 9,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_10",
+      "name": "鸟粪污染造成避雷器闪络故障-应急资源",
+      "node_desc": "需要巡视人员、登塔工器具、绝缘防护用品、防鸟刺、防鸟挡板、红外测温与放电痕迹检查工具、照明和通信设备。",
+      "lvl": 4,
+      "source_id": 10,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_11",
+      "name": "密封不良造成避雷器阀片侧闪故障",
+      "node_desc": "外绝缘与表面闪络故障下的二级故障小类：密封不良造成避雷器阀片侧闪故障。",
+      "lvl": 2,
+      "source_id": 11,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_12",
+      "name": "密封不良造成避雷器阀片侧闪故障-故障原因",
+      "node_desc": "主要由合成护套与绝缘筒黏结不紧密、密封结构缺陷或老化导致内部进水受潮，继而引发氧化锌阀片侧面爬电与侧闪。",
+      "lvl": 3,
+      "source_id": 12,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_13",
+      "name": "密封不良造成避雷器阀片侧闪故障-故障现象",
+      "node_desc": "表现为避雷器外表存在放电痕迹、阀片侧闪、绝缘筒烧蚀，雷电记录不明显但避雷器已发生击穿或零序保护动作。",
+      "lvl": 4,
+      "source_id": 13,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_14",
+      "name": "密封不良造成避雷器阀片侧闪故障-应对措施",
+      "node_desc": "应停运故障避雷器并更换同型号合格产品，排查同厂家同批次设备密封状态，加强解体检查、密封试验和运行巡视。",
+      "lvl": 3,
+      "source_id": 14,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_15",
+      "name": "密封不良造成避雷器阀片侧闪故障-故障后果",
+      "node_desc": "会导致避雷器击穿、线路停运、同批次设备批量质量风险暴露，并可能影响配电系统过电压防护能力。",
+      "lvl": 4,
+      "source_id": 15,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_16",
+      "name": "密封不良造成避雷器阀片侧闪故障-安全风险",
+      "node_desc": "存在受潮后重复放电、电弧灼伤、设备误投运以及同类产品潜在缺陷未及时发现导致故障扩大的风险。",
+      "lvl": 4,
+      "source_id": 16,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_17",
+      "name": "密封不良造成避雷器阀片侧闪故障-应急资源",
+      "node_desc": "需要备用避雷器、解体检查工具、密封检测材料、巡视试验人员、停电检修计划、绝缘防护用品和故障记录资料。",
+      "lvl": 4,
+      "source_id": 17,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_18",
+      "name": "交界面气隙造成避雷器阀片侧闪故障",
+      "node_desc": "外绝缘与表面闪络故障下的二级故障小类：交界面气隙造成避雷器阀片侧闪故障。",
+      "lvl": 2,
+      "source_id": 18,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_19",
+      "name": "交界面气隙造成避雷器阀片侧闪故障-故障原因",
+      "node_desc": "主要由绝缘树脂内部存在气隙、树脂包封厚度不均匀或固化工艺不足，导致阀片沿面绝缘强度下降，在长期运行中发生侧闪。",
+      "lvl": 3,
+      "source_id": 19,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_20",
+      "name": "交界面气隙造成避雷器阀片侧闪故障-故障现象",
+      "node_desc": "表现为避雷器两端或伞裙破裂、阀片沿面形成贯通放电通道、外护套开裂且未见明显进水痕迹。",
+      "lvl": 4,
+      "source_id": 20,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_21",
+      "name": "交界面气隙造成避雷器阀片侧闪故障-应对措施",
+      "node_desc": "应更换故障避雷器，重点核查同批次产品的树脂包封质量和绝缘均匀性，并对厂家工艺一致性开展复核。",
+      "lvl": 3,
+      "source_id": 21,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_22",
+      "name": "交界面气隙造成避雷器阀片侧闪故障-故障后果",
+      "node_desc": "会造成避雷器绝缘失效、局部侧闪、线路保护动作及设备运行可靠性下降，严重时引发连续停电。",
+      "lvl": 4,
+      "source_id": 22,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_23",
+      "name": "交界面气隙造成避雷器阀片侧闪故障-安全风险",
+      "node_desc": "存在长期隐蔽缺陷导致突发放电、检修误判、重复合闸失败和同批次设备集中失效风险。",
+      "lvl": 4,
+      "source_id": 23,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_24",
+      "name": "交界面气隙造成避雷器阀片侧闪故障-应急资源",
+      "node_desc": "需要备用避雷器、厂家技术资料、绝缘结构检测手段、试验人员、故障解体样品保存条件和运行分析记录。",
+      "lvl": 4,
+      "source_id": 24,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_25",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障",
+      "node_desc": "外绝缘与表面闪络故障下的二级故障小类：积雪冰棱导致避雷器沿面侧闪故障。",
+      "lvl": 2,
+      "source_id": 25,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#2563EB",
+      "typed_tag": "fault_l2",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_26",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障-故障原因",
+      "node_desc": "主要由降雪结冰后避雷器表面形成冰棱或导电通道，使高压端与接地端之间沿面绝缘距离显著降低，最终发生燃弧侧闪。",
+      "lvl": 3,
+      "source_id": 26,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_27",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障-故障现象",
+      "node_desc": "表现为高压引线烧断、避雷器高压端烧蚀、外护套表面沿面放电痕迹明显，故障多发生在降雪或低温后。",
+      "lvl": 4,
+      "source_id": 27,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_28",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障-应对措施",
+      "node_desc": "应隔离故障设备、清除积雪冰棱影响，更换受损部件，复查同区域避雷器安装环境并加强冰雪天气特巡和防覆冰措施。",
+      "lvl": 3,
+      "source_id": 28,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_29",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障-故障后果",
+      "node_desc": "会导致避雷器沿面侧闪、引线烧断、线路停运和寒潮期间供电可靠性下降，严重时可扩大为相邻设备损伤。",
+      "lvl": 4,
+      "source_id": 29,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_30",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障-安全风险",
+      "node_desc": "存在冰雪天气高空作业、滑坠、低温操作、电弧灼伤和夜间故障处置视线不足等风险。",
+      "lvl": 4,
+      "source_id": 30,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_31",
+      "name": "积雪冰棱导致避雷器沿面侧闪故障-应急资源",
+      "node_desc": "需要除冰清雪工具、绝缘操作杆、备用引线及避雷器、夜间照明、冬季防护用品、巡视与抢修人员。",
+      "lvl": 4,
+      "source_id": 31,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "外绝缘与表面闪络故障"
+    },
+    {
+      "vid": "n_32",
+      "name": "雷击造成避雷器阀片击穿故障",
+      "node_desc": "阀片与本体绝缘故障下的二级故障小类：雷击造成避雷器阀片击穿故障。",
+      "lvl": 2,
+      "source_id": 32,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#D97706",
+      "typed_tag": "fault_l2",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_33",
+      "name": "雷击造成避雷器阀片击穿故障-故障原因",
+      "node_desc": "主要由较高雷击过电压和较大雷电流冲击避雷器，导致氧化锌阀片发生贯穿性击穿；若同时存在材质老化或密封问题，会进一步降低耐受能力。",
+      "lvl": 3,
+      "source_id": 33,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_34",
+      "name": "雷击造成避雷器阀片击穿故障-故障现象",
+      "node_desc": "表现为雷雨天气下避雷器故障、阀片贯穿性击穿、伞裙或护套开裂、内部阀片有明显放电通道和烧蚀痕迹。",
+      "lvl": 4,
+      "source_id": 34,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_35",
+      "name": "雷击造成避雷器阀片击穿故障-应对措施",
+      "node_desc": "应及时更换故障避雷器，复核雷电活动记录和接地状态，检查同区域同批次避雷器耐雷性能，并优化防雷配置。",
+      "lvl": 3,
+      "source_id": 35,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_36",
+      "name": "雷击造成避雷器阀片击穿故障-故障后果",
+      "node_desc": "会削弱系统过电压保护能力，造成线路接地或跳闸，严重时诱发设备损坏、停电扩大和重复雷击风险上升。",
+      "lvl": 4,
+      "source_id": 36,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_37",
+      "name": "雷击造成避雷器阀片击穿故障-安全风险",
+      "node_desc": "存在雷雨天气下再次遭受雷击、故障设备残余电荷、电弧灼伤和户外紧急检修风险。",
+      "lvl": 4,
+      "source_id": 37,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_38",
+      "name": "雷击造成避雷器阀片击穿故障-应急资源",
+      "node_desc": "需要备用避雷器、接地与绝缘测试设备、雷电定位记录、抢修工器具、防雷作业防护用品和调度协调资源。",
+      "lvl": 4,
+      "source_id": 38,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "阀片与本体绝缘故障"
+    },
+    {
+      "vid": "n_39",
+      "name": "安装不规范导致避雷器失效故障",
+      "node_desc": "安装结构与连接故障下的二级故障小类：安装不规范导致避雷器失效故障。",
+      "lvl": 2,
+      "source_id": 39,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l2",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_40",
+      "name": "安装不规范导致避雷器失效故障-故障原因",
+      "node_desc": "主要由支架尺寸不合理、导电电极引出过长、计数器引线处理不当或安装位置错误导致电场畸变，使避雷器在过电压下未能有效动作。",
+      "lvl": 3,
+      "source_id": 40,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_41",
+      "name": "安装不规范导致避雷器失效故障-故障现象",
+      "node_desc": "表现为故障区雷击明显但加装避雷器未有效动作，支架角铁、引线或电极端部存在烧蚀痕迹，避雷器本体有电弧灼伤。",
+      "lvl": 4,
+      "source_id": 41,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_42",
+      "name": "安装不规范导致避雷器失效故障-应对措施",
+      "node_desc": "应按厂家手册整改安装方式，优化支架、计数器引线和电极尺寸，对同批次同安装方案设备开展排查并复核施工验收记录。",
+      "lvl": 3,
+      "source_id": 42,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_43",
+      "name": "安装不规范导致避雷器失效故障-故障后果",
+      "node_desc": "会导致避雷器失效、线路雷击双跳或保护动作，削弱原有防雷措施效果，并可能造成批量隐患。",
+      "lvl": 4,
+      "source_id": 43,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_44",
+      "name": "安装不规范导致避雷器失效故障-安全风险",
+      "node_desc": "存在安装缺陷长期潜伏、雷雨天气下重复故障、带缺陷运行和施工验收不到位导致风险外溢等问题。",
+      "lvl": 4,
+      "source_id": 44,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_45",
+      "name": "安装不规范导致避雷器失效故障-应急资源",
+      "node_desc": "需要厂家安装手册、测量工具、整改配件、检测试验设备、施工验收资料、停电窗口和专业检修人员。",
+      "lvl": 4,
+      "source_id": 45,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_46",
+      "name": "安装不规范导致避雷器脱落接地故障",
+      "node_desc": "安装结构与连接故障下的二级故障小类：安装不规范导致避雷器脱落接地故障。",
+      "lvl": 2,
+      "source_id": 46,
+      "degree": 3,
+      "weight": 8,
+      "stroke": "#0F766E",
+      "typed_tag": "fault_l2",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_47",
+      "name": "安装不规范导致避雷器脱落接地故障-故障原因",
+      "node_desc": "主要由导电杆连接方式错误、单螺母固定不可靠、支架振动后螺母松脱以及施工验收管理不到位，造成避雷器脱落并引发接地。",
+      "lvl": 3,
+      "source_id": 47,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#FA8C16",
+      "typed_tag": "fault_cause",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_48",
+      "name": "安装不规范导致避雷器脱落接地故障-故障现象",
+      "node_desc": "表现为避雷器从杆塔上脱落，引线搭接在弓子线或导线上形成接地，现场可见固定部位松脱、杆塔震动影响痕迹。",
+      "lvl": 4,
+      "source_id": 48,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#1890FF",
+      "typed_tag": "fault_symptom",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_49",
+      "name": "安装不规范导致避雷器脱落接地故障-应对措施",
+      "node_desc": "应立即隔离故障线路并回收脱落部件，按厂家要求重新安装，统一排查同批次设备连接方式，并强化施工与验收复核。",
+      "lvl": 3,
+      "source_id": 49,
+      "degree": 3,
+      "weight": 6,
+      "stroke": "#52C41A",
+      "typed_tag": "response_measure",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_50",
+      "name": "安装不规范导致避雷器脱落接地故障-故障后果",
+      "node_desc": "会造成线路接地、母线异常、跳闸停电和设备机械损坏，严重时影响同塔或同走廊其他回路安全运行。",
+      "lvl": 4,
+      "source_id": 50,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#E8684A",
+      "typed_tag": "fault_consequence",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_51",
+      "name": "安装不规范导致避雷器脱落接地故障-安全风险",
+      "node_desc": "存在导体坠落、接地电位升高、高空坠物、误触带电部件和恶劣天气抢修风险。",
+      "lvl": 4,
+      "source_id": 51,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#722ED1",
+      "typed_tag": "safety_risk",
+      "major": "安装结构与连接故障"
+    },
+    {
+      "vid": "n_52",
+      "name": "安装不规范导致避雷器脱落接地故障-应急资源",
+      "node_desc": "需要备用避雷器及连接金具、双螺母紧固件、登塔工器具、接地防护用品、巡视抢修人员和厂家安装资料。",
+      "lvl": 4,
+      "source_id": 52,
+      "degree": 1,
+      "weight": 6,
+      "stroke": "#13C2C2",
+      "typed_tag": "emergency_resource",
+      "major": "安装结构与连接故障"
+    }
+  ],
+  "links": [
+    {
+      "src": "n_0",
+      "dst": "n_1",
+      "relation": "发生"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_4",
+      "relation": "包含"
+    },
+    {
+      "src": "n_4",
+      "dst": "n_5",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_5",
+      "dst": "n_6",
+      "relation": "表现"
+    },
+    {
+      "src": "n_4",
+      "dst": "n_7",
+      "relation": "处置"
+    },
+    {
+      "src": "n_5",
+      "dst": "n_8",
+      "relation": "导致"
+    },
+    {
+      "src": "n_7",
+      "dst": "n_9",
+      "relation": "存在"
+    },
+    {
+      "src": "n_7",
+      "dst": "n_10",
+      "relation": "需要"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_11",
+      "relation": "包含"
+    },
+    {
+      "src": "n_11",
+      "dst": "n_12",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_12",
+      "dst": "n_13",
+      "relation": "表现"
+    },
+    {
+      "src": "n_11",
+      "dst": "n_14",
+      "relation": "处置"
+    },
+    {
+      "src": "n_12",
+      "dst": "n_15",
+      "relation": "导致"
+    },
+    {
+      "src": "n_14",
+      "dst": "n_16",
+      "relation": "存在"
+    },
+    {
+      "src": "n_14",
+      "dst": "n_17",
+      "relation": "需要"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_18",
+      "relation": "包含"
+    },
+    {
+      "src": "n_18",
+      "dst": "n_19",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_19",
+      "dst": "n_20",
+      "relation": "表现"
+    },
+    {
+      "src": "n_18",
+      "dst": "n_21",
+      "relation": "处置"
+    },
+    {
+      "src": "n_19",
+      "dst": "n_22",
+      "relation": "导致"
+    },
+    {
+      "src": "n_21",
+      "dst": "n_23",
+      "relation": "存在"
+    },
+    {
+      "src": "n_21",
+      "dst": "n_24",
+      "relation": "需要"
+    },
+    {
+      "src": "n_1",
+      "dst": "n_25",
+      "relation": "包含"
+    },
+    {
+      "src": "n_25",
+      "dst": "n_26",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_26",
+      "dst": "n_27",
+      "relation": "表现"
+    },
+    {
+      "src": "n_25",
+      "dst": "n_28",
+      "relation": "处置"
+    },
+    {
+      "src": "n_26",
+      "dst": "n_29",
+      "relation": "导致"
+    },
+    {
+      "src": "n_28",
+      "dst": "n_30",
+      "relation": "存在"
+    },
+    {
+      "src": "n_28",
+      "dst": "n_31",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_2",
+      "relation": "发生"
+    },
+    {
+      "src": "n_2",
+      "dst": "n_32",
+      "relation": "包含"
+    },
+    {
+      "src": "n_32",
+      "dst": "n_33",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_33",
+      "dst": "n_34",
+      "relation": "表现"
+    },
+    {
+      "src": "n_32",
+      "dst": "n_35",
+      "relation": "处置"
+    },
+    {
+      "src": "n_33",
+      "dst": "n_36",
+      "relation": "导致"
+    },
+    {
+      "src": "n_35",
+      "dst": "n_37",
+      "relation": "存在"
+    },
+    {
+      "src": "n_35",
+      "dst": "n_38",
+      "relation": "需要"
+    },
+    {
+      "src": "n_0",
+      "dst": "n_3",
+      "relation": "发生"
+    },
+    {
+      "src": "n_3",
+      "dst": "n_39",
+      "relation": "包含"
+    },
+    {
+      "src": "n_39",
+      "dst": "n_40",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_40",
+      "dst": "n_41",
+      "relation": "表现"
+    },
+    {
+      "src": "n_39",
+      "dst": "n_42",
+      "relation": "处置"
+    },
+    {
+      "src": "n_40",
+      "dst": "n_43",
+      "relation": "导致"
+    },
+    {
+      "src": "n_42",
+      "dst": "n_44",
+      "relation": "存在"
+    },
+    {
+      "src": "n_42",
+      "dst": "n_45",
+      "relation": "需要"
+    },
+    {
+      "src": "n_3",
+      "dst": "n_46",
+      "relation": "包含"
+    },
+    {
+      "src": "n_46",
+      "dst": "n_47",
+      "relation": "起因于"
+    },
+    {
+      "src": "n_47",
+      "dst": "n_48",
+      "relation": "表现"
+    },
+    {
+      "src": "n_46",
+      "dst": "n_49",
+      "relation": "处置"
+    },
+    {
+      "src": "n_47",
+      "dst": "n_50",
+      "relation": "导致"
+    },
+    {
+      "src": "n_49",
+      "dst": "n_51",
+      "relation": "存在"
+    },
+    {
+      "src": "n_49",
+      "dst": "n_52",
+      "relation": "需要"
+    }
+  ],
+  "counts": {
+    "nodes": 53,
+    "links": 52,
+    "groups": 3,
+    "group_members": 52
+  }
+}

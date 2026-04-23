@@ -1,18 +1,45 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import random
 import subprocess
 import sys
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 
 PORT = int(os.getenv("FRONTEND_PROXY_PORT", "8788"))
 PIPELINE_SCRIPT = os.getenv("PIPELINE_SCRIPT", "/app/scripts/run_parallel_generation_pipeline.py")
 PIPELINE_RUN_DIR = Path(os.getenv("PIPELINE_RUN_DIR", "/app/data/frontend_pipeline_runs"))
+KB_PLUGIN_URL = os.getenv("KB_PLUGIN_URL", "http://host.docker.internal:3000/api/v1/chat/completions")
+KB_PLUGIN_KEY_FILE = os.getenv(
+    "KB_PLUGIN_KEY_FILE",
+    "/run/fastgpt_keys/knowledge_base_query_plugin_api_key",
+)
+DATASET_MAP = {
+    "breaker": {
+        "kb_name": "llmkg_breaker",
+        "dataset_id": "69e8b07a796863b2e4d3a88f",
+    },
+    "cable": {
+        "kb_name": "llmkg_cable",
+        "dataset_id": "69e8b07a796863b2e4d3a890",
+    },
+    "transformer": {
+        "kb_name": "llmkg_transformer",
+        "dataset_id": "69e8b07a796863b2e4d3a897",
+    },
+    "surge_arrester": {
+        "kb_name": "llmkg_surge_arrester",
+        "dataset_id": "69e8b07a796863b2e4d3a894",
+    },
+}
 
 
 def send_sse(handler: BaseHTTPRequestHandler, event: str, data: object) -> None:
@@ -38,7 +65,128 @@ def find_result_file(base_dir: Path) -> Path:
     return result_file
 
 
-def run_pipeline_sync(question: str) -> dict:
+def parse_fault_scene(raw: object) -> dict:
+    if isinstance(raw, dict):
+        return raw
+    if not isinstance(raw, str) or not raw.strip():
+        return {}
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {}
+
+
+def infer_dataset_with_context(question: str, fault_scene: str = "", graph_material: str = "") -> dict | None:
+    text_parts = [question]
+    text_parts.append(str(fault_scene or ""))
+    text_parts.append(str(graph_material or ""))
+    parsed = parse_fault_scene(fault_scene)
+    for key in ("故障对象", "故障二级节点", "事件场景", "关键处置要求"):
+        value = parsed.get(key)
+        if value:
+            text_parts.append(str(value))
+
+    haystack = " ".join(text_parts)
+    if any(word in haystack for word in ["断路器", "开关柜", "拒合", "拒动", "跳闸线圈", "液压机构", "弹簧机构"]):
+        return DATASET_MAP["breaker"]
+    if any(word in haystack for word in ["电缆", "电缆沟", "中间接头", "终端头", "绝缘劣化", "击穿"]):
+        return DATASET_MAP["cable"]
+    if any(word in haystack for word in ["变压器", "主变", "瓦斯", "有载调压", "套管", "油温", "电抗器"]):
+        return DATASET_MAP["transformer"]
+    if any(word in haystack for word in ["避雷器", "阀片", "侧闪", "闪络", "雷击", "脱落接地", "未有效动作"]):
+        return DATASET_MAP["surge_arrester"]
+    return None
+
+
+def infer_dataset(question: str, pipeline_result: dict | None = None) -> dict | None:
+    if not pipeline_result:
+        return infer_dataset_with_context(question)
+
+    basic_info = pipeline_result.get("basic_info", {}) or {}
+    fields = basic_info.get("fields", {}) or {}
+    return infer_dataset_with_context(
+        question,
+        str(fields.get("故障与场景提取结果") or ""),
+        str(fields.get("图谱检索方案素材") or ""),
+    )
+
+
+def read_plugin_key() -> str:
+    path = Path(KB_PLUGIN_KEY_FILE)
+    key = path.read_text(encoding="utf-8").strip()
+    if not key:
+        raise RuntimeError(f"plugin key file is empty: {path}")
+    return key
+
+
+def run_case_search(question: str, dataset: dict) -> dict:
+    payload = {
+        "stream": False,
+        "detail": True,
+        "variables": {
+            "当前识别设备": [{"datasetId": dataset["dataset_id"]}],
+            "用户问题": question,
+        },
+    }
+    req = Request(
+        KB_PLUGIN_URL,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {read_plugin_key()}",
+            "Content-Type": "application/json; charset=utf-8",
+        },
+    )
+
+    try:
+        with urlopen(req, timeout=120) as resp:
+            body = json.loads(resp.read().decode("utf-8", errors="replace"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"case search HTTP {exc.code}: {detail[:400]}")
+    except URLError as exc:
+        raise RuntimeError(f"case search URL error: {exc}")
+
+    plugin_output = None
+    for node in body.get("responseData", []):
+        if node.get("moduleType") == "pluginOutput":
+            plugin_output = node.get("pluginOutput", {})
+    cards: list[dict] = []
+    if isinstance(plugin_output, dict):
+        raw_cards = plugin_output.get("ICBM")
+        if isinstance(raw_cards, list):
+            for item in raw_cards[:6]:
+                if not isinstance(item, dict):
+                    continue
+                score_parts = []
+                for score in item.get("score", []):
+                    if isinstance(score, dict) and isinstance(score.get("value"), (int, float)):
+                        score_parts.append(f"{score.get('type', 'score')}={score['value']:.3f}")
+                cards.append(
+                    {
+                        "id": item.get("id"),
+                        "title": str(item.get("sourceName") or "未命名案例"),
+                        "kbId": str(item.get("datasetId") or ""),
+                        "docId": str(item.get("collectionId") or ""),
+                        "relevance": " / ".join(score_parts),
+                        "excerpt": str(item.get("q") or item.get("a") or ""),
+                    }
+                )
+
+    if not cards:
+        raise RuntimeError("case search returned no cards")
+
+    return {
+        "enabled": True,
+        "status": "done",
+        "kb_name": dataset["kb_name"],
+        "dataset_id": dataset["dataset_id"],
+        "query_question": question,
+        "cards": cards,
+    }
+
+
+def run_pipeline_process(question: str) -> dict:
     base_dir = make_run_dir()
     command = [
         sys.executable,
@@ -65,7 +213,42 @@ def run_pipeline_sync(question: str) -> dict:
     return json.loads(result_file.read_text(encoding="utf-8"))
 
 
-def stream_pipeline(question: str, handler: BaseHTTPRequestHandler) -> None:
+def run_pipeline_sync(question: str, enable_case_search: bool = False) -> dict:
+    dataset = infer_dataset_with_context(question) if enable_case_search else None
+    if enable_case_search and dataset is not None:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            pipeline_future = executor.submit(run_pipeline_process, question)
+            case_future = executor.submit(run_case_search, question, dataset)
+            result = pipeline_future.result()
+            try:
+                result["case_search"] = case_future.result()
+            except Exception as exc:
+                result["case_search"] = {
+                    "enabled": True,
+                    "status": "error",
+                    "kb_name": dataset["kb_name"],
+                    "dataset_id": dataset["dataset_id"],
+                    "query_question": question,
+                    "error": str(exc),
+                }
+            return result
+
+    result = run_pipeline_process(question)
+    if enable_case_search:
+        dataset = infer_dataset(question, result)
+        if dataset is None:
+            result["case_search"] = {
+                "enabled": True,
+                "status": "skipped",
+                "query_question": question,
+                "error": "未命中已建立知识库对应设备",
+            }
+        else:
+            result["case_search"] = run_case_search(question, dataset)
+    return result
+
+
+def stream_pipeline(question: str, handler: BaseHTTPRequestHandler, enable_case_search: bool = False) -> None:
     base_dir = make_run_dir()
     command = [
         sys.executable,
@@ -86,6 +269,62 @@ def stream_pipeline(question: str, handler: BaseHTTPRequestHandler) -> None:
     )
 
     error_lines: list[str] = []
+    final_result: dict | None = None
+    send_lock = threading.Lock()
+    case_thread: threading.Thread | None = None
+    case_started = False
+    case_finished = not enable_case_search
+
+    def safe_send(event: str, data: object) -> bool:
+        try:
+            with send_lock:
+                send_sse(handler, event, data)
+            return True
+        except BrokenPipeError:
+            return False
+
+    def start_case_search(dataset: dict) -> None:
+        nonlocal case_thread, case_started, case_finished
+        case_started = True
+        case_finished = False
+
+        def worker() -> None:
+            nonlocal case_finished
+            if not safe_send(
+                "case_search_started",
+                {
+                    "enabled": True,
+                    "status": "running",
+                    "kb_name": dataset["kb_name"],
+                    "dataset_id": dataset["dataset_id"],
+                    "query_question": question,
+                },
+            ):
+                return
+            try:
+                case_result = run_case_search(question, dataset)
+                safe_send("case_search_done", case_result)
+            except Exception as exc:
+                safe_send(
+                    "case_search_error",
+                    {
+                        "enabled": True,
+                        "status": "error",
+                        "kb_name": dataset["kb_name"],
+                        "dataset_id": dataset["dataset_id"],
+                        "query_question": question,
+                        "error": str(exc),
+                    },
+                )
+            finally:
+                case_finished = True
+
+        case_thread = threading.Thread(target=worker, daemon=True)
+        case_thread.start()
+
+    initial_dataset = infer_dataset_with_context(question) if enable_case_search else None
+    if enable_case_search and initial_dataset is not None:
+        start_case_search(initial_dataset)
 
     assert process.stdout is not None
     for raw_line in process.stdout:
@@ -107,9 +346,18 @@ def stream_pipeline(question: str, handler: BaseHTTPRequestHandler) -> None:
         if not isinstance(event, str):
             continue
         data = payload.get("data", {})
-        try:
-            send_sse(handler, event, data)
-        except BrokenPipeError:
+        if event == "pipeline_done" and isinstance(data, dict):
+            final_result = data
+        if event == "basic_info_done" and enable_case_search and not case_started and isinstance(data, dict):
+            basic_info = data.get("basicInfo", {}) if isinstance(data, dict) else {}
+            dataset = infer_dataset_with_context(
+                question,
+                str(basic_info.get("faultScene") or ""),
+                str(basic_info.get("graphMaterial") or ""),
+            )
+            if dataset is not None:
+                start_case_search(dataset)
+        if not safe_send(event, data):
             process.kill()
             return
 
@@ -120,9 +368,28 @@ def stream_pipeline(question: str, handler: BaseHTTPRequestHandler) -> None:
             send_sse(handler, "pipeline_error", {"message": message})
         except BrokenPipeError:
             return
+    elif enable_case_search and not case_started:
+        dataset = infer_dataset(question, final_result)
+        if dataset is None:
+            if not safe_send(
+                "case_search_error",
+                {
+                    "enabled": True,
+                    "status": "skipped",
+                    "query_question": question,
+                    "error": "未命中已建立知识库对应设备",
+                },
+            ):
+                return
+        else:
+            start_case_search(dataset)
+
+    if case_thread is not None:
+        case_thread.join(timeout=120)
 
     try:
-        send_sse(handler, "close", {})
+        with send_lock:
+            send_sse(handler, "close", {})
     except BrokenPipeError:
         return
 
@@ -160,6 +427,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = self._read_json_body()
             question = str(body.get("question") or "").strip()
+            enable_case_search = bool(body.get("enableCaseSearch"))
             if not question:
                 self.send_response(400)
                 self._send_common_headers()
@@ -169,7 +437,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             if not body.get("stream"):
-                result = run_pipeline_sync(question)
+                result = run_pipeline_sync(question, enable_case_search=enable_case_search)
                 payload = json.dumps(result, ensure_ascii=False).encode("utf-8")
                 self.send_response(200)
                 self._send_common_headers()
@@ -185,7 +453,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Connection", "keep-alive")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            stream_pipeline(question, self)
+            stream_pipeline(question, self, enable_case_search=enable_case_search)
         except Exception as exc:
             payload = json.dumps({"message": str(exc)}, ensure_ascii=False).encode("utf-8")
             self.send_response(500)
