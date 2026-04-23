@@ -1161,7 +1161,7 @@ def run_case_search(question: str, dataset: dict) -> dict:
     }
 
 
-def run_pipeline_process(question: str) -> dict:
+def run_pipeline_process(question: str, enable_multi_fault_search: bool = False) -> dict:
     base_dir = make_run_dir()
     command = [
         sys.executable,
@@ -1171,6 +1171,8 @@ def run_pipeline_process(question: str) -> dict:
         "--output-dir",
         str(base_dir),
     ]
+    if enable_multi_fault_search:
+        command.append("--multi-fault")
     completed = subprocess.run(
         command,
         check=False,
@@ -1188,11 +1190,11 @@ def run_pipeline_process(question: str) -> dict:
     return json.loads(result_file.read_text(encoding="utf-8"))
 
 
-def run_pipeline_sync(question: str, enable_case_search: bool = False) -> dict:
+def run_pipeline_sync(question: str, enable_case_search: bool = False, enable_multi_fault_search: bool = False) -> dict:
     dataset = infer_dataset_with_context(question) if enable_case_search else None
     if enable_case_search and dataset is not None:
         with ThreadPoolExecutor(max_workers=2) as executor:
-            pipeline_future = executor.submit(run_pipeline_process, question)
+            pipeline_future = executor.submit(run_pipeline_process, question, enable_multi_fault_search)
             case_future = executor.submit(run_case_search, question, dataset)
             result = pipeline_future.result()
             try:
@@ -1208,7 +1210,7 @@ def run_pipeline_sync(question: str, enable_case_search: bool = False) -> dict:
                 }
             return result
 
-    result = run_pipeline_process(question)
+    result = run_pipeline_process(question, enable_multi_fault_search)
     if enable_case_search:
         dataset = infer_dataset(question, result)
         if dataset is None:
@@ -1223,7 +1225,12 @@ def run_pipeline_sync(question: str, enable_case_search: bool = False) -> dict:
     return result
 
 
-def stream_pipeline(question: str, handler: BaseHTTPRequestHandler, enable_case_search: bool = False) -> None:
+def stream_pipeline(
+    question: str,
+    handler: BaseHTTPRequestHandler,
+    enable_case_search: bool = False,
+    enable_multi_fault_search: bool = False,
+) -> None:
     base_dir = make_run_dir()
     command = [
         sys.executable,
@@ -1234,6 +1241,8 @@ def stream_pipeline(question: str, handler: BaseHTTPRequestHandler, enable_case_
         str(base_dir),
         "--stream-events",
     ]
+    if enable_multi_fault_search:
+        command.append("--multi-fault")
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -1687,6 +1696,7 @@ class Handler(BaseHTTPRequestHandler):
             body = self._read_json_body()
             question = str(body.get("question") or "").strip()
             enable_case_search = bool(body.get("enableCaseSearch"))
+            enable_multi_fault_search = bool(body.get("enableMultiFaultSearch"))
             if not question:
                 self.send_response(400)
                 self._send_common_headers()
@@ -1696,7 +1706,11 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             if not body.get("stream"):
-                result = run_pipeline_sync(question, enable_case_search=enable_case_search)
+                result = run_pipeline_sync(
+                    question,
+                    enable_case_search=enable_case_search,
+                    enable_multi_fault_search=enable_multi_fault_search,
+                )
                 self._write_json(200, result)
                 return
 
@@ -1706,7 +1720,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Connection", "keep-alive")
             self._send_stream_headers()
             self.end_headers()
-            stream_pipeline(question, self, enable_case_search=enable_case_search)
+            stream_pipeline(
+                question,
+                self,
+                enable_case_search=enable_case_search,
+                enable_multi_fault_search=enable_multi_fault_search,
+            )
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 

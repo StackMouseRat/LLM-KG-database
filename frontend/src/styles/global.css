@@ -248,6 +248,19 @@ body.theme-dark {
   margin-top: 16px;
 }
 
+.action-toggle.ant-checkbox-wrapper {
+  color: #172033;
+}
+
+body.theme-dark .action-toggle.ant-checkbox-wrapper {
+  color: #dbeafe;
+}
+
+body.theme-dark .action-toggle.ant-checkbox-wrapper .ant-checkbox + span,
+body.theme-dark .action-toggle.ant-checkbox-wrapper span:not(.ant-checkbox) {
+  color: #dbeafe;
+}
+
 .status-box {
   margin-top: 18px;
   min-height: 32px;

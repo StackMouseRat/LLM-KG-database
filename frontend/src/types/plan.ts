@@ -10,6 +10,7 @@ export type PipelineStage =
 export interface PipelineRunRequest {
   question: string;
   enableCaseSearch?: boolean;
+  enableMultiFaultSearch?: boolean;
 }
 
 export interface PipelineBasicInfo {

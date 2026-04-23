@@ -297,7 +297,7 @@ function promoteStructuredHeadings(text: string) {
 
 function parseFaultScene(text: string) {
   try {
-    return JSON.parse(text || '{}') as Record<string, string>;
+    return JSON.parse(text || '{}') as Record<string, unknown>;
   } catch {
     return {};
   }
@@ -388,6 +388,7 @@ export default function App() {
   const [nodeStageLabel, setNodeStageLabel] = useState(savedSnapshot?.pipeline ? '已恢复上次生成结果' : '等待输入');
   const [loading, setLoading] = useState(false);
   const [enableCaseSearch, setEnableCaseSearch] = useState(false);
+  const [enableMultiFaultSearch, setEnableMultiFaultSearch] = useState(false);
   const [savedFlag, setSavedFlag] = useState(Boolean(savedSnapshot?.pipeline));
 
   const chapters = pipeline?.chapters ?? [];
@@ -399,9 +400,15 @@ export default function App() {
   const summaryTags = useMemo(() => {
     if (!pipeline) return [];
     const parsed = parseFaultScene(pipeline.basicInfo.faultScene);
+    const faultNodes = parsed['故障二级节点'];
+    const faultTags = Array.isArray(faultNodes)
+      ? faultNodes.map((item) => String(item)).filter(Boolean)
+      : faultNodes
+        ? [String(faultNodes)]
+        : [];
     return [
-      parsed['故障二级节点'],
-      parsed['故障对象'],
+      ...faultTags,
+      parsed['故障对象'] ? String(parsed['故障对象']) : '',
       pipeline.templateSplit.templateName,
       `${pipeline.templateSplit.chapterCount}章`
     ].filter(Boolean) as string[];
@@ -561,7 +568,7 @@ export default function App() {
 
     try {
       await runPipelineStream(
-        { question, enableCaseSearch },
+        { question, enableCaseSearch, enableMultiFaultSearch },
         {
           onStage: (nextStage) => {
             if (nextStage === 'basic_info') {
@@ -782,8 +789,19 @@ export default function App() {
               <Button size="small" icon={<DownloadOutlined />} disabled={!chapters.length} onClick={handleDownload}>
                 下载全部
               </Button>
-              <Checkbox checked={enableCaseSearch} onChange={(event) => setEnableCaseSearch(event.target.checked)}>
+              <Checkbox
+                className="action-toggle"
+                checked={enableCaseSearch}
+                onChange={(event) => setEnableCaseSearch(event.target.checked)}
+              >
                 开启案例搜索
+              </Checkbox>
+              <Checkbox
+                className="action-toggle"
+                checked={enableMultiFaultSearch}
+                onChange={(event) => setEnableMultiFaultSearch(event.target.checked)}
+              >
+                开启多故障检索
               </Checkbox>
             </Space>
             <div className="status-box">

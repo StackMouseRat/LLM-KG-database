@@ -17,8 +17,40 @@ from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(os.getenv("LLM_KG_REPO_ROOT", "/home/ubuntu/LLM-KG-database"))
 DEFAULT_BASE_URL = os.getenv("PIPELINE_BASE_URL", "http://127.0.0.1:3000/api/v1/chat/completions")
+
+
+def pick_key_path(*candidates: str) -> Path:
+    for candidate in candidates:
+        path = Path(candidate)
+        if path.exists():
+            return path
+    return Path(candidates[0])
+
+
 DEFAULT_BASIC_KEY = Path(
     os.getenv("PIPELINE_BASIC_KEY_FILE", "/home/ubuntu/.fastgpt_keys/basic_info_api_key")
+)
+DEFAULT_MULTI_FAULT_BASIC_KEY = Path(
+    os.getenv(
+        "PIPELINE_MULTI_FAULT_BASIC_KEY_FILE",
+        str(
+            pick_key_path(
+                "/run/fastgpt_keys/multi_fault_device_analysis_plugin_api_key",
+                "/home/ubuntu/.fastgpt_keys/multi_fault_device_analysis_plugin_api_key",
+            )
+        ),
+    )
+)
+DEFAULT_MULTI_FAULT_GRAPH_QUERY_KEY = Path(
+    os.getenv(
+        "PIPELINE_MULTI_FAULT_GRAPH_QUERY_KEY_FILE",
+        str(
+            pick_key_path(
+                "/run/fastgpt_keys/parallel_database_query_plugin_api_key",
+                "/home/ubuntu/.fastgpt_keys/parallel_database_query_plugin_api_key",
+            )
+        ),
+    )
 )
 DEFAULT_SPLITTER_KEY = Path(
     os.getenv("PIPELINE_SPLITTER_KEY_FILE", "/home/ubuntu/.fastgpt_keys/template_publish_test_api_key")
@@ -184,12 +216,90 @@ def extract_plugin_output(response: dict[str, Any]) -> dict[str, Any]:
 
 
 def extract_basic_fields(plugin_output: dict[str, Any], question: str) -> dict[str, str]:
+    fault_scene = str(plugin_output.get("故障类型分析") or "")
+    if fault_scene:
+        try:
+            parsed = json.loads(fault_scene)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, dict):
+            fault_nodes = parsed.get("故障二级节点")
+            if isinstance(fault_nodes, list):
+                normalized_fault_nodes = [str(item).strip() for item in fault_nodes if str(item).strip()]
+                parsed["故障二级节点"] = normalized_fault_nodes
+                if normalized_fault_nodes and not parsed.get("主故障二级节点"):
+                    parsed["主故障二级节点"] = normalized_fault_nodes[0]
+            elif isinstance(fault_nodes, str) and fault_nodes.strip():
+                parsed.setdefault("主故障二级节点", fault_nodes.strip())
+            fault_scene = json.dumps(parsed, ensure_ascii=False)
+
     return {
         "用户问题": str(plugin_output.get("用户问题") or question),
-        "故障与场景提取结果": str(plugin_output.get("故障类型分析") or ""),
+        "故障与场景提取结果": fault_scene,
         "图谱检索方案素材": str(plugin_output.get("图谱检索") or ""),
         "模板文本": str(plugin_output.get("模板文本") or ""),
     }
+
+
+def build_multi_fault_graph_material(
+    endpoint: str,
+    api_key: str,
+    timeout: int,
+    device_space: str,
+    fault_scene_text: str,
+    max_workers: int,
+) -> str:
+    try:
+        parsed = json.loads(fault_scene_text or "{}")
+    except Exception:
+        parsed = {}
+
+    if not isinstance(parsed, dict):
+        return ""
+
+    fault_nodes_raw = parsed.get("故障二级节点")
+    if isinstance(fault_nodes_raw, list):
+        fault_nodes = [str(item).strip() for item in fault_nodes_raw if str(item).strip()]
+    elif isinstance(fault_nodes_raw, str) and fault_nodes_raw.strip():
+        fault_nodes = [fault_nodes_raw.strip()]
+    else:
+        fault_nodes = []
+
+    if not device_space or not fault_nodes:
+        return ""
+
+    per_fault: dict[str, str] = {}
+    errors: dict[str, str] = {}
+
+    def query_one_fault(fault_name: str) -> tuple[str, str]:
+        response, _ = call_plugin(
+            endpoint=endpoint,
+            api_key=api_key,
+            variables={"设备表": device_space, "当前查询的二级故障": fault_name},
+            timeout=timeout,
+        )
+        plugin_output = extract_plugin_output(response)
+        return fault_name, str(plugin_output.get("图谱检索") or "")
+
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(fault_nodes))) as executor:
+        future_map = {executor.submit(query_one_fault, fault_name): fault_name for fault_name in fault_nodes}
+        for future in as_completed(future_map):
+            fault_name = future_map[future]
+            try:
+                name, text = future.result()
+                per_fault[name] = text
+            except Exception as exc:
+                errors[fault_name] = str(exc)
+
+    material = {
+        "设备表": device_space,
+        "故障二级节点": fault_nodes,
+        "主故障二级节点": str(parsed.get("主故障二级节点") or (fault_nodes[0] if fault_nodes else "")),
+        "逐故障图谱检索": per_fault,
+    }
+    if errors:
+        material["查询错误"] = errors
+    return json.dumps(material, ensure_ascii=False)
 
 
 def extract_split_result(plugin_output: dict[str, Any]) -> dict[str, Any]:
@@ -375,21 +485,30 @@ def main() -> None:
     parser.add_argument("--question", required=True, help="User question passed to the basic-info plugin.")
     parser.add_argument("--endpoint", default=DEFAULT_BASE_URL)
     parser.add_argument("--basic-key-file", type=Path, default=DEFAULT_BASIC_KEY)
+    parser.add_argument("--multi-fault-basic-key-file", type=Path, default=DEFAULT_MULTI_FAULT_BASIC_KEY)
+    parser.add_argument("--multi-fault-graph-query-key-file", type=Path, default=DEFAULT_MULTI_FAULT_GRAPH_QUERY_KEY)
     parser.add_argument("--splitter-key-file", type=Path, default=DEFAULT_SPLITTER_KEY)
     parser.add_argument("--parallel-key-file", type=Path, default=DEFAULT_PARALLEL_KEY)
     parser.add_argument("--timeout", type=int, default=210)
     parser.add_argument("--max-workers", type=int, default=6)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--stream-events", action="store_true")
+    parser.add_argument("--multi-fault", action="store_true")
     args = parser.parse_args()
 
-    basic_key = read_key(args.basic_key_file)
+    basic_key = read_key(args.multi_fault_basic_key_file if args.multi_fault else args.basic_key_file)
+    multi_fault_graph_query_key = (
+        read_key(args.multi_fault_graph_query_key_file) if args.multi_fault else ""
+    )
     splitter_key = read_key(args.splitter_key_file)
     parallel_key = read_key(args.parallel_key_file)
 
     try:
         emit_event(args.stream_events, "basic_info_started", {"question": args.question})
-        log_progress(args.stream_events, "[1/3] Calling 基本信息获取 plugin...")
+        log_progress(
+            args.stream_events,
+            "[1/3] Calling 多故障基本信息获取 plugin..." if args.multi_fault else "[1/3] Calling 基本信息获取 plugin..."
+        )
         basic_response, basic_elapsed = call_plugin(
             endpoint=args.endpoint,
             api_key=basic_key,
@@ -398,6 +517,17 @@ def main() -> None:
         )
         basic_output = extract_plugin_output(basic_response)
         basic_fields = extract_basic_fields(basic_output, args.question)
+        if args.multi_fault:
+            graph_material = build_multi_fault_graph_material(
+                endpoint=args.endpoint,
+                api_key=multi_fault_graph_query_key,
+                timeout=args.timeout,
+                device_space=str(basic_output.get("设备表") or ""),
+                fault_scene_text=basic_fields["故障与场景提取结果"],
+                max_workers=args.max_workers,
+            )
+            if graph_material:
+                basic_fields["图谱检索方案素材"] = graph_material
         emit_event(
             args.stream_events,
             "basic_info_done",
