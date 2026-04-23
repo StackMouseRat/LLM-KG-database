@@ -88,6 +88,13 @@ const stageText: Record<PipelineStage, string> = {
   error: '生成失败'
 };
 
+const chapterStatusText: Record<'pending' | 'running' | 'done' | 'error', string> = {
+  pending: '等待中',
+  running: '生成中',
+  done: '已完成',
+  error: '失败'
+};
+
 function renderInlineText(text: string): ReactNode[] {
   const parts = text.split(/(\[KG\]|\[GEN\]|\[FIX\]|\*\*[^*]+\*\*)/g);
   return parts
@@ -754,7 +761,7 @@ export default function App() {
                   title={`${chapter.chapterNo} ${chapter.title}`}
                   extra={
                     <Tag color={chapter.status === 'done' ? 'green' : chapter.status === 'error' ? 'red' : 'processing'}>
-                      {chapter.status}
+                      {chapterStatusText[chapter.status]}
                     </Tag>
                   }
                 >

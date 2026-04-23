@@ -367,6 +367,26 @@ body {
   flex-direction: column;
 }
 
+.quality-plan-card .ant-card-head {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+}
+
+.quality-plan-card .ant-card-head-wrapper {
+  width: 100%;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+}
+
+.quality-plan-card .ant-card-head-title,
+.quality-plan-card .ant-card-extra {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+}
+
 .quality-plan-card .ant-card-body {
   flex: 1;
   min-height: 0;

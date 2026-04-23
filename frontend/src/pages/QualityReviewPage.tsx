@@ -170,8 +170,11 @@ export function QualityReviewPage({ currentUserGroup }: { currentUserGroup: 'adm
   const buildReviewPrompt = (target: StreamTarget, chapterTemplateText?: string) => {
     const promptKey = target === 'optimize' ? 'optimize_prompt' : 'evaluate_prompt';
     const basePrompt = prompts.find((item) => item.prompt_key === promptKey)?.prompt_text || '';
-    if (target === 'optimize' || !chapterTemplateText?.trim()) {
+    if (!chapterTemplateText?.trim()) {
       return basePrompt;
+    }
+    if (target === 'optimize') {
+      return `${basePrompt}\n\n当前章节生成模板：\n${chapterTemplateText}\n\n请严格参考该章节生成模板，对正文进行格式优化，尽量使输出结构、标题层级与内容组织更贴近模板要求，但不要改变原始业务含义和处置步骤。`;
     }
     const targetLabel = target === 'rawEvaluate' ? '原文' : '优化后的文本';
     return `${basePrompt}\n\n当前待评估对象：${targetLabel}\n\n当前章节生成模板：\n${chapterTemplateText}\n\n请结合该章节生成模板进行评估，检查正文是否符合模板预期的结构边界、内容重点与表达要求。`;
@@ -741,7 +744,7 @@ export function QualityReviewPage({ currentUserGroup }: { currentUserGroup: 'adm
                   className="panel-card quality-plan-card"
                   title={`${chapter.chapterNo} ${chapter.title} · 优化后`}
                   extra={
-                    <Space size={8} wrap>
+                    <Space direction="vertical" size={6}>
                       <Tag color={optimizeColorMap[optimizeStatus]}>{optimizeLabelMap[optimizeStatus]}</Tag>
                       <Tag color={evaluateColorMap[rawEvaluateStatus]}>{rawEvaluateLabelMap[rawEvaluateStatus]}</Tag>
                       <Tag color={evaluateColorMap[optimizedEvaluateStatus]}>
