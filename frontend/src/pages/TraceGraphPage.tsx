@@ -20,7 +20,8 @@ const NODE_COLOR_MAP: Record<TraceNode['type'], string> = {
   emergency_resource: '#14b8a6',
   unknown: '#64748b'
 };
-const LEVEL3_RADIAL_OFFSET_STEP = 10;
+const LEVEL3_RADIAL_OFFSET_STEP = 30;
+const LEVEL4_RADIAL_OFFSET_STEP = 30;
 
 function getNodeSize(node: TraceNode): [number, number] {
   if (node.type === 'root_node') {
@@ -120,6 +121,13 @@ function getDisplayLabel(node: TraceNode, focusFaultName: string) {
   return label;
 }
 
+function getEdgeDisplayLabel(label: string) {
+  return String(label || '')
+    .replace(/故障/g, '')
+    .replace(/应对措施/g, '应对')
+    .replace(/安全风险/g, '风险');
+}
+
 function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number) {
   const centerX = width / 2;
   const centerY = height / 2;
@@ -169,8 +177,8 @@ function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number)
   const fullCircle = Math.PI * 2;
   const l1Radius = 180;
   const l2Radius = 540;
-  const l3Radius = 760;
-  const l4Radius = 1470;
+  const l3Radius = 720;
+  const l4Radius = 950;
 
   level1.forEach((node, index) => {
     const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, level1.length);
@@ -211,13 +219,33 @@ function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number)
       positions[node.id] = polarToCartesian(centerX, centerY, l3Radius + layerOffset, angle);
       visibleNodeIds.add(node.id);
     });
-  }
 
-  level4.forEach((node, index) => {
-    const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, level4.length);
-    positions[node.id] = polarToCartesian(centerX, centerY, l4Radius, angle);
-    visibleNodeIds.add(node.id);
-  });
+    const level4Branch = level4
+      .filter((node) => {
+        const parentL3 = [...outgoing.entries()].find(([, targets]) => targets.includes(node.id))?.[0] || '';
+        const parentL2 = [...outgoing.entries()].find(([, targets]) => targets.includes(parentL3))?.[0] || '';
+        return l2Children.some((child) => child.id === parentL2);
+      })
+      .sort((a, b) => {
+        const aL3 = [...outgoing.entries()].find(([, targets]) => targets.includes(a.id))?.[0] || '';
+        const bL3 = [...outgoing.entries()].find(([, targets]) => targets.includes(b.id))?.[0] || '';
+        const aL2 = [...outgoing.entries()].find(([, targets]) => targets.includes(aL3))?.[0] || '';
+        const bL2 = [...outgoing.entries()].find(([, targets]) => targets.includes(bL3))?.[0] || '';
+        const aIndex = level2.findIndex((node) => node.id === aL2);
+        const bIndex = level2.findIndex((node) => node.id === bL2);
+        return aIndex - bIndex;
+      });
+
+    level4Branch.forEach((node, index) => {
+      const globalIndex = level4.findIndex((item) => item.id === node.id);
+      const angle = -Math.PI / 2 + ((globalIndex + 0.5) * fullCircle) / Math.max(1, level4.length);
+      const distanceFromStart = index;
+      const distanceFromEnd = level4Branch.length - 1 - index;
+      const layerOffset = Math.min(distanceFromStart, distanceFromEnd) * LEVEL4_RADIAL_OFFSET_STEP;
+      positions[node.id] = polarToCartesian(centerX, centerY, l4Radius + layerOffset, angle);
+      visibleNodeIds.add(node.id);
+    });
+  }
 
   return { positions, visibleNodeIds };
 }
@@ -330,7 +358,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
         source: edge.source,
         target: edge.target,
         data: {
-          label: edge.label,
+          label: getEdgeDisplayLabel(edge.label),
           isHit: Boolean(edge.isHit),
           stroke: edge.isHit ? (darkMode ? '#94a3b8' : '#64748b') : darkMode ? '#334155' : '#cbd5e1'
         }
