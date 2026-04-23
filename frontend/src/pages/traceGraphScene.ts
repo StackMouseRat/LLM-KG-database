@@ -16,6 +16,14 @@ export const NODE_COLOR_MAP: Record<TraceNode['type'], string> = {
 export const LEVEL3_RADIAL_OFFSET_STEP = 30;
 export const LEVEL4_RADIAL_OFFSET_STEP = 50;
 
+type TraceAnimationState = {
+  ghostNodeIds?: Set<string>;
+  nodePositionOverrides?: Map<string, { x: number; y: number }>;
+  nodeOpacityOverrides?: Map<string, number>;
+  edgeOpacityOverrides?: Map<string, number>;
+  edgeLabelOpacityOverrides?: Map<string, number>;
+};
+
 export function getNodeSize(node: TraceNode): [number, number] {
   if (node.type === 'root_node') {
     return [164, 52];
@@ -250,30 +258,70 @@ export function buildVisibleTraceGraphData(
   height: number,
   visibleNodeIds?: Set<string>,
   visibleEdgeIds?: Set<string>,
-  ghostNodeIds?: Set<string>
+  animationState?: TraceAnimationState
 ) {
   const { graphData } = buildTraceGraphData(trace, darkMode, width, height);
+  const ghostNodeIds = animationState?.ghostNodeIds;
+  const nodePositionOverrides = animationState?.nodePositionOverrides;
+  const nodeOpacityOverrides = animationState?.nodeOpacityOverrides;
+  const edgeOpacityOverrides = animationState?.edgeOpacityOverrides;
+  const edgeLabelOpacityOverrides = animationState?.edgeLabelOpacityOverrides;
 
   return {
     nodes: visibleNodeIds || ghostNodeIds
       ? graphData.nodes
           .filter((node: any) => visibleNodeIds?.has(String(node.id)) || ghostNodeIds?.has(String(node.id)))
           .map((node: any) => {
+            const nextNode = {
+              ...node,
+              style: {
+                ...node.style
+              },
+              data: {
+                ...node.data
+              }
+            };
+            if (nodePositionOverrides?.has(String(node.id))) {
+              const override = nodePositionOverrides.get(String(node.id));
+              nextNode.style.x = override?.x;
+              nextNode.style.y = override?.y;
+            }
+            if (nodeOpacityOverrides?.has(String(node.id))) {
+              const opacity = nodeOpacityOverrides.get(String(node.id)) ?? 1;
+              nextNode.style.opacity = opacity;
+              nextNode.style.labelOpacity = opacity;
+            }
             if (ghostNodeIds?.has(String(node.id)) && !visibleNodeIds?.has(String(node.id))) {
               return {
-                ...node,
+                ...nextNode,
                 data: {
-                  ...node.data,
+                  ...nextNode.data,
                   lineWidth: 0,
                   labelColor: 'rgba(0,0,0,0)'
                 }
               };
             }
-            return node;
+            return nextNode;
           })
       : graphData.nodes,
     edges: visibleEdgeIds
-      ? graphData.edges.filter((edge: any) => visibleEdgeIds.has(String(edge.id)))
+      ? graphData.edges
+          .filter((edge: any) => visibleEdgeIds.has(String(edge.id)))
+          .map((edge: any) => {
+            const nextEdge = {
+              ...edge,
+              data: {
+                ...edge.data
+              }
+            };
+            if (edgeOpacityOverrides?.has(String(edge.id))) {
+              nextEdge.data.strokeOpacity = edgeOpacityOverrides.get(String(edge.id));
+            }
+            if (edgeLabelOpacityOverrides?.has(String(edge.id))) {
+              nextEdge.data.labelOpacity = edgeLabelOpacityOverrides.get(String(edge.id));
+            }
+            return nextEdge;
+          })
       : graphData.edges
   };
 }
