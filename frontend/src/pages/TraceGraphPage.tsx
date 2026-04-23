@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Empty, Spin, Tag, Typography } from 'antd';
 import { fetchTraceSubgraph } from '../services/planApi';
 import type { PipelineRunResponse, PlanTrace, TraceNode } from '../types/plan';
-import { buildTraceGraphData } from './traceGraphScene';
-import { createTraceAnimationController } from './traceGraphAnimation';
+import { buildTraceAnimationSeedData } from './traceGraphScene';
+import { buildTraceAnimationPlans, createTraceAnimationController } from './traceGraphAnimation';
 
 interface TraceGraphPageProps {
   pipeline: PipelineRunResponse | null;
@@ -78,7 +78,8 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       if (cancelled || !graphContainerRef.current) return;
       const width = graphContainerRef.current.clientWidth || 1680;
       const height = graphContainerRef.current.clientHeight || 1080;
-      const { graphData } = buildTraceGraphData(trace, darkMode, width, height);
+      const { rootId } = buildTraceAnimationPlans(trace);
+      const graphData = buildTraceAnimationSeedData(trace, darkMode, width, height, rootId);
       setGraphViewport({ width, height });
 
       const graph = new Graph({
@@ -86,10 +87,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
         width,
         height,
         autoFit: 'center',
-        data: {
-          nodes: [],
-          edges: []
-        },
+        data: graphData,
         animation: false,
         node: {
           type: 'rect',

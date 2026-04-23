@@ -44,6 +44,28 @@ export function polarToCartesian(cx: number, cy: number, radius: number, angle: 
   };
 }
 
+export function buildTraceAnimationSeedData(trace: PlanTrace, darkMode: boolean, width: number, height: number, rootId?: string) {
+  const { graphData } = buildTraceGraphData(trace, darkMode, width, height);
+  return {
+    nodes: graphData.nodes.map((node: any) => ({
+      ...node,
+      style: {
+        ...node.style,
+        opacity: node.id === rootId ? 1 : 0,
+        labelOpacity: node.id === rootId ? 1 : 0
+      }
+    })),
+    edges: graphData.edges.map((edge: any) => ({
+      ...edge,
+      data: {
+        ...edge.data,
+        strokeOpacity: 0,
+        labelOpacity: 0
+      }
+    }))
+  };
+}
+
 function getDisplayLabel(node: TraceNode, focusFaultName: string) {
   if (node.type === 'fault_l2' || node.type === 'fault_l1' || node.type === 'root_node') {
     return node.label;

@@ -1,5 +1,5 @@
 import type { PlanTrace, TraceEdge, TraceNode } from '../types/plan';
-import { buildVisibleTraceGraphData, computeTraceLayout } from './traceGraphScene';
+import { computeTraceLayout } from './traceGraphScene';
 
 type BranchPlan = {
   l1Id: string;
@@ -159,17 +159,11 @@ export function createTraceAnimationController(params: {
   const { rootId, focusHitPlan, focusRemainderPlan, clockwisePlans } = buildTraceAnimationPlans(trace);
   const { positions } = computeTraceLayout(trace, width, height);
   const { incoming } = buildGraphIndexes(trace);
-
   const visibleNodeIds = new Set<string>(rootId ? [rootId] : []);
   const visibleEdgeIds = new Set<string>();
-  const ghostNodeIds = new Set<string>();
-  const nodePositionOverrides = new Map<string, { x: number; y: number }>();
-  const nodeOpacityOverrides = new Map<string, number>();
-  const edgeOpacityOverrides = new Map<string, number>();
-  const edgeLabelOpacityOverrides = new Map<string, number>();
   let stopped = false;
   const timers: number[] = [];
-  let renderChain = Promise.resolve();
+  let drawChain: Promise<void> = Promise.resolve();
 
   const EDGE_GROW_DURATION = 96;
   const NODE_FADE_DURATION = 72;
@@ -177,19 +171,11 @@ export function createTraceAnimationController(params: {
 
   const flush = async () => {
     if (stopped) return;
-    const nextData = buildVisibleTraceGraphData(trace, darkMode, width, height, visibleNodeIds, visibleEdgeIds, {
-      ghostNodeIds,
-      nodePositionOverrides,
-      nodeOpacityOverrides,
-      edgeOpacityOverrides,
-      edgeLabelOpacityOverrides
-    });
-    renderChain = renderChain.then(async () => {
+    drawChain = drawChain.then(async () => {
       if (stopped) return;
-      graph.setData(nextData);
-      await graph.render();
+      await graph.draw();
     });
-    await renderChain;
+    await drawChain;
   };
 
   const playBranch = async (plan: BranchPlan | null, onAfterLevel2?: () => void) => {
@@ -201,18 +187,42 @@ export function createTraceAnimationController(params: {
       const startPositions = new Map<string, { x: number; y: number }>();
       for (const nodeId of nextNodeIds) {
         const parentId = incoming.get(nodeId)?.[0]?.source || rootId;
-        const parentPos = nodePositionOverrides.get(parentId) || positions[parentId] || positions[rootId];
+        const parentPos = positions[parentId] || positions[rootId];
         if (!parentPos) continue;
         startPositions.set(nodeId, parentPos);
-        ghostNodeIds.add(nodeId);
-        nodePositionOverrides.set(nodeId, { ...parentPos });
-        nodeOpacityOverrides.set(nodeId, 0);
+      }
+
+      if (nextNodeIds.length) {
+        graph.updateNodeData(
+          nextNodeIds.map((nodeId) => {
+            const start = startPositions.get(nodeId) || positions[nodeId];
+            return {
+              id: nodeId,
+              style: {
+                x: start?.x,
+                y: start?.y,
+                opacity: 0,
+                labelOpacity: 0
+              }
+            };
+          })
+        );
       }
 
       for (const edgeId of nextEdgeIds) {
         visibleEdgeIds.add(edgeId);
-        edgeOpacityOverrides.set(edgeId, 1);
-        edgeLabelOpacityOverrides.set(edgeId, 0);
+      }
+
+      if (nextEdgeIds.length) {
+        graph.updateEdgeData(
+          nextEdgeIds.map((edgeId) => ({
+            id: edgeId,
+            data: {
+              strokeOpacity: 1,
+              labelOpacity: 0
+            }
+          }))
+        );
       }
 
       await flush();
@@ -225,10 +235,17 @@ export function createTraceAnimationController(params: {
           const start = startPositions.get(nodeId);
           const end = positions[nodeId];
           if (!start || !end) continue;
-          nodePositionOverrides.set(nodeId, {
-            x: lerp(start.x, end.x, progress),
-            y: lerp(start.y, end.y, progress)
-          });
+          graph.updateNodeData([
+            {
+              id: nodeId,
+              style: {
+                x: lerp(start.x, end.x, progress),
+                y: lerp(start.y, end.y, progress),
+                opacity: 0,
+                labelOpacity: 0
+              }
+            }
+          ]);
         }
         await flush();
         if (frame < growFrames) {
@@ -236,13 +253,21 @@ export function createTraceAnimationController(params: {
         }
       }
 
-      for (const nodeId of nextNodeIds) {
-        ghostNodeIds.delete(nodeId);
-        visibleNodeIds.add(nodeId);
-        if (positions[nodeId]) {
-          nodePositionOverrides.set(nodeId, positions[nodeId]);
-        }
-        nodeOpacityOverrides.set(nodeId, 0);
+      if (nextNodeIds.length) {
+        graph.updateNodeData(
+          nextNodeIds.map((nodeId) => {
+            visibleNodeIds.add(nodeId);
+            return {
+              id: nodeId,
+              style: {
+                x: positions[nodeId]?.x,
+                y: positions[nodeId]?.y,
+                opacity: 0,
+                labelOpacity: 0
+              }
+            };
+          })
+        );
       }
       await flush();
 
@@ -254,11 +279,29 @@ export function createTraceAnimationController(params: {
       for (let frame = 1; frame <= fadeFrames; frame += 1) {
         if (stopped) return;
         const progress = frame / fadeFrames;
-        for (const nodeId of nextNodeIds) {
-          nodeOpacityOverrides.set(nodeId, progress);
+        if (nextNodeIds.length) {
+          graph.updateNodeData(
+            nextNodeIds.map((nodeId) => ({
+              id: nodeId,
+              style: {
+                x: positions[nodeId]?.x,
+                y: positions[nodeId]?.y,
+                opacity: progress,
+                labelOpacity: progress
+              }
+            }))
+          );
         }
-        for (const edgeId of nextEdgeIds) {
-          edgeLabelOpacityOverrides.set(edgeId, progress);
+        if (nextEdgeIds.length) {
+          graph.updateEdgeData(
+            nextEdgeIds.map((edgeId) => ({
+              id: edgeId,
+              data: {
+                strokeOpacity: 1,
+                labelOpacity: progress
+              }
+            }))
+          );
         }
         await flush();
         if (frame < fadeFrames) {
@@ -266,13 +309,29 @@ export function createTraceAnimationController(params: {
         }
       }
 
-      for (const nodeId of nextNodeIds) {
-        nodeOpacityOverrides.delete(nodeId);
-        nodePositionOverrides.delete(nodeId);
+      if (nextNodeIds.length) {
+        graph.updateNodeData(
+          nextNodeIds.map((nodeId) => ({
+            id: nodeId,
+            style: {
+              x: positions[nodeId]?.x,
+              y: positions[nodeId]?.y,
+              opacity: 1,
+              labelOpacity: 1
+            }
+          }))
+        );
       }
-      for (const edgeId of nextEdgeIds) {
-        edgeOpacityOverrides.delete(edgeId);
-        edgeLabelOpacityOverrides.delete(edgeId);
+      if (nextEdgeIds.length) {
+        graph.updateEdgeData(
+          nextEdgeIds.map((edgeId) => ({
+            id: edgeId,
+            data: {
+              strokeOpacity: 1,
+              labelOpacity: 1
+            }
+          }))
+        );
       }
       await flush();
     }
