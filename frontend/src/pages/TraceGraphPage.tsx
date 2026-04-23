@@ -22,13 +22,16 @@ const NODE_COLOR_MAP: Record<TraceNode['type'], string> = {
 };
 
 function getNodeSize(node: TraceNode): [number, number] {
-  if (node.type === 'root_node' || node.type === 'fault_l1') {
+  if (node.type === 'root_node') {
     return [164, 52];
   }
-  if (node.type === 'fault_l2') {
-    return [220, 86];
+  if (node.type === 'fault_l1') {
+    return [92, 52];
   }
-  return [82, 26];
+  if (node.type === 'fault_l2') {
+    return [83, 49];
+  }
+  return [48, 45];
 }
 
 function polarToCartesian(cx: number, cy: number, radius: number, angle: number) {
@@ -42,134 +45,143 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+function buildL1Groups(trace: PlanTrace) {
+  const visibleNodes = trace.graph.nodes.filter((node) => node.type === 'fault_l1' || node.type === 'fault_l2');
+  const nodeMap = new Map(visibleNodes.map((node) => [node.id, node]));
+  const l1Nodes = visibleNodes.filter((node): node is TraceNode => node.type === 'fault_l1');
+
+  const l2ByL1 = new Map<string, TraceNode[]>();
+  for (const edge of trace.graph.edges) {
+    if (edge.label !== '包含') continue;
+    const source = nodeMap.get(edge.source);
+    const target = nodeMap.get(edge.target);
+    if (source?.type === 'fault_l1' && target?.type === 'fault_l2') {
+      const list = l2ByL1.get(source.id) || [];
+      list.push(target);
+      l2ByL1.set(source.id, list);
+    }
+  }
+
+  const remaining = l1Nodes.map((l1Node) => ({
+    l1Node,
+    l2Nodes: l2ByL1.get(l1Node.id) || []
+  }));
+
+  const groups: Array<{ members: Array<{ l1Node: TraceNode; l2Nodes: TraceNode[] }>; totalL2: number }> = [];
+
+  while (remaining.length > 0) {
+    remaining.sort((a, b) => b.l2Nodes.length - a.l2Nodes.length);
+    const current = remaining.shift();
+    if (!current) break;
+    if (remaining.length === 0) {
+      groups.push({ members: [current], totalL2: current.l2Nodes.length });
+      break;
+    }
+
+    let bestIndex = 0;
+    let bestDiff = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < remaining.length; index += 1) {
+      const diff = Math.abs(current.l2Nodes.length - remaining[index].l2Nodes.length);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIndex = index;
+      }
+    }
+
+    const pair = remaining.splice(bestIndex, 1)[0];
+    groups.push({
+      members: [current, pair],
+      totalL2: current.l2Nodes.length + pair.l2Nodes.length
+    });
+  }
+
+  return groups;
+}
+
 function getDisplayLabel(node: TraceNode, focusFaultName: string) {
   if (node.type === 'fault_l2' || node.type === 'fault_l1' || node.type === 'root_node') {
     return node.label;
   }
+  let label = node.label;
   if (focusFaultName) {
     const focusPrefix = `${focusFaultName}-`;
-    if (node.label.startsWith(focusPrefix)) {
-      return node.label.slice(focusPrefix.length);
+    if (label.startsWith(focusPrefix)) {
+      label = label.slice(focusPrefix.length);
     }
   }
-  const splitIndex = node.label.indexOf('-');
-  if (splitIndex > 0 && splitIndex < node.label.length - 1) {
-    return node.label.slice(splitIndex + 1);
+  const splitIndex = label.indexOf('-');
+  if (splitIndex > 0 && splitIndex < label.length - 1) {
+    label = label.slice(splitIndex + 1);
   }
-  return node.label;
+  if (label.length === 4) {
+    return `${label.slice(0, 2)}\n${label.slice(2)}`;
+  }
+  return label;
 }
 
 function computeSnowflakeLayout(trace: PlanTrace, width: number, height: number) {
   const centerX = width / 2;
   const centerY = height / 2;
   const positions: Record<string, { x: number; y: number }> = {};
-  const nodeMap = new Map(trace.graph.nodes.map((node) => [node.id, node]));
-  const outgoing = new Map<string, Array<{ target: string; label: string }>>();
+  const visibleNodeIds = new Set<string>();
 
-  for (const edge of trace.graph.edges) {
+  const root = trace.graph.nodes.find((node) => node.type === 'root_node') || trace.graph.nodes[0];
+  if (!root) return { positions, visibleNodeIds };
+  positions[root.id] = { x: centerX, y: centerY };
+  visibleNodeIds.add(root.id);
+
+  const allNodes = trace.graph.nodes;
+  const allEdges = trace.graph.edges;
+  const nodeMap = new Map(allNodes.map((node) => [node.id, node]));
+  const outgoing = new Map<string, string[]>();
+
+  for (const edge of allEdges) {
     const list = outgoing.get(edge.source) || [];
-    list.push({ target: edge.target, label: edge.label });
+    list.push(edge.target);
     outgoing.set(edge.source, list);
   }
 
-  const root = trace.graph.nodes.find((node) => node.type === 'root_node') || trace.graph.nodes[0];
-  if (!root) return positions;
-  positions[root.id] = { x: centerX, y: centerY };
+  const level1 = allNodes.filter((node): node is TraceNode => node.type === 'fault_l1');
+  const level2 = allNodes.filter((node): node is TraceNode => node.type === 'fault_l2');
 
-  const l1Nodes = (outgoing.get(root.id) || [])
-    .map((item) => nodeMap.get(item.target))
-    .filter((item): item is TraceNode => Boolean(item && item.type === 'fault_l1'));
-
-  const fullCircle = Math.PI * 2;
-  const l1Radius = 240;
-  const l2BaseRadius = 440;
-  const l2RadiusStep = 44;
-  const childOffsetRadius = 190;
-  const grandchildOffsetRadius = 135;
-
-  const l1Groups = l1Nodes.map((l1Node) => ({
-    l1Node,
-    l2Nodes: (outgoing.get(l1Node.id) || [])
-      .map((item) => nodeMap.get(item.target))
-      .filter((item): item is TraceNode => Boolean(item && item.type === 'fault_l2'))
-  }));
-
-  const totalSectorCount = Math.max(
-    1,
-    l1Groups.reduce((sum, group) => sum + Math.max(1, group.l2Nodes.length), 0)
-  );
-  const sectorAngle = fullCircle / totalSectorCount;
-  let sectorCursor = 0;
-
-  l1Groups.forEach(({ l1Node, l2Nodes }) => {
-    const sectorCount = Math.max(1, l2Nodes.length);
-    const firstSectorCenter = -Math.PI / 2 + (sectorCursor + 0.5) * sectorAngle;
-    const lastSectorCenter = -Math.PI / 2 + (sectorCursor + sectorCount - 0.5) * sectorAngle;
-    const l1Angle = (firstSectorCenter + lastSectorCenter) / 2;
-
-    positions[l1Node.id] = polarToCartesian(centerX, centerY, l1Radius, l1Angle);
-
-    l2Nodes.forEach((l2Node, index) => {
-      const sectorCenter = -Math.PI / 2 + (sectorCursor + index + 0.5) * sectorAngle;
-      const sectorStart = sectorCenter - sectorAngle / 2;
-      const sectorEnd = sectorCenter + sectorAngle / 2;
-      const usableSectorStart = sectorStart + sectorAngle * 0.12;
-      const usableSectorEnd = sectorEnd - sectorAngle * 0.12;
-
-      const spiralIndex = sectorCursor + index;
-      const l2Radius = l2BaseRadius + spiralIndex * l2RadiusStep;
-      positions[l2Node.id] = polarToCartesian(centerX, centerY, l2Radius, sectorCenter);
-
-      const children = (outgoing.get(l2Node.id) || [])
-        .map((item) => ({ edge: item, node: nodeMap.get(item.target) }))
-        .filter((item): item is { edge: { target: string; label: string }; node: TraceNode } => Boolean(item.node));
-
-      const childAngles: number[] = [];
-      children.forEach((child, childIndex) => {
-        const childAngle =
-          children.length === 1
-            ? sectorCenter
-            : usableSectorStart +
-              ((usableSectorEnd - usableSectorStart) * childIndex) / Math.max(1, children.length - 1);
-        childAngles.push(childAngle);
-        const childRadius = l2Radius + childOffsetRadius;
-        positions[child.node.id] = polarToCartesian(centerX, centerY, childRadius, childAngle);
-
-        const grandchildren = (outgoing.get(child.node.id) || [])
-          .map((item) => nodeMap.get(item.target))
-          .filter((item): item is TraceNode => Boolean(item));
-
-          const childSpan = Math.min((usableSectorEnd - usableSectorStart) / Math.max(1, children.length), sectorAngle * 0.42);
-          grandchildren.forEach((grandchild, grandchildIndex) => {
-            const grandchildAngle =
-              grandchildren.length === 1
-                ? childAngle
-                : childAngle - childSpan / 2 + (childSpan * grandchildIndex) / Math.max(1, grandchildren.length - 1);
-            const grandchildRadius = childRadius + grandchildOffsetRadius;
-            positions[grandchild.id] = polarToCartesian(
-              centerX,
-              centerY,
-              grandchildRadius,
-              clamp(grandchildAngle, usableSectorStart, usableSectorEnd)
-            );
-          });
-      });
-    });
-
-    sectorCursor += sectorCount;
-  });
-
-  let fallbackIndex = 0;
-  for (const node of trace.graph.nodes) {
-    if (positions[node.id]) continue;
-    const angle = -Math.PI / 2 + (fullCircle * fallbackIndex) / Math.max(1, trace.graph.nodes.length);
-    const fallbackRadius =
-      l2BaseRadius + totalSectorCount * l2RadiusStep + childOffsetRadius + grandchildOffsetRadius + 180;
-    positions[node.id] = polarToCartesian(centerX, centerY, fallbackRadius, angle);
-    fallbackIndex += 1;
+  const level3Ids = new Set<string>();
+  for (const node of level2) {
+    for (const targetId of outgoing.get(node.id) || []) {
+      level3Ids.add(targetId);
+    }
   }
 
-  return positions;
+  const level4Ids = new Set<string>();
+  for (const nodeId of level3Ids) {
+    for (const targetId of outgoing.get(nodeId) || []) {
+      level4Ids.add(targetId);
+    }
+  }
+
+  const level3 = [...level3Ids]
+    .map((id) => nodeMap.get(id))
+    .filter((node): node is TraceNode => Boolean(node));
+  const level4 = [...level4Ids]
+    .map((id) => nodeMap.get(id))
+    .filter((node): node is TraceNode => Boolean(node));
+
+  const fullCircle = Math.PI * 2;
+  const ringConfigs: Array<{ nodes: TraceNode[]; radius: number }> = [
+    { nodes: level1, radius: 180 },
+    { nodes: level2, radius: 540 },
+    { nodes: level3, radius: 760 },
+    { nodes: level4, radius: 980 }
+  ];
+
+  ringConfigs.forEach(({ nodes, radius }) => {
+    nodes.forEach((node, index) => {
+      const angle = -Math.PI / 2 + ((index + 0.5) * fullCircle) / Math.max(1, nodes.length);
+      positions[node.id] = polarToCartesian(centerX, centerY, radius, angle);
+      visibleNodeIds.add(node.id);
+    });
+  });
+
+  return { positions, visibleNodeIds };
 }
 
 export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
@@ -179,6 +191,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState('');
+  const [graphViewport, setGraphViewport] = useState({ width: 1680, height: 1080 });
 
   useEffect(() => {
     if (!pipeline) {
@@ -238,10 +251,15 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       if (cancelled || !graphContainerRef.current) return;
       const width = graphContainerRef.current.clientWidth || 1680;
       const height = graphContainerRef.current.clientHeight || 1080;
-      const nodePositions = computeSnowflakeLayout(trace, width, height);
+      const layoutResult = computeSnowflakeLayout(trace, width, height);
+      const nodePositions = layoutResult.positions;
+      const visibleNodeIds = layoutResult.visibleNodeIds;
+      setGraphViewport({ width, height });
 
       const graphData: any = {
-        nodes: trace.graph.nodes.map((node) => ({
+        nodes: trace.graph.nodes
+          .filter((node) => visibleNodeIds.has(node.id))
+          .map((node) => ({
           id: node.id,
           data: {
             label: node.label,
@@ -267,7 +285,9 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
             y: nodePositions[node.id]?.y
           }
         })),
-      edges: trace.graph.edges.map((edge) => ({
+      edges: trace.graph.edges
+        .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+        .map((edge) => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
@@ -300,9 +320,9 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
             labelTextBaseline: 'middle',
             labelFill: (d: any) => d.data?.labelColor,
             labelWordWrap: true,
-            labelMaxWidth: (d: any) => (Array.isArray(d.data?.size) ? d.data.size[0] - 20 : 150),
-            labelMaxLines: (d: any) => (d.data?.type === 'fault_l2' ? 2 : 1),
-            fontSize: (d: any) => (d.data?.type === 'fault_l2' ? 11 : d.data?.type === 'root_node' || d.data?.type === 'fault_l1' ? 12 : 10)
+            labelMaxWidth: (d: any) => (Array.isArray(d.data?.size) ? d.data.size[0] - (d.data?.type === 'fault_l2' ? 12 : 4) : 150),
+            labelMaxLines: (d: any) => (d.data?.type === 'fault_l2' || d.data?.type === 'fault_l1' ? 5 : 2),
+            fontSize: (d: any) => (d.data?.type === 'fault_l2' ? 10 : d.data?.type === 'root_node' || d.data?.type === 'fault_l1' ? 12 : 9)
           }
         } as any,
         edge: {
@@ -451,7 +471,9 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       </div>
 
       <Card title="图谱溯源可视化" className="panel-card trace-card trace-graph-card">
-        <div className="trace-graph-container" ref={graphContainerRef} />
+        <div className="trace-graph-container">
+          <div className="trace-graph-canvas" ref={graphContainerRef} />
+        </div>
       </Card>
     </div>
   );

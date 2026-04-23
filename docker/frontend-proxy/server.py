@@ -541,7 +541,11 @@ def wrap_fault_l2_label(text: str) -> str:
     if split_index < 0 or split_index >= len(words) - 1:
         return value
 
-    return "".join(words[: split_index + 1]) + "\n" + "".join(words[split_index + 1 :])
+    left = "".join(words[: split_index + 1])
+    right = "".join(words[split_index + 1 :])
+    if len(right) > 5:
+        right = wrap_fault_l2_label(right)
+    return left + "\n" + right
 
 
 def extract_trace_focus_fields(
@@ -605,7 +609,7 @@ def add_trace_node(
     if not node_id:
         return
     existing = nodes.get(node_id)
-    wrapped_label = wrap_fault_l2_label(label) if node_type == "fault_l2" else ""
+    wrapped_label = wrap_fault_l2_label(label) if node_type in {"fault_l1", "fault_l2"} else ""
     payload = {
         "id": node_id,
         "label": label or node_id,
