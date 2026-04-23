@@ -1,16 +1,75 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Tag, Typography } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import type { PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
+import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
+import { TraceGraphPage } from './pages/TraceGraphPage';
+import { QualityReviewPage } from './pages/QualityReviewPage';
 import { runPipelineStream } from './services/planApi';
 import { downloadText } from './utils/download';
 
 const { Header, Content } = Layout;
 const { TextArea } = Input;
+const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
 
-const demoQuestion =
-  '暴雨导致电缆沟进水，开关柜出现绝缘告警，夜间值班，无法立即更换设备，需要一份简短的双阶段处置方案。';
+type RouteKey = 'plan' | 'trace' | 'quality' | 'template';
+
+const routeItems: Array<{ key: RouteKey; label: string; path: string }> = [
+  { key: 'plan', label: '预案生成', path: '/plan' },
+  { key: 'trace', label: '图谱溯源', path: '/trace' },
+  { key: 'quality', label: '格式优化与质量评估', path: '/quality' },
+  { key: 'template', label: '模板查看', path: '/template' }
+];
+
+const PRESET_QUESTIONS: Record<string, string[]> = {
+  高压断路器: [
+    '雷雨后某 110kV 变电站线路断路器拒合，后台报机构异常，夜间值班，无法立即停电大修，请生成一份现场应急处置方案。',
+    '某 35kV 断路器液压机构渗油，当前仍带负荷运行，需要先控风险再安排检修，请生成一份双阶段处置方案。',
+    '断路器触头发热并伴随异味，运行人员已发现异常但尚未跳闸，请生成一份简短的先期处置和恢复运行方案。'
+  ],
+  变压器: [
+    '暴雨后主变轻瓦斯频繁报警，油位异常，夜间值班且不能长时间停电，请生成一份双阶段处置方案。',
+    '某 220kV 主变套管接点持续过热，现场测温升高，要求生成一份先期控制与后续检修结合的应急方案。',
+    '夏季高负荷下主变油温过高，冷却器运行异常，无法立即更换设备，请生成一份简短应急预案。'
+  ],
+  电力电缆: [
+    '暴雨导致电缆沟进水，开关柜出现绝缘告警，夜间值班，无法立即更换设备，需要一份简短的双阶段处置方案。',
+    '某配电电缆中间接头疑似受潮放电，现场有烧焦气味，请生成一份现场隔离、故障确认和抢修恢复方案。',
+    '电力电缆绝缘劣化与击穿故障导致线路停运，请生成一份包含故障定位、开挖抢修和恢复验证的应急方案。'
+  ],
+  互感器: [
+    '某 110kV 电压互感器接线盒渗油，现场暂无明显发热，请生成一份应急处置与后续检修方案。',
+    '220kV 电流互感器末屏接地异常并伴随放电痕迹，请生成一份风险控制优先的处置预案。',
+    '35kV 母线 TV 高压熔断器熔断后电压异常，要求生成一份现场核查和恢复运行方案。'
+  ],
+  光缆: [
+    '传输机房出现 2M 业务中断，怀疑光缆接续异常，请生成一份夜间现场排查和恢复方案。',
+    '某段光缆疑似被外力损伤导致业务中断，要求生成一份快速定位和抢修恢复方案。',
+    '雨后光缆接头盒附近出现异常告警，怀疑受潮，请生成一份现场检查与应急处置方案。'
+  ],
+  环网柜: [
+    '户外环网柜内部疑似受潮，开闭器动作异常，请生成一份现场隔离与抢修恢复方案。',
+    '环网柜防凝露设计不良导致柜内绝缘风险升高，请生成一份临时控制和后续整改方案。',
+    '某环网柜自动化信号异常并影响运行监视，请生成一份简短应急处置预案。'
+  ],
+  避雷器: [
+    '雷雨天气后避雷器疑似阀片击穿，线路出现接地异常，请生成一份现场应急处置方案。',
+    '某配电线路避雷器表面存在放电痕迹并伴随污闪风险，请生成一份隔离与巡检加强方案。',
+    '降雪后避雷器高压端疑似沿面侧闪，要求生成一份风险控制和恢复运行方案。'
+  ],
+  杆塔: [
+    '持续暴雨后杆塔基础冲刷严重并出现倾斜迹象，请生成一份现场隔离、风险研判和抢修方案。',
+    '大风天气后发现输电杆塔构件松动，线路暂未跳闸，请生成一份先期处置和后续加固方案。',
+    '某塔位附近山体滑坡，杆塔受力异常，要求生成一份夜间应急处置方案。'
+  ],
+  输电线路: [
+    '雷击导致输电线路跳闸并重合不成功，请生成一份故障巡视、研判和恢复运行方案。',
+    '导线覆冰严重，存在舞动和断线风险，请生成一份防风险和应急处置方案。',
+    '外力施工导致输电线路异常停运，要求生成一份现场控制与抢修恢复方案。'
+  ]
+};
+
+const ALL_PRESET_QUESTIONS = Object.values(PRESET_QUESTIONS).flat();
 
 const stageText: Record<PipelineStage, string> = {
   idle: '等待输入',
@@ -55,8 +114,9 @@ function renderInlineText(text: string): ReactNode[] {
     });
 }
 
-function renderMarkedText(text: string, options?: { normalize?: boolean }) {
-  const normalizedText = options?.normalize === false ? String(text || '') : normalizeRenderedOutput(text);
+function renderMarkedText(text: string, options?: { normalize?: boolean; stripMeta?: boolean }) {
+  const rawText = options?.normalize === false ? String(text || '') : normalizeRenderedOutput(text);
+  const normalizedText = options?.stripMeta === false ? rawText : cleanupInlineMetaLines(rawText);
   return (
     <div className="rendered-rich-text">
       {normalizedText.split('\n').map((line, index) => {
@@ -124,11 +184,11 @@ function normalizeRenderedOutput(text: string) {
   const match = raw.match(headingPattern);
 
   if (!match || typeof match.index !== 'number') {
-    return cleanupInlineMetaLines(promoteStructuredHeadings(raw));
+    return promoteStructuredHeadings(raw);
   }
 
   const startIndex = match[1] ? match.index + match[1].length : match.index;
-  return cleanupInlineMetaLines(promoteStructuredHeadings(raw.slice(startIndex).trimStart()));
+  return promoteStructuredHeadings(raw.slice(startIndex).trimStart());
 }
 
 function cleanupInlineMetaLines(text: string) {
@@ -217,83 +277,62 @@ function parseFaultScene(text: string) {
   }
 }
 
-type CaseSearchCard = {
-  rank: string;
-  title: string;
-  kbId: string;
-  docId: string;
-  relevance: string;
-  excerpt: string;
-};
+function routeFromPath(pathname: string): RouteKey {
+  if (pathname === '/trace') return 'trace';
+  if (pathname === '/quality') return 'quality';
+  if (pathname === '/template') return 'template';
+  return 'plan';
+}
 
-function parseCaseSearchCards(text: string): CaseSearchCard[] {
-  const normalized = String(text || '').replace(/\r/g, '');
-  const blocks = normalized
-    .split(/\n\s*---+\s*\n/g)
-    .map((item) => item.trim())
-    .filter(Boolean);
+function loadSavedSnapshot(): { question: string; pipeline: PipelineRunResponse } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(PLAN_SNAPSHOT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (typeof parsed.question !== 'string') return null;
+    if (!parsed.pipeline || typeof parsed.pipeline !== 'object') return null;
+    return {
+      question: parsed.question,
+      pipeline: parsed.pipeline as PipelineRunResponse
+    };
+  } catch {
+    return null;
+  }
+}
 
-  return blocks
-    .map((block) => {
-      const lines = block.split('\n');
-      let rank = '';
-      let title = '';
-      let kbId = '';
-      let docId = '';
-      let relevance = '';
-      const excerptLines: string[] = [];
-      let inExcerpt = false;
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('### 命中 ')) {
-          rank = trimmed.slice('### 命中 '.length).trim();
-          continue;
-        }
-        if (trimmed.startsWith('- 标题：')) {
-          title = trimmed.slice('- 标题：'.length).trim();
-          continue;
-        }
-        if (trimmed.startsWith('- 知识库ID：')) {
-          kbId = trimmed.slice('- 知识库ID：'.length).trim();
-          continue;
-        }
-        if (trimmed.startsWith('- 文档ID：')) {
-          docId = trimmed.slice('- 文档ID：'.length).trim();
-          continue;
-        }
-        if (trimmed.startsWith('- 相关性：')) {
-          relevance = trimmed.slice('- 相关性：'.length).trim();
-          continue;
-        }
-        if (trimmed === '- 摘要：') {
-          inExcerpt = true;
-          continue;
-        }
-        if (inExcerpt) {
-          excerptLines.push(line);
-        }
-      }
-
-      return {
-        rank,
-        title,
-        kbId,
-        docId,
-        relevance,
-        excerpt: excerptLines.join('\n').trim()
-      };
+function saveSnapshot(question: string, pipeline: PipelineRunResponse) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(
+    PLAN_SNAPSHOT_KEY,
+    JSON.stringify({
+      question,
+      pipeline
     })
-    .filter((item) => item.title || item.excerpt);
+  );
+}
+
+function pickRandomPresetQuestion() {
+  if (!ALL_PRESET_QUESTIONS.length) {
+    return '';
+  }
+  const index = Math.floor(Math.random() * ALL_PRESET_QUESTIONS.length);
+  return ALL_PRESET_QUESTIONS[index];
 }
 
 export default function App() {
-  const [question, setQuestion] = useState(demoQuestion);
-  const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(null);
-  const [stage, setStage] = useState<PipelineStage>('idle');
-  const [nodeStageLabel, setNodeStageLabel] = useState('等待输入');
+  const savedSnapshot = loadSavedSnapshot();
+  const [route, setRoute] = useState<RouteKey>(() =>
+    typeof window === 'undefined' ? 'plan' : routeFromPath(window.location.pathname)
+  );
+  const [question, setQuestion] = useState(savedSnapshot?.question || pickRandomPresetQuestion());
+  const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(savedSnapshot?.pipeline || null);
+  const [stage, setStage] = useState<PipelineStage>(savedSnapshot?.pipeline ? 'done' : 'idle');
+  const [nodeStageLabel, setNodeStageLabel] = useState(savedSnapshot?.pipeline ? '已恢复上次生成结果' : '等待输入');
   const [loading, setLoading] = useState(false);
   const [enableCaseSearch, setEnableCaseSearch] = useState(false);
+  const [savedFlag, setSavedFlag] = useState(Boolean(savedSnapshot?.pipeline));
 
   const chapters = pipeline?.chapters ?? [];
   const mergedOutput = useMemo(
@@ -311,10 +350,34 @@ export default function App() {
       `${pipeline.templateSplit.chapterCount}章`
     ].filter(Boolean) as string[];
   }, [pipeline]);
-  const caseCards = useMemo(
-    () => parseCaseSearchCards(pipeline?.caseSearch?.outputText || ''),
-    [pipeline?.caseSearch?.outputText]
-  );
+  const caseCards = useMemo(() => pipeline?.caseSearch?.cards || [], [pipeline?.caseSearch?.cards]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const current = routeFromPath(window.location.pathname);
+    if (window.location.pathname === '/' || !window.location.pathname) {
+      window.history.replaceState(null, '', '/plan');
+      setRoute('plan');
+      return;
+    }
+    setRoute(current);
+
+    const onPopState = () => {
+      setRoute(routeFromPath(window.location.pathname));
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const navigateRoute = (nextRoute: RouteKey) => {
+    const target = routeItems.find((item) => item.key === nextRoute);
+    if (!target || typeof window === 'undefined') return;
+    if (window.location.pathname !== target.path) {
+      window.history.pushState(null, '', target.path);
+    }
+    setRoute(nextRoute);
+  };
 
   const handleGenerate = async () => {
     if (!question.trim()) {
@@ -454,7 +517,8 @@ export default function App() {
                   kbName: payload?.kb_name ? String(payload.kb_name) : undefined,
                   datasetId: payload?.dataset_id ? String(payload.dataset_id) : undefined,
                   queryQuestion: payload?.query_question ? String(payload.query_question) : question,
-                  outputText: ''
+                  outputText: '',
+                  cards: prev.caseSearch?.cards || []
                 }
               };
             });
@@ -472,7 +536,8 @@ export default function App() {
                   kbName: payload?.kb_name ? String(payload.kb_name) : undefined,
                   datasetId: payload?.dataset_id ? String(payload.dataset_id) : undefined,
                   queryQuestion: payload?.query_question ? String(payload.query_question) : question,
-                  outputText: payload?.output_text ? String(payload.output_text) : ''
+                  outputText: payload?.output_text ? String(payload.output_text) : '',
+                  cards: Array.isArray(payload?.cards) ? payload.cards : []
                 }
               };
             });
@@ -496,6 +561,7 @@ export default function App() {
                   datasetId: payload?.dataset_id ? String(payload.dataset_id) : undefined,
                   queryQuestion: payload?.query_question ? String(payload.query_question) : question,
                   outputText: '',
+                  cards: prev.caseSearch?.cards || [],
                   error: payload?.error ? String(payload.error) : payload?.message ? String(payload.message) : ''
                 }
               };
@@ -503,10 +569,15 @@ export default function App() {
           },
           onDone: (result) => {
             setLoading(false);
-            setPipeline((prev) => ({
-              ...result,
-              caseSearch: prev?.caseSearch || result.caseSearch
-            }));
+            setPipeline((prev) => {
+              const nextPipeline = {
+                ...result,
+                caseSearch: prev?.caseSearch || result.caseSearch
+              };
+              saveSnapshot(question, nextPipeline);
+              setSavedFlag(true);
+              return nextPipeline;
+            });
             setStage('done');
             setNodeStageLabel('生成完成');
             message.success(`已生成 ${result.chapters.length} 个章节`);
@@ -532,17 +603,12 @@ export default function App() {
     downloadText('并行生成预案.md', mergedOutput);
   };
 
-  return (
-    <Layout className="app-shell">
-      <Header className="app-header">
-        <div>
-          <Typography.Title level={3} className="app-title">
-            电力设备并行预案生成系统
-          </Typography.Title>
-        </div>
-      </Header>
-      <Content className="app-content">
-        <div className="pipeline-page">
+  const handleFillExample = () => {
+    setQuestion(pickRandomPresetQuestion());
+  };
+
+  const renderPlanPage = () => (
+    <div className="pipeline-page">
           <Card title="故障场景输入" className="panel-card pipeline-input-card">
             <TextArea
               value={question}
@@ -554,7 +620,7 @@ export default function App() {
               <Button type="primary" icon={<PlayCircleOutlined />} loading={loading} onClick={handleGenerate}>
                 运行流水线
               </Button>
-              <Button onClick={() => setQuestion(demoQuestion)}>填入示例</Button>
+              <Button onClick={handleFillExample}>填入示例</Button>
               <Button size="small" icon={<CopyOutlined />} disabled={!chapters.length} onClick={handleCopy}>
                 复制全部
               </Button>
@@ -570,6 +636,7 @@ export default function App() {
                 {stageText[stage]}
               </Tag>
               <Tag>{nodeStageLabel}</Tag>
+              {savedFlag ? <Tag color="success">已保存</Tag> : null}
               {summaryTags.map((tag) => (
                 <Tag color="purple" key={tag}>
                   {tag}
@@ -614,7 +681,7 @@ export default function App() {
                   />
                   <div className="chapter-panel__body">
                     {chapter.outputText ? (
-                      renderMarkedText(chapter.outputText, { normalize: false })
+                      renderMarkedText(chapter.outputText, { normalize: false, stripMeta: true })
                     ) : (
                       <Typography.Text type="secondary">本章节暂无输出。</Typography.Text>
                     )}
@@ -632,17 +699,16 @@ export default function App() {
 
           <Card title="案例检索" className="panel-card chapter-empty-card">
             {pipeline?.caseSearch?.enabled ? (
-              pipeline.caseSearch.status === 'done' && pipeline.caseSearch.outputText ? (
+              pipeline.caseSearch.status === 'done' && caseCards.length > 0 ? (
                 <>
                   <div className="chapter-meta">
                     知识库：{pipeline.caseSearch.kbName || '-'} · 查询：{pipeline.caseSearch.queryQuestion || '-'}
                   </div>
-                  {caseCards.length ? (
-                    <div className="case-card-grid">
-                      {caseCards.map((card, index) => (
-                        <div className="case-search-card" key={`${card.rank}-${card.title}-${index}`}>
+                  <div className="case-card-grid">
+                    {caseCards.map((card, index) => (
+                      <div className="case-search-card" key={`${card.id || index}-${card.title}`}>
                         <div className="case-search-card__header">
-                          <Tag color="blue">命中 {card.rank || index + 1}</Tag>
+                          <Tag color="blue">命中 {index + 1}</Tag>
                         </div>
                         <div className="case-search-card__title">{card.title || '未命名案例'}</div>
                         <div className="case-search-card__meta-inline">
@@ -665,15 +731,12 @@ export default function App() {
                             </span>
                           ) : null}
                         </div>
-                          <div className="case-search-card__excerpt">
-                            {card.excerpt ? renderMarkedText(card.excerpt) : <Typography.Text type="secondary">无摘要</Typography.Text>}
-                          </div>
+                        <div className="case-search-card__excerpt">
+                          {card.excerpt ? renderMarkedText(card.excerpt) : <Typography.Text type="secondary">无摘要</Typography.Text>}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    renderMarkedText(pipeline.caseSearch.outputText)
-                  )}
+                      </div>
+                    ))}
+                  </div>
                 </>
               ) : pipeline.caseSearch.status === 'running' ? (
                 <Typography.Text type="secondary">正在检索案例，请稍候。</Typography.Text>
@@ -693,6 +756,36 @@ export default function App() {
             )}
           </Card>
         </div>
+  );
+
+  return (
+    <Layout className="app-shell">
+      <Header className="app-header">
+        <div className="app-header__inner">
+          <div>
+            <Typography.Title level={3} className="app-title">
+              电力设备并行预案生成系统
+            </Typography.Title>
+          </div>
+          <div className="app-route-tabs">
+            {routeItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className={`app-route-tab ${route === item.key ? 'app-route-tab--active' : ''}`}
+                onClick={() => navigateRoute(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Header>
+      <Content className="app-content">
+        {route === 'plan' ? renderPlanPage() : null}
+        {route === 'trace' ? <TraceGraphPage trace={null} /> : null}
+        {route === 'quality' ? <QualityReviewPage /> : null}
+        {route === 'template' ? <QualityReviewPage /> : null}
       </Content>
     </Layout>
   );
