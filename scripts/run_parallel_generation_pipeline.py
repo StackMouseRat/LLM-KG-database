@@ -360,6 +360,58 @@ def extract_parallel_text(response: dict[str, Any]) -> str:
     return ""
 
 
+def build_generation_graph_material(graph_material_text: str) -> str:
+    value = str(graph_material_text or "").strip()
+    if not value:
+        return ""
+
+    try:
+        parsed = json.loads(value)
+    except Exception:
+        return value
+
+    if not isinstance(parsed, dict):
+        return value
+
+    per_fault = parsed.get("逐故障图谱检索")
+    if not isinstance(per_fault, dict) or not per_fault:
+        return value
+
+    fault_names = parsed.get("故障二级节点")
+    if isinstance(fault_names, list):
+        normalized_faults = [str(item).strip() for item in fault_names if str(item).strip()]
+    elif isinstance(fault_names, str) and fault_names.strip():
+        normalized_faults = [fault_names.strip()]
+    else:
+        normalized_faults = []
+
+    lines = [
+        f"设备表：{str(parsed.get('设备表') or '未明确')}",
+        f"主故障二级节点：{str(parsed.get('主故障二级节点') or (normalized_faults[0] if normalized_faults else '未明确'))}",
+    ]
+    if normalized_faults:
+        lines.append(f"命中故障二级节点：{'、'.join(normalized_faults)}")
+
+    for fault_name in normalized_faults or list(per_fault.keys()):
+        fault_text = str(per_fault.get(fault_name) or "").strip()
+        if not fault_text:
+            continue
+        lines.extend([
+            "",
+            f"【{fault_name}】",
+            fault_text,
+        ])
+
+    extra_errors = parsed.get("查询错误")
+    if isinstance(extra_errors, dict) and extra_errors:
+        lines.append("")
+        lines.append("【查询错误】")
+        for fault_name, error_text in extra_errors.items():
+            lines.append(f"{fault_name}：{error_text}")
+
+    return "\n".join(lines).strip()
+
+
 def generate_one_chapter(
     endpoint: str,
     api_key: str,
@@ -371,7 +423,7 @@ def generate_one_chapter(
     variables = {
         "用户问题": shared_fields["用户问题"],
         "故障与场景提取结果": shared_fields["故障与场景提取结果"],
-        "图谱检索方案素材": shared_fields["图谱检索方案素材"],
+        "图谱检索方案素材": build_generation_graph_material(shared_fields["图谱检索方案素材"]),
         "模板": chapter["template_text"],
     }
 
