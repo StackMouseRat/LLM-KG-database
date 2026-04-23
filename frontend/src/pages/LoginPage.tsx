@@ -3,10 +3,11 @@ import { Button, Card, Form, Input, Typography } from 'antd';
 
 type LoginPageProps = {
   loading: boolean;
+  errorMessage?: string;
   onSubmit: (username: string, password: string) => Promise<void> | void;
 };
 
-export function LoginPage({ loading, onSubmit }: LoginPageProps) {
+export function LoginPage({ loading, errorMessage, onSubmit }: LoginPageProps) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
 
@@ -36,6 +37,11 @@ export function LoginPage({ loading, onSubmit }: LoginPageProps) {
               onPressEnter={handleSubmit}
             />
           </Form.Item>
+          {errorMessage ? (
+            <Typography.Text type="danger" className="login-card__error">
+              {errorMessage}
+            </Typography.Text>
+          ) : null}
           <Button type="primary" htmlType="submit" loading={loading} block>
             登录
           </Button>

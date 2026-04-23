@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import { Tag, Typography } from 'antd';
 
-function renderInlineText(text: string): ReactNode[] {
+function renderInlineText(text: string, showModeTags: boolean): ReactNode[] {
   const parts = text.split(/(\[KG\]|\[GEN\]|\[FIX\]|\*\*[^*]+\*\*)/g);
   return parts
     .filter((part) => part !== '')
     .map((part, index) => {
       if (part === '[KG]') {
+        if (!showModeTags) return null;
         return (
           <Tag color="blue" key={index}>
             KG
@@ -14,6 +15,7 @@ function renderInlineText(text: string): ReactNode[] {
         );
       }
       if (part === '[GEN]') {
+        if (!showModeTags) return null;
         return (
           <Tag color="orange" key={index}>
             GEN
@@ -21,6 +23,7 @@ function renderInlineText(text: string): ReactNode[] {
         );
       }
       if (part === '[FIX]') {
+        if (!showModeTags) return null;
         return (
           <Tag color="green" key={index}>
             FIX
@@ -139,12 +142,14 @@ export function RichTextRenderer({
   text,
   normalize = true,
   stripMeta = true,
-  emptyText = '暂无内容。'
+  emptyText = '暂无内容。',
+  showModeTags = true
 }: {
   text: string;
   normalize?: boolean;
   stripMeta?: boolean;
   emptyText?: string;
+  showModeTags?: boolean;
 }) {
   const rawText = normalize ? normalizeRenderedOutput(text) : String(text || '');
   const normalizedText = stripMeta ? cleanupInlineMetaLines(rawText) : rawText;
@@ -165,7 +170,7 @@ export function RichTextRenderer({
         if (trimmed.startsWith('#### ')) {
           return (
             <div className="render-h4" key={index}>
-              {renderInlineText(trimmed.slice(5))}
+              {renderInlineText(trimmed.slice(5), showModeTags)}
             </div>
           );
         }
@@ -173,7 +178,7 @@ export function RichTextRenderer({
         if (trimmed.startsWith('### ')) {
           return (
             <div className="render-h3" key={index}>
-              {renderInlineText(trimmed.slice(4))}
+              {renderInlineText(trimmed.slice(4), showModeTags)}
             </div>
           );
         }
@@ -181,7 +186,7 @@ export function RichTextRenderer({
         if (trimmed.startsWith('## ')) {
           return (
             <div className="render-h2" key={index}>
-              {renderInlineText(trimmed.slice(3))}
+              {renderInlineText(trimmed.slice(3), showModeTags)}
             </div>
           );
         }
@@ -189,14 +194,14 @@ export function RichTextRenderer({
         if (trimmed.startsWith('# ')) {
           return (
             <div className="render-h1" key={index}>
-              {renderInlineText(trimmed.slice(2))}
+              {renderInlineText(trimmed.slice(2), showModeTags)}
             </div>
           );
         }
 
         return (
           <div className="render-line" key={index}>
-            {renderInlineText(line)}
+            {renderInlineText(line, showModeTags)}
           </div>
         );
       })}

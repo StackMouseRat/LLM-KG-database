@@ -14,3 +14,4 @@ frontend/dist/
 frontend/.vite/
 frontend/.tmp/
 frontend/node_modules/.tmp/
+docs/project_changes/frontend_pipeline_runs/

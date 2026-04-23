@@ -60,7 +60,15 @@ function isRunningStatus(status: ReviewStatus) {
   return status === 'started' || status === 'thinking' || status === 'generating';
 }
 
-export function QualityReviewPage({ currentUserGroup }: { currentUserGroup: 'admin' | 'user' }) {
+export function QualityReviewPage({
+  currentUserGroup,
+  showModeTags,
+  compactLayout
+}: {
+  currentUserGroup: 'admin' | 'user';
+  showModeTags: boolean;
+  compactLayout: boolean;
+}) {
   const pipeline = useMemo(() => loadSavedPipeline(), []);
   const chapters = pipeline?.chapters || [];
   const leftBodyRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -591,7 +599,16 @@ export function QualityReviewPage({ currentUserGroup }: { currentUserGroup: 'adm
       </div>
 
       {chapters.length ? (
-        <div className="quality-compare-grid">
+        <div
+          className="quality-compare-grid"
+          style={
+            compactLayout
+              ? {
+                  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))'
+                }
+              : undefined
+          }
+        >
           {chapters.map((chapter) => {
             const leftCardView = leftCardViewMap[chapter.chapterNo] || 'raw';
             const optimizeReasoningText = optimizeReasoningMap[chapter.chapterNo] || '';
@@ -735,6 +752,7 @@ export function QualityReviewPage({ currentUserGroup }: { currentUserGroup: 'adm
                         normalize={false}
                         stripMeta
                         emptyText={leftEmptyText}
+                        showModeTags={showModeTags}
                       />
                     </div>
                   </Card>
@@ -765,6 +783,7 @@ export function QualityReviewPage({ currentUserGroup }: { currentUserGroup: 'adm
                       normalize={false}
                       stripMeta
                       emptyText="点击左侧“优化”按钮后在此流式显示优化过程与输出结果。"
+                      showModeTags={showModeTags}
                     />
                   </div>
                 </Card>

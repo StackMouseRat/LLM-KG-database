@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Tag, Typography } from 'antd';
+import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Switch, Tag, Typography } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
 import { RichTextRenderer } from './components/RichTextRenderer';
@@ -15,6 +15,8 @@ import { downloadText } from './utils/download';
 const { Header, Content } = Layout;
 const { TextArea } = Input;
 const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
+const MODE_TAGS_VISIBLE_KEY = 'llmkg_mode_tags_visible_v1';
+const COMPACT_LAYOUT_KEY = 'llmkg_compact_layout_v1';
 
 type RouteKey = 'plan' | 'trace' | 'quality' | 'template';
 type AppRoute = RouteKey | 'login';
@@ -95,12 +97,13 @@ const chapterStatusText: Record<'pending' | 'running' | 'done' | 'error', string
   error: '失败'
 };
 
-function renderInlineText(text: string): ReactNode[] {
+function renderInlineText(text: string, showModeTags: boolean): ReactNode[] {
   const parts = text.split(/(\[KG\]|\[GEN\]|\[FIX\]|\*\*[^*]+\*\*)/g);
   return parts
     .filter((part) => part !== '')
     .map((part, index) => {
       if (part === '[KG]') {
+        if (!showModeTags) return null;
         return (
           <Tag color="blue" key={index}>
             KG
@@ -108,6 +111,7 @@ function renderInlineText(text: string): ReactNode[] {
         );
       }
       if (part === '[GEN]') {
+        if (!showModeTags) return null;
         return (
           <Tag color="orange" key={index}>
             GEN
@@ -115,6 +119,7 @@ function renderInlineText(text: string): ReactNode[] {
         );
       }
       if (part === '[FIX]') {
+        if (!showModeTags) return null;
         return (
           <Tag color="green" key={index}>
             FIX
@@ -128,9 +133,10 @@ function renderInlineText(text: string): ReactNode[] {
     });
 }
 
-function renderMarkedText(text: string, options?: { normalize?: boolean; stripMeta?: boolean }) {
+function renderMarkedText(text: string, options?: { normalize?: boolean; stripMeta?: boolean; showModeTags?: boolean }) {
   const rawText = options?.normalize === false ? String(text || '') : normalizeRenderedOutput(text);
   const normalizedText = options?.stripMeta === false ? rawText : cleanupInlineMetaLines(rawText);
+  const showModeTags = options?.showModeTags ?? true;
   return (
     <div className="rendered-rich-text">
       {normalizedText.split('\n').map((line, index) => {
@@ -143,7 +149,7 @@ function renderMarkedText(text: string, options?: { normalize?: boolean; stripMe
         if (trimmed.startsWith('#### ')) {
           return (
             <div className="render-h4" key={index}>
-              {renderInlineText(trimmed.slice(5))}
+              {renderInlineText(trimmed.slice(5), showModeTags)}
             </div>
           );
         }
@@ -151,7 +157,7 @@ function renderMarkedText(text: string, options?: { normalize?: boolean; stripMe
         if (trimmed.startsWith('### ')) {
           return (
             <div className="render-h3" key={index}>
-              {renderInlineText(trimmed.slice(4))}
+              {renderInlineText(trimmed.slice(4), showModeTags)}
             </div>
           );
         }
@@ -159,7 +165,7 @@ function renderMarkedText(text: string, options?: { normalize?: boolean; stripMe
         if (trimmed.startsWith('## ')) {
           return (
             <div className="render-h2" key={index}>
-              {renderInlineText(trimmed.slice(3))}
+              {renderInlineText(trimmed.slice(3), showModeTags)}
             </div>
           );
         }
@@ -167,14 +173,14 @@ function renderMarkedText(text: string, options?: { normalize?: boolean; stripMe
         if (trimmed.startsWith('# ')) {
           return (
             <div className="render-h1" key={index}>
-              {renderInlineText(trimmed.slice(2))}
+              {renderInlineText(trimmed.slice(2), showModeTags)}
             </div>
           );
         }
 
         return (
           <div className="render-line" key={index}>
-            {renderInlineText(line)}
+            {renderInlineText(line, showModeTags)}
           </div>
         );
       })}
@@ -317,6 +323,20 @@ function loadSavedSnapshot(): { question: string; pipeline: PipelineRunResponse 
   }
 }
 
+function loadModeTagsVisible() {
+  if (typeof window === 'undefined') return true;
+  const raw = window.localStorage.getItem(MODE_TAGS_VISIBLE_KEY);
+  if (raw == null) return true;
+  return raw !== '0';
+}
+
+function loadCompactLayout() {
+  if (typeof window === 'undefined') return false;
+  const raw = window.localStorage.getItem(COMPACT_LAYOUT_KEY);
+  if (raw == null) return false;
+  return raw === '1';
+}
+
 function saveSnapshot(question: string, pipeline: PipelineRunResponse) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(
@@ -345,6 +365,9 @@ export default function App() {
   const [currentUsername, setCurrentUsername] = useState('');
   const [currentUserGroup, setCurrentUserGroup] = useState<UserGroup>('user');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginErrorMessage, setLoginErrorMessage] = useState('');
+  const [showModeTags, setShowModeTags] = useState(loadModeTagsVisible);
+  const [showCompactLayout, setShowCompactLayout] = useState(loadCompactLayout);
   const [question, setQuestion] = useState(savedSnapshot?.question || pickRandomPresetQuestion());
   const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(savedSnapshot?.pipeline || null);
   const [stage, setStage] = useState<PipelineStage>(savedSnapshot?.pipeline ? 'done' : 'idle');
@@ -380,6 +403,16 @@ export default function App() {
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(MODE_TAGS_VISIBLE_KEY, showModeTags ? '1' : '0');
+  }, [showModeTags]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(COMPACT_LAYOUT_KEY, showCompactLayout ? '1' : '0');
+  }, [showCompactLayout]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -439,11 +472,13 @@ export default function App() {
 
   const handleLogin = async (username: string, password: string) => {
     if (!username || !password) {
+      setLoginErrorMessage('请输入用户名和密码');
       message.warning('请输入用户名和密码');
       return;
     }
 
     setLoginLoading(true);
+    setLoginErrorMessage('');
     try {
       const session = await login(username, password);
       setCurrentUsername(session.username);
@@ -455,7 +490,9 @@ export default function App() {
       setRoute('plan');
       message.success('登录成功');
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '登录失败');
+      const nextMessage = error instanceof Error ? error.message : '登录失败';
+      setLoginErrorMessage(nextMessage);
+      message.error(nextMessage);
     } finally {
       setLoginLoading(false);
     }
@@ -748,7 +785,9 @@ export default function App() {
             style={
               chapters.length
                 ? {
-                    gridTemplateColumns: `repeat(${chapters.length}, minmax(0, 1fr))`
+                    gridTemplateColumns: showCompactLayout
+                      ? 'repeat(3, minmax(0, 1fr))'
+                      : `repeat(${chapters.length}, minmax(0, 1fr))`
                   }
                 : undefined
             }
@@ -777,9 +816,9 @@ export default function App() {
                       }
                     ]}
                   />
-                  <div className="chapter-panel__body">
+                    <div className="chapter-panel__body">
                     {chapter.outputText ? (
-                      <RichTextRenderer text={chapter.outputText} normalize={false} stripMeta />
+                      <RichTextRenderer text={chapter.outputText} normalize={false} stripMeta showModeTags={showModeTags} />
                     ) : (
                       <Typography.Text type="secondary">本章节暂无输出。</Typography.Text>
                     )}
@@ -830,7 +869,11 @@ export default function App() {
                           ) : null}
                         </div>
                         <div className="case-search-card__excerpt">
-                          {card.excerpt ? renderMarkedText(card.excerpt) : <Typography.Text type="secondary">无摘要</Typography.Text>}
+                          {card.excerpt ? (
+                            renderMarkedText(card.excerpt, { showModeTags })
+                          ) : (
+                            <Typography.Text type="secondary">无摘要</Typography.Text>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -875,7 +918,18 @@ export default function App() {
                   登出
                 </Button>
               </div>
-              <div className="app-route-tabs">
+              <div className="app-route-bar">
+                <div className="app-mode-toggle">
+                  <div className="app-mode-toggle__item">
+                    <Typography.Text className="app-mode-toggle__label">显示标签</Typography.Text>
+                    <Switch size="small" checked={showModeTags} onChange={setShowModeTags} />
+                  </div>
+                  <div className="app-mode-toggle__item">
+                    <Typography.Text className="app-mode-toggle__label">紧凑布局</Typography.Text>
+                    <Switch size="small" checked={showCompactLayout} onChange={setShowCompactLayout} />
+                  </div>
+                </div>
+                <div className="app-route-tabs">
                 {routeItems.map((item) => (
                   <button
                     key={item.key}
@@ -886,6 +940,7 @@ export default function App() {
                     {item.label}
                   </button>
                 ))}
+                </div>
               </div>
             </div>
           ) : null}
@@ -898,12 +953,16 @@ export default function App() {
           </Card>
         ) : null}
         {authStatus === 'unauthenticated' && route === 'login' ? (
-          <LoginPage loading={loginLoading} onSubmit={handleLogin} />
+          <LoginPage loading={loginLoading} errorMessage={loginErrorMessage} onSubmit={handleLogin} />
         ) : null}
         {authStatus === 'authenticated' && route === 'plan' ? renderPlanPage() : null}
         {authStatus === 'authenticated' && route === 'trace' ? <TraceGraphPage trace={null} /> : null}
         {authStatus === 'authenticated' && route === 'quality' ? (
-          <QualityReviewPage currentUserGroup={currentUserGroup} />
+          <QualityReviewPage
+            currentUserGroup={currentUserGroup}
+            showModeTags={showModeTags}
+            compactLayout={showCompactLayout}
+          />
         ) : null}
         {authStatus === 'authenticated' && route === 'template' ? (
           <TemplateViewPage currentUserGroup={currentUserGroup} />
