@@ -3,8 +3,10 @@ import type { ReactNode } from 'react';
 import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Tag, Typography } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
+import { RichTextRenderer } from './components/RichTextRenderer';
 import { TraceGraphPage } from './pages/TraceGraphPage';
 import { QualityReviewPage } from './pages/QualityReviewPage';
+import { TemplateViewPage } from './pages/TemplateViewPage';
 import { runPipelineStream } from './services/planApi';
 import { downloadText } from './utils/download';
 
@@ -681,7 +683,7 @@ export default function App() {
                   />
                   <div className="chapter-panel__body">
                     {chapter.outputText ? (
-                      renderMarkedText(chapter.outputText, { normalize: false, stripMeta: true })
+                      <RichTextRenderer text={chapter.outputText} normalize={false} stripMeta />
                     ) : (
                       <Typography.Text type="secondary">本章节暂无输出。</Typography.Text>
                     )}
@@ -764,7 +766,7 @@ export default function App() {
         <div className="app-header__inner">
           <div>
             <Typography.Title level={3} className="app-title">
-              电力设备并行预案生成系统
+              电力设备智能预案生成系统
             </Typography.Title>
           </div>
           <div className="app-route-tabs">
@@ -785,7 +787,7 @@ export default function App() {
         {route === 'plan' ? renderPlanPage() : null}
         {route === 'trace' ? <TraceGraphPage trace={null} /> : null}
         {route === 'quality' ? <QualityReviewPage /> : null}
-        {route === 'template' ? <QualityReviewPage /> : null}
+        {route === 'template' ? <TemplateViewPage /> : null}
       </Content>
     </Layout>
   );

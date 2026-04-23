@@ -7,7 +7,22 @@ interface TraceGraphPageProps {
 
 export function TraceGraphPage({ trace }: TraceGraphPageProps) {
   if (!trace) {
-    return <Empty description="请先生成一份预案，再查看溯源分析" />;
+    return (
+      <div className="pipeline-page">
+        <Card title="图谱溯源" className="panel-card pipeline-input-card">
+          <Typography.Paragraph className="app-subtitle">
+            当前页面为图谱溯源入口页，后续将在这里展示预案生成过程中的知识命中、节点关系与图谱证据。
+          </Typography.Paragraph>
+          <div className="status-box">
+            <Tag color="cyan">占位页</Tag>
+            <Tag>待接入图谱溯源可视化结果</Tag>
+          </div>
+        </Card>
+        <Card title="图谱溯源占位" className="panel-card chapter-empty-card">
+          <Empty description="请先生成一份预案，再查看溯源分析" />
+        </Card>
+      </div>
+    );
   }
 
   return (

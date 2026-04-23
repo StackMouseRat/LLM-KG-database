@@ -1,25 +1,67 @@
-export type GenerateStage =
+export type PipelineStage =
   | 'idle'
-  | 'detecting_device'
-  | 'querying_graph'
-  | 'generating'
+  | 'basic_info'
+  | 'template_split'
+  | 'parallel_generating'
+  | 'case_search'
   | 'done'
   | 'error';
 
-export interface GeneratePlanRequest {
+export interface PipelineRunRequest {
   question: string;
-  stream?: boolean;
+  enableCaseSearch?: boolean;
 }
 
-export interface GeneratePlanResponse {
-  answer: string;
-  trace: PlanTrace;
+export interface PipelineBasicInfo {
+  userQuestion: string;
+  faultScene: string;
+  graphMaterial: string;
+}
+
+export interface PipelineTemplateSplit {
+  templateId: string;
+  templateName: string;
+  currentVersion: string;
+  chapterCount: number;
+}
+
+export interface PipelineChapter {
+  chapterNo: string;
+  title: string;
+  sectionCount: number;
+  templateText: string;
+  outputText: string;
+  elapsedSec?: number;
+  status: 'pending' | 'running' | 'done' | 'error';
+}
+
+export interface PipelineRunResponse {
+  question: string;
+  basicInfo: PipelineBasicInfo;
+  templateSplit: PipelineTemplateSplit;
+  chapters: PipelineChapter[];
+  caseSearch?: PipelineCaseSearchResult;
   raw?: unknown;
 }
 
-export interface StreamEventPayload {
-  event?: string;
-  data?: any;
+export interface PipelineCaseSearchResult {
+  enabled: boolean;
+  status: 'idle' | 'running' | 'done' | 'skipped' | 'error';
+  kbName?: string;
+  datasetId?: string;
+  queryQuestion?: string;
+  outputText?: string;
+  cards?: PipelineCaseSearchCard[];
+  error?: string;
+}
+
+export interface PipelineCaseSearchCard {
+  id?: string;
+  title: string;
+  kbId: string;
+  docId: string;
+  relevance: string;
+  excerpt: string;
 }
 
 export interface PlanTrace {

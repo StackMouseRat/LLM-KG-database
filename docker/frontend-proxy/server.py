@@ -22,6 +22,12 @@ KB_PLUGIN_KEY_FILE = os.getenv(
     "KB_PLUGIN_KEY_FILE",
     "/run/fastgpt_keys/knowledge_base_query_plugin_api_key",
 )
+TEMPLATE_GRAPH_URL = os.getenv("TEMPLATE_GRAPH_URL", "http://host.docker.internal:8787/graph/query")
+TEMPLATE_SPACE = os.getenv("TEMPLATE_SPACE", "llmkg_templates")
+TEMPLATE_ID = os.getenv("TEMPLATE_ID", "tpl_default_emergency")
+TEMPLATE_DEFAULTS_FILE = Path(
+    os.getenv("TEMPLATE_DEFAULTS_FILE", "/app/data/template_defaults_snapshot.json")
+)
 DATASET_MAP = {
     "breaker": {
         "kb_name": "llmkg_breaker",
@@ -63,6 +69,124 @@ def find_result_file(base_dir: Path) -> Path:
     if not result_file.exists():
         raise RuntimeError(f"pipeline result file not found: {result_file}")
     return result_file
+
+
+def parse_table(stdout: str) -> list[dict[str, str]]:
+    rows = []
+    for line in stdout.splitlines():
+        if not line.startswith("|"):
+            continue
+        parts = [part.strip() for part in line.split("|")[1:-1]]
+        if not parts:
+            continue
+        if set("".join(parts)) <= {"+", "-"}:
+            continue
+        rows.append(parts)
+    if len(rows) < 2:
+        return []
+    header = rows[0]
+    data_rows = rows[1:]
+    result: list[dict[str, str]] = []
+    for row in data_rows:
+        if len(row) != len(header):
+            continue
+        item = {}
+        for key, value in zip(header, row):
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1]
+            item[key] = value
+        result.append(item)
+    return result
+
+
+def gql(space: str, ngql: str) -> dict:
+    req = Request(
+        TEMPLATE_GRAPH_URL,
+        data=json.dumps({"space": space, "ngql": ngql}, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={"Content-Type": "application/json; charset=utf-8"},
+    )
+    try:
+        with urlopen(req, timeout=60) as resp:
+            body = json.loads(resp.read().decode("utf-8", errors="replace"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"template graph HTTP {exc.code}: {detail[:400]}")
+    except URLError as exc:
+        raise RuntimeError(f"template graph URL error: {exc}")
+    if not body.get("ok"):
+        raise RuntimeError(str(body.get("errors") or body.get("message") or body))
+    return body
+
+
+def esc_ngql(value: str) -> str:
+    return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+
+
+def list_template_sections() -> list[dict]:
+    ngql = (
+        "MATCH (t:template)-[:has_version]->(v:template_version)-[:has_section]->(s:template_section) "
+        f"WHERE id(t) == {esc_ngql(TEMPLATE_ID)} "
+        "RETURN id(s) AS section_id, "
+        "s.template_section.section_no AS section_no, "
+        "s.template_section.title AS title, "
+        "s.template_section.level AS level, "
+        "s.template_section.order_no AS order_no, "
+        "s.template_section.source_type AS source_type, "
+        "s.template_section.kg_field AS kg_field, "
+        "s.template_section.fixed_text AS fixed_text, "
+        "s.template_section.gen_instruction AS gen_instruction "
+        "ORDER BY order_no;"
+    )
+    rows = parse_table(gql(TEMPLATE_SPACE, ngql)["stdout"])
+    sections = [
+        {
+            "section_id": row.get("section_id", ""),
+            "section_no": row.get("section_no", ""),
+            "title": row.get("title", ""),
+            "level": int(row.get("level") or 0),
+            "order_no": int(row.get("order_no") or 0),
+            "source_type": row.get("source_type", ""),
+            "kg_field": row.get("kg_field", ""),
+            "fixed_text": row.get("fixed_text", ""),
+            "gen_instruction": row.get("gen_instruction", ""),
+        }
+        for row in rows
+    ]
+    return sections
+
+
+def ensure_template_defaults_snapshot(sections: list[dict]) -> dict[str, dict]:
+    if TEMPLATE_DEFAULTS_FILE.exists():
+        try:
+            saved = json.loads(TEMPLATE_DEFAULTS_FILE.read_text(encoding="utf-8"))
+            if isinstance(saved, dict):
+                return saved
+        except Exception:
+            pass
+
+    snapshot = {
+        item["section_id"]: {
+            "source_type": item["source_type"],
+            "fixed_text": item["fixed_text"],
+            "gen_instruction": item["gen_instruction"],
+        }
+        for item in sections
+    }
+    TEMPLATE_DEFAULTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    TEMPLATE_DEFAULTS_FILE.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+    return snapshot
+
+
+def update_template_section(section_id: str, source_type: str, fixed_text: str, gen_instruction: str) -> None:
+    ngql = (
+        "UPDATE VERTEX ON template_section "
+        f"{esc_ngql(section_id)} SET "
+        f"template_section.source_type={esc_ngql(source_type)}, "
+        f"template_section.fixed_text={esc_ngql(fixed_text)}, "
+        f"template_section.gen_instruction={esc_ngql(gen_instruction)};"
+    )
+    gql(TEMPLATE_SPACE, ngql)
 
 
 def parse_fault_scene(raw: object) -> dict:
@@ -415,7 +539,107 @@ class Handler(BaseHTTPRequestHandler):
         self._send_common_headers()
         self.end_headers()
 
+    def do_GET(self) -> None:
+        if self.path != "/api/template/sections":
+            self.send_response(404)
+            self._send_common_headers()
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"message": "not found"}).encode("utf-8"))
+            return
+
+        try:
+            sections = list_template_sections()
+            defaults = ensure_template_defaults_snapshot(sections)
+            payload = {
+                "template_id": TEMPLATE_ID,
+                "sections": [
+                    {
+                        **section,
+                        "default": defaults.get(section["section_id"], {}),
+                    }
+                    for section in sections
+                ],
+            }
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self._send_common_headers()
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except Exception as exc:
+            body = json.dumps({"message": str(exc)}, ensure_ascii=False).encode("utf-8")
+            self.send_response(500)
+            self._send_common_headers()
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
     def do_POST(self) -> None:
+        if self.path in ("/api/template/section/save", "/api/template/section/reset"):
+            try:
+                body = self._read_json_body()
+                section_id = str(body.get("section_id") or "").strip()
+                if not section_id:
+                    self.send_response(400)
+                    self._send_common_headers()
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"message": "section_id is required"}).encode("utf-8"))
+                    return
+
+                if self.path == "/api/template/section/reset":
+                    sections = list_template_sections()
+                    defaults = ensure_template_defaults_snapshot(sections)
+                    default = defaults.get(section_id)
+                    if not default:
+                        raise RuntimeError(f"default template section not found: {section_id}")
+                    update_template_section(
+                        section_id,
+                        str(default.get("source_type") or ""),
+                        str(default.get("fixed_text") or ""),
+                        str(default.get("gen_instruction") or ""),
+                    )
+                else:
+                    update_template_section(
+                        section_id,
+                        str(body.get("source_type") or ""),
+                        str(body.get("fixed_text") or ""),
+                        str(body.get("gen_instruction") or ""),
+                    )
+
+                sections = list_template_sections()
+                defaults = ensure_template_defaults_snapshot(sections)
+                matched = next((item for item in sections if item["section_id"] == section_id), None)
+                payload = {
+                    "ok": True,
+                    "section": {
+                        **matched,
+                        "default": defaults.get(section_id, {}),
+                    }
+                    if matched
+                    else None,
+                }
+                data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+                self.send_response(200)
+                self._send_common_headers()
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            except Exception as exc:
+                payload = json.dumps({"message": str(exc)}, ensure_ascii=False).encode("utf-8")
+                self.send_response(500)
+                self._send_common_headers()
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+                return
+
         if self.path not in ("/api/plan/generate", "/api/pipeline/run"):
             self.send_response(404)
             self._send_common_headers()
