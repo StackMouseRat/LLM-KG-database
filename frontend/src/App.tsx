@@ -4,9 +4,11 @@ import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Tag, T
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
 import { RichTextRenderer } from './components/RichTextRenderer';
+import { LoginPage } from './pages/LoginPage';
 import { TraceGraphPage } from './pages/TraceGraphPage';
 import { QualityReviewPage } from './pages/QualityReviewPage';
 import { TemplateViewPage } from './pages/TemplateViewPage';
+import { fetchCurrentUser, login, logout } from './services/authApi';
 import { runPipelineStream } from './services/planApi';
 import { downloadText } from './utils/download';
 
@@ -15,6 +17,9 @@ const { TextArea } = Input;
 const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
 
 type RouteKey = 'plan' | 'trace' | 'quality' | 'template';
+type AppRoute = RouteKey | 'login';
+type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
+type UserGroup = 'admin' | 'user';
 
 const routeItems: Array<{ key: RouteKey; label: string; path: string }> = [
   { key: 'plan', label: '预案生成', path: '/plan' },
@@ -279,7 +284,8 @@ function parseFaultScene(text: string) {
   }
 }
 
-function routeFromPath(pathname: string): RouteKey {
+function routeFromPath(pathname: string): AppRoute {
+  if (pathname === '/login') return 'login';
   if (pathname === '/trace') return 'trace';
   if (pathname === '/quality') return 'quality';
   if (pathname === '/template') return 'template';
@@ -325,9 +331,13 @@ function pickRandomPresetQuestion() {
 
 export default function App() {
   const savedSnapshot = loadSavedSnapshot();
-  const [route, setRoute] = useState<RouteKey>(() =>
-    typeof window === 'undefined' ? 'plan' : routeFromPath(window.location.pathname)
+  const [route, setRoute] = useState<AppRoute>(() =>
+    typeof window === 'undefined' ? 'login' : routeFromPath(window.location.pathname)
   );
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('checking');
+  const [currentUsername, setCurrentUsername] = useState('');
+  const [currentUserGroup, setCurrentUserGroup] = useState<UserGroup>('user');
+  const [loginLoading, setLoginLoading] = useState(false);
   const [question, setQuestion] = useState(savedSnapshot?.question || pickRandomPresetQuestion());
   const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(savedSnapshot?.pipeline || null);
   const [stage, setStage] = useState<PipelineStage>(savedSnapshot?.pipeline ? 'done' : 'idle');
@@ -356,14 +366,6 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const current = routeFromPath(window.location.pathname);
-    if (window.location.pathname === '/' || !window.location.pathname) {
-      window.history.replaceState(null, '', '/plan');
-      setRoute('plan');
-      return;
-    }
-    setRoute(current);
-
     const onPopState = () => {
       setRoute(routeFromPath(window.location.pathname));
     };
@@ -372,13 +374,100 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const syncAuth = async () => {
+      try {
+        const session = await fetchCurrentUser();
+        if (session?.username) {
+          setCurrentUsername(session.username);
+          setCurrentUserGroup(session.group);
+          setAuthStatus('authenticated');
+        } else {
+          setCurrentUsername('');
+          setCurrentUserGroup('user');
+          setAuthStatus('unauthenticated');
+        }
+      } catch (error) {
+        setCurrentUsername('');
+        setCurrentUserGroup('user');
+        setAuthStatus('unauthenticated');
+        message.error(error instanceof Error ? error.message : '登录状态校验失败');
+      }
+    };
+
+    void syncAuth();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || authStatus === 'checking') return;
+
+    if (authStatus === 'unauthenticated') {
+      if (window.location.pathname !== '/login') {
+        window.history.replaceState(null, '', '/login');
+      }
+      setRoute('login');
+      return;
+    }
+
+    if (window.location.pathname === '/' || window.location.pathname === '/login') {
+      window.history.replaceState(null, '', '/plan');
+      setRoute('plan');
+      return;
+    }
+
+    setRoute(routeFromPath(window.location.pathname));
+  }, [authStatus]);
+
   const navigateRoute = (nextRoute: RouteKey) => {
+    if (authStatus !== 'authenticated') return;
     const target = routeItems.find((item) => item.key === nextRoute);
     if (!target || typeof window === 'undefined') return;
     if (window.location.pathname !== target.path) {
       window.history.pushState(null, '', target.path);
     }
     setRoute(nextRoute);
+  };
+
+  const handleLogin = async (username: string, password: string) => {
+    if (!username || !password) {
+      message.warning('请输入用户名和密码');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const session = await login(username, password);
+      setCurrentUsername(session.username);
+      setCurrentUserGroup(session.group);
+      setAuthStatus('authenticated');
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/plan');
+      }
+      setRoute('plan');
+      message.success('登录成功');
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '登录失败');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '登出失败');
+    } finally {
+      setCurrentUsername('');
+      setCurrentUserGroup('user');
+      setAuthStatus('unauthenticated');
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/login');
+      }
+      setRoute('login');
+    }
   };
 
   const handleGenerate = async () => {
@@ -769,25 +858,49 @@ export default function App() {
               电力设备智能预案生成系统
             </Typography.Title>
           </div>
-          <div className="app-route-tabs">
-            {routeItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className={`app-route-tab ${route === item.key ? 'app-route-tab--active' : ''}`}
-                onClick={() => navigateRoute(item.key)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          {authStatus === 'authenticated' ? (
+            <div className="app-header__controls">
+              <div className="app-user-bar">
+                <Tag color="blue">
+                  当前用户：{currentUsername} · 用户组：{currentUserGroup}
+                </Tag>
+                <Button size="small" onClick={handleLogout}>
+                  登出
+                </Button>
+              </div>
+              <div className="app-route-tabs">
+                {routeItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`app-route-tab ${route === item.key ? 'app-route-tab--active' : ''}`}
+                    onClick={() => navigateRoute(item.key)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </Header>
       <Content className="app-content">
-        {route === 'plan' ? renderPlanPage() : null}
-        {route === 'trace' ? <TraceGraphPage trace={null} /> : null}
-        {route === 'quality' ? <QualityReviewPage /> : null}
-        {route === 'template' ? <TemplateViewPage /> : null}
+        {authStatus === 'checking' ? (
+          <Card className="panel-card chapter-empty-card auth-wait-card">
+            <Typography.Text type="secondary">正在校验登录状态，请稍候。</Typography.Text>
+          </Card>
+        ) : null}
+        {authStatus === 'unauthenticated' && route === 'login' ? (
+          <LoginPage loading={loginLoading} onSubmit={handleLogin} />
+        ) : null}
+        {authStatus === 'authenticated' && route === 'plan' ? renderPlanPage() : null}
+        {authStatus === 'authenticated' && route === 'trace' ? <TraceGraphPage trace={null} /> : null}
+        {authStatus === 'authenticated' && route === 'quality' ? (
+          <QualityReviewPage currentUserGroup={currentUserGroup} />
+        ) : null}
+        {authStatus === 'authenticated' && route === 'template' ? (
+          <TemplateViewPage currentUserGroup={currentUserGroup} />
+        ) : null}
       </Content>
     </Layout>
   );

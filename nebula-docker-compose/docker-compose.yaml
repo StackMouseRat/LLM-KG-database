@@ -350,7 +350,12 @@ services:
       dockerfile: docker/frontend-proxy/Dockerfile
     environment:
       TZ: "${TZ}"
+      APP_LOGIN_USERS: "${APP_LOGIN_USERS:-}"
       FRONTEND_PROXY_PORT: "8788"
+      APP_LOGIN_USERNAME: "${APP_LOGIN_USERNAME}"
+      APP_LOGIN_PASSWORD: "${APP_LOGIN_PASSWORD}"
+      APP_LOGIN_COOKIE_NAME: "${APP_LOGIN_COOKIE_NAME:-llmkg_session}"
+      APP_LOGIN_SESSION_TTL: "${APP_LOGIN_SESSION_TTL:-86400}"
       LLM_KG_REPO_ROOT: /app
       PIPELINE_SCRIPT: /app/scripts/run_parallel_generation_pipeline.py
       PIPELINE_RUN_DIR: /app/data/frontend_pipeline_runs
@@ -362,6 +367,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
+      - ../docker/frontend-proxy/server.py:/app/server.py:ro
+      - ../scripts/run_parallel_generation_pipeline.py:/app/scripts/run_parallel_generation_pipeline.py:ro
       - ../docs/project_changes/frontend_pipeline_runs:/app/data/frontend_pipeline_runs
       - ${FASTGPT_KEYS_DIR:-/home/ubuntu/.fastgpt_keys}:/run/fastgpt_keys:ro
     ports:

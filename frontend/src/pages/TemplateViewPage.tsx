@@ -49,12 +49,14 @@ function saveTemplateCache(sections: TemplateSection[]) {
   window.localStorage.setItem(TEMPLATE_CACHE_KEY, JSON.stringify(sections));
 }
 
-export function TemplateViewPage() {
+export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admin' | 'user' }) {
   const [sections, setSections] = useState<TemplateSection[]>(() => loadTemplateCache() || []);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState('');
   const [editingId, setEditingId] = useState('');
   const [drafts, setDrafts] = useState<Record<string, TemplateSection>>({});
+
+  const canManageTemplate = currentUserGroup === 'admin';
 
   const loadSections = async (forceRefresh = false) => {
     if (!forceRefresh) {
@@ -185,8 +187,10 @@ export function TemplateViewPage() {
     <div className="pipeline-page">
       <Card title="模板查看" className="panel-card pipeline-input-card">
         <Typography.Paragraph className="app-subtitle">
-          当前页用于查看和编辑模板章节。每个章节卡片可独立修改 `source_type`、`fixed_text` 和
-          `gen_instruction`，并可保存到数据库或恢复为当前默认值。
+          当前页用于查看模板章节。
+          {canManageTemplate
+            ? ' 每个章节卡片可独立修改 `source_type`、`fixed_text` 和 `gen_instruction`，并可保存到数据库或恢复为当前默认值。'
+            : ' 当前账号为只读权限，可查看模板内容但不能编辑或恢复默认。'}
         </Typography.Paragraph>
         <div className="status-box">
           <Tag color="cyan">模板定制</Tag>
@@ -265,29 +269,31 @@ export function TemplateViewPage() {
                   </div>
                 </div>
 
-                <Space className="template-card__actions" wrap>
-                  {!editing ? (
-                    <Button onClick={() => beginEdit(section)}>编辑</Button>
-                  ) : (
-                    <>
-                      <Button
-                        type="primary"
-                        loading={savingId === section.section_id}
-                        onClick={() => saveSection(section.section_id)}
-                      >
-                        保存
-                      </Button>
-                      <Button onClick={cancelEdit}>取消</Button>
-                    </>
-                  )}
-                  <Button
-                    danger
-                    loading={savingId === section.section_id}
-                    onClick={() => resetSection(section.section_id)}
-                  >
-                    恢复默认
-                  </Button>
-                </Space>
+                {canManageTemplate ? (
+                  <Space className="template-card__actions" wrap>
+                    {!editing ? (
+                      <Button onClick={() => beginEdit(section)}>编辑</Button>
+                    ) : (
+                      <>
+                        <Button
+                          type="primary"
+                          loading={savingId === section.section_id}
+                          onClick={() => saveSection(section.section_id)}
+                        >
+                          保存
+                        </Button>
+                        <Button onClick={cancelEdit}>取消</Button>
+                      </>
+                    )}
+                    <Button
+                      danger
+                      loading={savingId === section.section_id}
+                      onClick={() => resetSection(section.section_id)}
+                    >
+                      恢复默认
+                    </Button>
+                  </Space>
+                ) : null}
               </Card>
             );
           })}

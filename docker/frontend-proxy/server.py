@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from http.cookies import SimpleCookie
 import json
 import os
 import random
+import secrets
 import subprocess
 import sys
 import threading
@@ -15,6 +17,11 @@ from urllib.request import Request, urlopen
 
 
 PORT = int(os.getenv("FRONTEND_PROXY_PORT", "8788"))
+AUTH_USERS_RAW = os.getenv("APP_LOGIN_USERS", "")
+AUTH_USERNAME = os.getenv("APP_LOGIN_USERNAME", "")
+AUTH_PASSWORD = os.getenv("APP_LOGIN_PASSWORD", "")
+AUTH_COOKIE_NAME = os.getenv("APP_LOGIN_COOKIE_NAME", "llmkg_session")
+AUTH_SESSION_TTL = int(os.getenv("APP_LOGIN_SESSION_TTL", "86400"))
 PIPELINE_SCRIPT = os.getenv("PIPELINE_SCRIPT", "/app/scripts/run_parallel_generation_pipeline.py")
 PIPELINE_RUN_DIR = Path(os.getenv("PIPELINE_RUN_DIR", "/app/data/frontend_pipeline_runs"))
 KB_PLUGIN_URL = os.getenv("KB_PLUGIN_URL", "http://host.docker.internal:3000/api/v1/chat/completions")
@@ -22,12 +29,37 @@ KB_PLUGIN_KEY_FILE = os.getenv(
     "KB_PLUGIN_KEY_FILE",
     "/run/fastgpt_keys/knowledge_base_query_plugin_api_key",
 )
+FORMAT_REVIEW_PLUGIN_URL = os.getenv(
+    "FORMAT_REVIEW_PLUGIN_URL",
+    "http://host.docker.internal:3000/api/v1/chat/completions",
+)
+FORMAT_REVIEW_PLUGIN_KEY_FILE = os.getenv(
+    "FORMAT_REVIEW_PLUGIN_KEY_FILE",
+    "/run/fastgpt_keys/format_review_plugin_api_key",
+)
 TEMPLATE_GRAPH_URL = os.getenv("TEMPLATE_GRAPH_URL", "http://host.docker.internal:8787/graph/query")
 TEMPLATE_SPACE = os.getenv("TEMPLATE_SPACE", "llmkg_templates")
 TEMPLATE_ID = os.getenv("TEMPLATE_ID", "tpl_default_emergency")
 TEMPLATE_DEFAULTS_FILE = Path(
     os.getenv("TEMPLATE_DEFAULTS_FILE", "/app/data/template_defaults_snapshot.json")
 )
+PROMPT_TAG = "template_prompt_config"
+PROMPT_DEFAULTS = {
+    "optimize_prompt": {
+        "id": "tpl_prompt_optimize",
+        "prompt_key": "optimize_prompt",
+        "title": "优化提示词",
+        "prompt_text": "请对预案正文进行格式优化：\n1. 保留原始章节编号和标题层级\n2. 修复换行、标题粘连、列表错位\n3. 删除无意义的元信息噪声\n4. 不改变业务含义和处置步骤\n5. 输出适合正式预案阅读的规范文本",
+        "order_no": 10,
+    },
+    "evaluate_prompt": {
+        "id": "tpl_prompt_evaluate",
+        "prompt_key": "evaluate_prompt",
+        "title": "评估提示词",
+        "prompt_text": "请对预案正文进行质量评估：\n1. 检查结构是否完整\n2. 检查章节编号是否连续\n3. 检查是否存在重复、缺项、逻辑跳跃\n4. 检查应急动作是否可执行\n5. 输出简短的质量结论与修改建议",
+        "order_no": 20,
+    },
+}
 DATASET_MAP = {
     "breaker": {
         "kb_name": "llmkg_breaker",
@@ -46,6 +78,77 @@ DATASET_MAP = {
         "dataset_id": "69e8b07a796863b2e4d3a894",
     },
 }
+ACTIVE_SESSIONS: dict[str, dict[str, object]] = {}
+SESSION_LOCK = threading.Lock()
+
+
+def load_auth_users() -> dict[str, str]:
+    users: dict[str, str] = {}
+
+    for item in str(AUTH_USERS_RAW or "").split(","):
+        pair = item.strip()
+        if not pair or ":" not in pair:
+            continue
+        username, password = pair.split(":", 1)
+        username = username.strip()
+        if username:
+            users[username] = password
+
+    if AUTH_USERNAME:
+        users.setdefault(AUTH_USERNAME, AUTH_PASSWORD)
+
+    return users
+
+
+AUTH_USERS = load_auth_users()
+
+
+def get_user_group(username: str) -> str:
+    return "admin" if username == "admin" else "user"
+
+
+def create_session(username: str) -> tuple[str, int]:
+    token = secrets.token_urlsafe(32)
+    expires_at = int(time.time()) + AUTH_SESSION_TTL
+    with SESSION_LOCK:
+        ACTIVE_SESSIONS[token] = {
+            "username": username,
+            "group": get_user_group(username),
+            "expires_at": expires_at,
+        }
+    return token, expires_at
+
+
+def resolve_session_info(token: str | None) -> dict[str, object] | None:
+    if not token:
+        return None
+    now = int(time.time())
+    with SESSION_LOCK:
+        session = ACTIVE_SESSIONS.get(token)
+        if not session:
+            return None
+        expires_at = int(session.get("expires_at") or 0)
+        if expires_at <= now:
+            ACTIVE_SESSIONS.pop(token, None)
+            return None
+        return {
+            "username": str(session.get("username") or ""),
+            "group": str(session.get("group") or get_user_group(str(session.get("username") or ""))),
+        }
+
+
+def resolve_session(token: str | None) -> str | None:
+    session = resolve_session_info(token)
+    if not session:
+        return None
+    return str(session.get("username") or "")
+
+
+def destroy_session(token: str | None) -> None:
+    if not token:
+        return
+    with SESSION_LOCK:
+        ACTIVE_SESSIONS.pop(token, None)
 
 
 def send_sse(handler: BaseHTTPRequestHandler, event: str, data: object) -> None:
@@ -99,6 +202,17 @@ def parse_table(stdout: str) -> list[dict[str, str]]:
     return result
 
 
+def count_rows(space: str, ngql: str) -> int:
+    rows = parse_table(gql(space, ngql)["stdout"])
+    if not rows:
+        return 0
+    value = next(iter(rows[0].values()))
+    try:
+        return int(str(value))
+    except Exception:
+        return 0
+
+
 def gql(space: str, ngql: str) -> dict:
     req = Request(
         TEMPLATE_GRAPH_URL,
@@ -121,6 +235,93 @@ def gql(space: str, ngql: str) -> dict:
 
 def esc_ngql(value: str) -> str:
     return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+
+
+def encode_prompt_text(text: str) -> str:
+    return str(text or "").replace("\\", "\\\\").replace("\n", "\\n")
+
+
+def decode_prompt_text(text: str) -> str:
+    return str(text or "").replace("\\n", "\n").replace("\\\\", "\\")
+
+
+def ensure_prompt_schema() -> None:
+    gql(
+        TEMPLATE_SPACE,
+        f"CREATE TAG IF NOT EXISTS {PROMPT_TAG}(prompt_key string, title string, prompt_text string, order_no int64);",
+    )
+
+
+def ensure_prompt_defaults() -> None:
+    ensure_prompt_schema()
+    for item in PROMPT_DEFAULTS.values():
+        exists = count_rows(
+            TEMPLATE_SPACE,
+            f"MATCH (p:{PROMPT_TAG}) WHERE id(p) == {esc_ngql(item['id'])} RETURN count(p) AS c;",
+        )
+        if exists:
+            continue
+        ngql = (
+            f"INSERT VERTEX {PROMPT_TAG}(prompt_key, title, prompt_text, order_no) VALUES "
+            f"{esc_ngql(item['id'])}:("
+            f"{esc_ngql(item['prompt_key'])},"
+            f"{esc_ngql(item['title'])},"
+            f"{esc_ngql(encode_prompt_text(item['prompt_text']))},"
+            f"{int(item['order_no'])}"
+            ");"
+        )
+        gql(TEMPLATE_SPACE, ngql)
+
+
+def get_prompt_record(prompt_key: str) -> dict:
+    ensure_prompt_defaults()
+    default = PROMPT_DEFAULTS[prompt_key]
+    ngql = (
+        f"MATCH (p:{PROMPT_TAG}) WHERE id(p) == {esc_ngql(default['id'])} "
+        "RETURN id(p) AS prompt_id, "
+        f"p.{PROMPT_TAG}.prompt_key AS prompt_key, "
+        f"p.{PROMPT_TAG}.title AS title, "
+        f"p.{PROMPT_TAG}.prompt_text AS prompt_text, "
+        f"p.{PROMPT_TAG}.order_no AS order_no;"
+    )
+    rows = parse_table(gql(TEMPLATE_SPACE, ngql)["stdout"])
+    if not rows:
+        return {
+            "prompt_id": default["id"],
+            "prompt_key": default["prompt_key"],
+            "title": default["title"],
+            "prompt_text": default["prompt_text"],
+            "order_no": default["order_no"],
+            "default": default,
+        }
+    row = rows[0]
+    return {
+        "prompt_id": row.get("prompt_id", ""),
+        "prompt_key": row.get("prompt_key", ""),
+        "title": row.get("title", ""),
+        "prompt_text": decode_prompt_text(row.get("prompt_text", "")),
+        "order_no": int(row.get("order_no") or 0),
+        "default": default,
+    }
+
+
+def list_template_prompts() -> list[dict]:
+    return sorted(
+        [get_prompt_record(key) for key in PROMPT_DEFAULTS.keys()],
+        key=lambda item: int(item.get("order_no") or 0),
+    )
+
+
+def update_template_prompt(prompt_key: str, prompt_text: str) -> None:
+    ensure_prompt_defaults()
+    default = PROMPT_DEFAULTS.get(prompt_key)
+    if not default:
+        raise RuntimeError(f"unknown prompt_key: {prompt_key}")
+    ngql = (
+        f"UPDATE VERTEX ON {PROMPT_TAG} {esc_ngql(default['id'])} "
+        f"SET {PROMPT_TAG}.prompt_text={esc_ngql(encode_prompt_text(prompt_text))};"
+    )
+    gql(TEMPLATE_SPACE, ngql)
 
 
 def list_template_sections() -> list[dict]:
@@ -241,6 +442,165 @@ def read_plugin_key() -> str:
     if not key:
         raise RuntimeError(f"plugin key file is empty: {path}")
     return key
+
+
+def read_format_review_key() -> str:
+    path = Path(FORMAT_REVIEW_PLUGIN_KEY_FILE)
+    key = path.read_text(encoding="utf-8").strip()
+    if not key:
+        raise RuntimeError(f"format review plugin key file is empty: {path}")
+    return key
+
+
+def extract_plugin_text(response: dict) -> tuple[str, str]:
+    reasoning = ""
+    output = ""
+    choices = response.get("choices", [])
+    if isinstance(choices, list) and choices:
+        first = choices[0]
+        if isinstance(first, dict):
+            message = first.get("message", {})
+            if isinstance(message, dict):
+                content = message.get("content")
+                if isinstance(content, str):
+                    output = content
+                elif isinstance(content, list):
+                    for item in content:
+                        if not isinstance(item, dict):
+                            continue
+                        if item.get("type") == "reasoning":
+                            reasoning += str(item.get("reasoning", {}).get("content") or "")
+                        if item.get("type") == "text":
+                            output += str(item.get("text", {}).get("content") or "")
+    for node in response.get("responseData", []):
+        if node.get("moduleType") == "chatNode":
+            if not reasoning:
+                reasoning = str(node.get("reasoningText") or "")
+    return output.strip(), reasoning.strip()
+
+
+def run_format_review_sync(prompt: str, content: str) -> dict:
+    payload = {
+        "stream": False,
+        "detail": True,
+        "variables": {
+            "提示词": prompt,
+            "当前需求": content,
+        },
+    }
+    req = Request(
+        FORMAT_REVIEW_PLUGIN_URL,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {read_format_review_key()}",
+            "Content-Type": "application/json; charset=utf-8",
+        },
+    )
+    try:
+        with urlopen(req, timeout=180) as resp:
+            body = json.loads(resp.read().decode("utf-8", errors="replace"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"format review HTTP {exc.code}: {detail[:400]}")
+    except URLError as exc:
+        raise RuntimeError(f"format review URL error: {exc}")
+    output_text, reasoning_text = extract_plugin_text(body)
+    return {
+        "output_text": output_text,
+        "reasoning_text": reasoning_text,
+        "raw": body,
+    }
+
+
+def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: str, mode: str) -> None:
+    payload = {
+        "stream": True,
+        "detail": True,
+        "variables": {
+            "提示词": prompt,
+            "当前需求": content,
+        },
+    }
+    req = Request(
+        FORMAT_REVIEW_PLUGIN_URL,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {read_format_review_key()}",
+            "Content-Type": "application/json; charset=utf-8",
+            "Accept": "text/event-stream",
+        },
+    )
+
+    send_sse(handler, "quality_status", {"mode": mode, "status": "started"})
+
+    reasoning_text = ""
+    output_text = ""
+    event_name = ""
+    data_lines: list[str] = []
+    seen_reasoning = False
+    seen_output = False
+
+    def flush_event() -> None:
+        nonlocal event_name, data_lines, reasoning_text, output_text, seen_reasoning, seen_output
+        if not event_name and not data_lines:
+            return
+        payload_text = "\n".join(data_lines).strip()
+        if event_name == "answer" and payload_text and payload_text != "[DONE]":
+            try:
+                payload_obj = json.loads(payload_text)
+            except Exception:
+                payload_obj = {}
+            if isinstance(payload_obj, dict):
+                choices = payload_obj.get("choices", [])
+                if isinstance(choices, list) and choices:
+                    delta = choices[0].get("delta", {}) if isinstance(choices[0], dict) else {}
+                    reasoning_chunk = str(delta.get("reasoning_content") or "")
+                    text_chunk = str(delta.get("content") or "")
+                    if reasoning_chunk:
+                        reasoning_text += reasoning_chunk
+                        if not seen_reasoning:
+                            seen_reasoning = True
+                            send_sse(handler, "quality_status", {"mode": mode, "status": "thinking"})
+                        send_sse(handler, "quality_reasoning_chunk", {"mode": mode, "chunk": reasoning_chunk})
+                    if text_chunk:
+                        output_text += text_chunk
+                        if not seen_output:
+                            seen_output = True
+                            send_sse(handler, "quality_status", {"mode": mode, "status": "generating"})
+                        send_sse(handler, "quality_output_chunk", {"mode": mode, "chunk": text_chunk})
+        event_name = ""
+        data_lines = []
+
+    try:
+        with urlopen(req, timeout=180) as resp:
+            for raw in resp:
+                line = raw.decode("utf-8", errors="replace").rstrip("\n").rstrip("\r")
+                if not line.strip():
+                    flush_event()
+                    continue
+                if line.startswith("event:"):
+                    event_name = line[6:].strip()
+                elif line.startswith("data:"):
+                    data_lines.append(line[5:].strip())
+            flush_event()
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"format review HTTP {exc.code}: {detail[:400]}")
+    except URLError as exc:
+        raise RuntimeError(f"format review URL error: {exc}")
+
+    send_sse(
+        handler,
+        "quality_done",
+        {
+            "mode": mode,
+            "status": "done",
+            "output_text": output_text,
+            "reasoning_text": reasoning_text,
+        },
+    )
 
 
 def run_case_search(question: str, dataset: dict) -> dict:
@@ -525,14 +885,77 @@ class Handler(BaseHTTPRequestHandler):
         return
 
     def _send_common_headers(self) -> None:
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin")
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+            self.send_header("Vary", "Origin")
+        else:
+            self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+    def _send_stream_headers(self) -> None:
+        origin = self.headers.get("Origin")
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+            self.send_header("Vary", "Origin")
+        else:
+            self.send_header("Access-Control-Allow-Origin", "*")
 
     def _read_json_body(self) -> dict:
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length).decode("utf-8") if length else "{}"
         return json.loads(raw or "{}")
+
+    def _write_json(self, status: int, payload: dict, extra_headers: list[tuple[str, str]] | None = None) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self._send_common_headers()
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        for key, value in extra_headers or []:
+            self.send_header(key, value)
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _get_cookie(self, name: str) -> str | None:
+        raw_cookie = self.headers.get("Cookie", "")
+        if not raw_cookie:
+            return None
+        cookie = SimpleCookie()
+        cookie.load(raw_cookie)
+        morsel = cookie.get(name)
+        return morsel.value if morsel else None
+
+    def _build_session_cookie(self, token: str, max_age: int) -> str:
+        return (
+            f"{AUTH_COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
+        )
+
+    def _authenticated_username(self) -> str | None:
+        return resolve_session(self._get_cookie(AUTH_COOKIE_NAME))
+
+    def _authenticated_session(self) -> dict[str, object] | None:
+        return resolve_session_info(self._get_cookie(AUTH_COOKIE_NAME))
+
+    def _require_auth(self) -> str | None:
+        username = self._authenticated_username()
+        if username:
+            return username
+        self._write_json(401, {"message": "请先登录", "code": "UNAUTHORIZED"})
+        return None
+
+    def _require_admin(self) -> dict[str, object] | None:
+        session = self._authenticated_session()
+        if not session:
+            self._write_json(401, {"message": "请先登录", "code": "UNAUTHORIZED"})
+            return None
+        if str(session.get("group") or "") != "admin":
+            self._write_json(403, {"message": "无权限执行该操作", "code": "FORBIDDEN"})
+            return None
+        return session
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
@@ -540,12 +963,35 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:
+        if self.path == "/api/auth/me":
+            session = self._authenticated_session()
+            if not session:
+                self._write_json(401, {"message": "未登录", "code": "UNAUTHORIZED"})
+                return
+            self._write_json(
+                200,
+                {
+                    "ok": True,
+                    "username": str(session.get("username") or ""),
+                    "group": str(session.get("group") or ""),
+                },
+            )
+            return
+
+        if self.path.startswith("/api/") and self._require_auth() is None:
+            return
+
+        if self.path == "/api/template/prompts":
+            try:
+                prompts = list_template_prompts()
+                self._write_json(200, {"prompts": prompts})
+                return
+            except Exception as exc:
+                self._write_json(500, {"message": str(exc)})
+                return
+
         if self.path != "/api/template/sections":
-            self.send_response(404)
-            self._send_common_headers()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps({"message": "not found"}).encode("utf-8"))
+            self._write_json(404, {"message": "not found"})
             return
 
         try:
@@ -561,25 +1007,121 @@ class Handler(BaseHTTPRequestHandler):
                     for section in sections
                 ],
             }
-            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-            self.send_response(200)
-            self._send_common_headers()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self._write_json(200, payload)
         except Exception as exc:
-            body = json.dumps({"message": str(exc)}, ensure_ascii=False).encode("utf-8")
-            self.send_response(500)
-            self._send_common_headers()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self._write_json(500, {"message": str(exc)})
 
     def do_POST(self) -> None:
+        if self.path == "/api/auth/login":
+            try:
+                body = self._read_json_body()
+                username = str(body.get("username") or "").strip()
+                password = str(body.get("password") or "")
+                if not username or AUTH_USERS.get(username) != password:
+                    self._write_json(401, {"message": "用户名或密码错误", "code": "INVALID_CREDENTIALS"})
+                    return
+                token, _ = create_session(username)
+                self._write_json(
+                    200,
+                    {"ok": True, "username": username, "group": get_user_group(username)},
+                    extra_headers=[("Set-Cookie", self._build_session_cookie(token, AUTH_SESSION_TTL))],
+                )
+                return
+            except Exception as exc:
+                self._write_json(500, {"message": str(exc)})
+                return
+
+        if self.path == "/api/auth/logout":
+            destroy_session(self._get_cookie(AUTH_COOKIE_NAME))
+            self._write_json(
+                200,
+                {"ok": True},
+                extra_headers=[("Set-Cookie", self._build_session_cookie("", 0))],
+            )
+            return
+
+        if self.path.startswith("/api/") and self._require_auth() is None:
+            return
+
+        if self.path == "/api/quality/review":
+            try:
+                body = self._read_json_body()
+                prompt = str(body.get("prompt") or "").strip()
+                content = str(body.get("content") or "").strip()
+                mode = str(body.get("mode") or "optimize").strip() or "optimize"
+                if not prompt:
+                    self.send_response(400)
+                    self._send_common_headers()
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"message": "prompt is required"}).encode("utf-8"))
+                    return
+                if not content:
+                    self.send_response(400)
+                    self._send_common_headers()
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"message": "content is required"}).encode("utf-8"))
+                    return
+
+                if not body.get("stream"):
+                    result = run_format_review_sync(prompt, content)
+                    payload = json.dumps({"mode": mode, **result}, ensure_ascii=False).encode("utf-8")
+                    self.send_response(200)
+                    self._send_common_headers()
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Content-Length", str(len(payload)))
+                    self.end_headers()
+                    self.wfile.write(payload)
+                    return
+
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Connection", "keep-alive")
+                self._send_stream_headers()
+                self.end_headers()
+                try:
+                    stream_format_review(self, prompt, content, mode)
+                except Exception as exc:
+                    send_sse(self, "quality_error", {"mode": mode, "message": str(exc)})
+                finally:
+                    send_sse(self, "close", {})
+                    self.wfile.flush()
+                    self.wfile.close()
+                return
+            except Exception as exc:
+                self._write_json(500, {"message": str(exc)})
+                return
+
+        if self.path == "/api/template/prompt/save":
+            try:
+                if self._require_admin() is None:
+                    return
+                body = self._read_json_body()
+                prompt_key = str(body.get("prompt_key") or "").strip()
+                prompt_text = str(body.get("prompt_text") or "")
+                if not prompt_key:
+                    self.send_response(400)
+                    self._send_common_headers()
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"message": "prompt_key is required"}).encode("utf-8"))
+                    return
+
+                update_template_prompt(prompt_key, prompt_text)
+                prompts = list_template_prompts()
+                matched = next((item for item in prompts if item["prompt_key"] == prompt_key), None)
+                self._write_json(200, {"ok": True, "prompt": matched})
+                return
+            except Exception as exc:
+                self._write_json(500, {"message": str(exc)})
+                return
+
         if self.path in ("/api/template/section/save", "/api/template/section/reset"):
             try:
+                if self._require_admin() is None:
+                    return
                 body = self._read_json_body()
                 section_id = str(body.get("section_id") or "").strip()
                 if not section_id:
@@ -622,30 +1164,14 @@ class Handler(BaseHTTPRequestHandler):
                     if matched
                     else None,
                 }
-                data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-                self.send_response(200)
-                self._send_common_headers()
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(data)))
-                self.end_headers()
-                self.wfile.write(data)
+                self._write_json(200, payload)
                 return
             except Exception as exc:
-                payload = json.dumps({"message": str(exc)}, ensure_ascii=False).encode("utf-8")
-                self.send_response(500)
-                self._send_common_headers()
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(payload)))
-                self.end_headers()
-                self.wfile.write(payload)
+                self._write_json(500, {"message": str(exc)})
                 return
 
         if self.path not in ("/api/plan/generate", "/api/pipeline/run"):
-            self.send_response(404)
-            self._send_common_headers()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps({"message": "not found"}).encode("utf-8"))
+            self._write_json(404, {"message": "not found"})
             return
 
         try:
@@ -662,30 +1188,18 @@ class Handler(BaseHTTPRequestHandler):
 
             if not body.get("stream"):
                 result = run_pipeline_sync(question, enable_case_search=enable_case_search)
-                payload = json.dumps(result, ensure_ascii=False).encode("utf-8")
-                self.send_response(200)
-                self._send_common_headers()
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(payload)))
-                self.end_headers()
-                self.wfile.write(payload)
+                self._write_json(200, result)
                 return
 
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream; charset=utf-8")
             self.send_header("Cache-Control", "no-cache")
             self.send_header("Connection", "keep-alive")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self._send_stream_headers()
             self.end_headers()
             stream_pipeline(question, self, enable_case_search=enable_case_search)
         except Exception as exc:
-            payload = json.dumps({"message": str(exc)}, ensure_ascii=False).encode("utf-8")
-            self.send_response(500)
-            self._send_common_headers()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
-            self.wfile.write(payload)
+            self._write_json(500, {"message": str(exc)})
 
 
 def main() -> None:
