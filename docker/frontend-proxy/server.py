@@ -521,6 +521,28 @@ def first_non_empty(*values: object) -> str:
     return ""
 
 
+def normalize_fault_names(*values: object) -> list[str]:
+    result: list[str] = []
+    for value in values:
+        if isinstance(value, str):
+            candidate = value.strip()
+            if candidate:
+                result.append(candidate)
+        elif isinstance(value, list):
+            for item in value:
+                candidate = str(item or "").strip()
+                if candidate:
+                    result.append(candidate)
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for item in result:
+        if item in seen:
+            continue
+        seen.add(item)
+        ordered.append(item)
+    return ordered
+
+
 def wrap_fault_l2_label(text: str) -> str:
     value = str(text or "").strip()
     if not value:
@@ -556,19 +578,30 @@ def extract_trace_focus_fields(
     fault_hint: str = "",
 ) -> dict:
     parsed = parse_fault_scene(fault_scene)
+    graph_material_parsed = parse_fault_scene(graph_material)
 
     device_name = first_non_empty(
         device_hint,
         parsed.get("故障对象"),
         parsed.get("设备"),
         parsed.get("设备名称"),
+        graph_material_parsed.get("设备表"),
+    )
+    fault_names = normalize_fault_names(
+        parsed.get("主故障二级节点"),
+        parsed.get("故障二级节点"),
+        graph_material_parsed.get("主故障二级节点"),
+        graph_material_parsed.get("故障二级节点"),
     )
     fault_name = first_non_empty(
         fault_hint,
-        parsed.get("故障二级节点"),
+        parsed.get("主故障二级节点"),
         parsed.get("当前故障分析"),
         parsed.get("二级故障名称"),
+        graph_material_parsed.get("主故障二级节点"),
     )
+    if not fault_name and fault_names:
+        fault_name = fault_names[0]
 
     if not fault_name:
         for text in (fault_scene, graph_material, question):
@@ -590,6 +623,7 @@ def extract_trace_focus_fields(
         "space": graph_space.get("space") if graph_space else "",
         "device": device_name or (graph_space.get("device") if graph_space else ""),
         "fault": fault_name,
+        "faults": fault_names or ([fault_name] if fault_name else []),
     }
 
 
@@ -653,7 +687,12 @@ def add_trace_edge(edges: dict[str, dict], source: str, target: str, label: str,
         edge["isHit"] = True
 
 
-def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> dict:
+def build_trace_subgraph(
+    space: str,
+    fault_name: str,
+    device_name: str = "",
+    hit_fault_names: list[str] | None = None,
+) -> dict:
     if not space:
         raise RuntimeError("trace graph space is empty")
     if not fault_name:
@@ -670,6 +709,8 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
         raise RuntimeError(f"trace root path not found for fault: {fault_name}")
 
     normalized_fault = fault_name.strip()
+    normalized_hit_faults = normalize_fault_names(hit_fault_names or [], normalized_fault)
+    normalized_hit_fault_set = set(normalized_hit_faults)
     filtered_rows = [
         item for item in upstream_rows
         if str(item.get("l2_name") or "").strip() == normalized_fault
@@ -697,18 +738,31 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
     l1_id = str(row.get("l1_id") or "")
     l2_id = str(row.get("l2_id") or "")
 
-    hit_node_ids = {root_id, l1_id, l2_id}
-    hit_edge_keys = {
-        f"{root_id}->has_fault_category->{l1_id}",
-        f"{l1_id}->contains->{l2_id}",
-    }
-
     nodes: dict[str, dict] = {}
     edges: dict[str, dict] = {}
 
     root_name = str(row.get("root_name") or device_name or "设备根节点")
 
     root_filter_rows = [item for item in upstream_rows if str(item.get("root_id") or "") == root_id]
+    hit_rows = [
+        item
+        for item in root_filter_rows
+        if str(item.get("l2_name") or "").strip() in normalized_hit_fault_set
+    ]
+    if not hit_rows:
+        hit_rows = [row]
+    hit_root_ids = {str(item.get("root_id") or "") for item in hit_rows}
+    hit_l1_ids = {str(item.get("l1_id") or "") for item in hit_rows}
+    hit_l2_ids = {str(item.get("l2_id") or "") for item in hit_rows}
+    hit_node_ids = {root_id, *hit_root_ids, *hit_l1_ids, *hit_l2_ids}
+    hit_edge_keys = {
+        f"{str(item.get('root_id') or '')}->has_fault_category->{str(item.get('l1_id') or '')}"
+        for item in hit_rows
+    }
+    hit_edge_keys.update(
+        f"{str(item.get('l1_id') or '')}->contains->{str(item.get('l2_id') or '')}"
+        for item in hit_rows
+    )
     for item in root_filter_rows:
         item_root_id = str(item.get("root_id") or "")
         item_l1_id = str(item.get("l1_id") or "")
@@ -764,7 +818,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
     for cause in cause_rows:
         current_l2_id = str(cause.get("l2_id") or "")
         cause_id = str(cause.get("cause_id") or "")
-        is_hit = current_l2_id == l2_id
+        is_hit = current_l2_id in hit_l2_ids
         if is_hit:
           hit_node_ids.add(cause_id)
           hit_edge_keys.add(f"{current_l2_id}->caused_by->{cause_id}")
@@ -790,7 +844,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
         current_l2_id = str(symptom.get("l2_id") or "")
         cause_id = str(symptom.get("cause_id") or "")
         symptom_id = str(symptom.get("symptom_id") or "")
-        is_hit = current_l2_id == l2_id
+        is_hit = current_l2_id in hit_l2_ids
         if is_hit:
           hit_node_ids.add(symptom_id)
           hit_edge_keys.add(f"{cause_id}->has_symptom->{symptom_id}")
@@ -816,7 +870,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
         current_l2_id = str(consequence.get("l2_id") or "")
         cause_id = str(consequence.get("cause_id") or "")
         consequence_id = str(consequence.get("consequence_id") or "")
-        is_hit = current_l2_id == l2_id
+        is_hit = current_l2_id in hit_l2_ids
         if is_hit:
           hit_node_ids.add(consequence_id)
           hit_edge_keys.add(f"{cause_id}->results_in->{consequence_id}")
@@ -841,7 +895,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
     for measure in measure_rows:
         current_l2_id = str(measure.get("l2_id") or "")
         measure_id = str(measure.get("measure_id") or "")
-        is_hit = current_l2_id == l2_id
+        is_hit = current_l2_id in hit_l2_ids
         if is_hit:
           hit_node_ids.add(measure_id)
           hit_edge_keys.add(f"{current_l2_id}->handled_by->{measure_id}")
@@ -867,7 +921,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
         current_l2_id = str(risk.get("l2_id") or "")
         measure_id = str(risk.get("measure_id") or "")
         risk_id = str(risk.get("risk_id") or "")
-        is_hit = current_l2_id == l2_id
+        is_hit = current_l2_id in hit_l2_ids
         if is_hit:
           hit_node_ids.add(risk_id)
           hit_edge_keys.add(f"{measure_id}->has_risk->{risk_id}")
@@ -893,7 +947,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
         current_l2_id = str(resource.get("l2_id") or "")
         measure_id = str(resource.get("measure_id") or "")
         resource_id = str(resource.get("resource_id") or "")
-        is_hit = current_l2_id == l2_id
+        is_hit = current_l2_id in hit_l2_ids
         if is_hit:
           hit_node_ids.add(resource_id)
           hit_edge_keys.add(f"{measure_id}->needs_resource->{resource_id}")
@@ -922,6 +976,7 @@ def build_trace_subgraph(space: str, fault_name: str, device_name: str = "") -> 
             "space": space,
             "deviceHint": device_name,
             "faultHint": fault_name,
+            "faultHints": normalized_hit_faults,
             "focusPath": [root_id, l1_id, l2_id],
         },
     }
@@ -1554,6 +1609,7 @@ class Handler(BaseHTTPRequestHandler):
                     space=str(focus.get("space") or ""),
                     fault_name=str(focus.get("fault") or ""),
                     device_name=str(focus.get("device") or ""),
+                    hit_fault_names=focus.get("faults") if isinstance(focus.get("faults"), list) else None,
                 )
                 self._write_json(200, trace)
                 return

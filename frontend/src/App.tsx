@@ -84,7 +84,56 @@ const PRESET_QUESTIONS: Record<string, string[]> = {
   ]
 };
 
+const MULTI_FAULT_PRESET_QUESTIONS: Record<string, string[]> = {
+  高压断路器: [
+    '某110kV断路器同时出现控制回路短路故障和合分闸控制回路故障，请生成一份现场应急处置方案。',
+    '某变电站断路器同时出现辅助开关及转换接点异常故障、合分闸线圈故障和拒动故障，请生成一份故障处置与恢复方案。',
+    '某高压断路器同时出现导电回路直阻超标故障、触头及导电连接异常故障和绝缘不良故障，请生成一份应急预案。'
+  ],
+  变压器: [
+    '某主变同时出现轻瓦斯报警和油温过高异常，请生成一份先期控制与后续检修方案。',
+    '某220kV主变同时出现套管接头过热、冷却器运行异常和油位异常，请生成一份应急处置方案。',
+    '某变压器同时出现有载调压异常和渗油缺陷，请生成一份双阶段处置方案。'
+  ],
+  电力电缆: [
+    '某配电电缆同时出现中间接头受潮放电和终端头发热异常，请生成一份现场隔离与抢修方案。',
+    '某电力电缆同时出现绝缘劣化、局部放电和中间接头异味，请生成一份故障确认与恢复方案。',
+    '暴雨后某电缆线路同时出现电缆沟进水和接头击穿故障，请生成一份应急处置预案。'
+  ],
+  互感器: [
+    '某电流互感器同时出现渗油和末屏接地异常，请生成一份应急处置方案。',
+    '某电压互感器同时出现高压熔断器熔断和异常放电痕迹，请生成一份现场处置方案。',
+    '某互感器同时出现发热和绝缘异常告警，请生成一份风险控制与恢复方案。'
+  ],
+  光缆: [
+    '某段光缆同时出现业务中断和接头盒受潮告警，请生成一份排查恢复方案。',
+    '某光缆同时出现外力损伤和接续点衰耗异常，请生成一份应急抢修方案。',
+    '雨后某通信光缆同时出现链路中断与机房告警异常，请生成一份现场处置方案。'
+  ],
+  环网柜: [
+    '某环网柜同时出现柜内受潮和开闭器动作异常，请生成一份应急处置方案。',
+    '某环网柜同时出现绝缘告警、凝露异常和遥信异常，请生成一份现场处置方案。',
+    '某户外环网柜同时出现自动化信号异常和局部放电风险，请生成一份双阶段方案。'
+  ],
+  避雷器: [
+    '雷雨后某避雷器同时出现阀片击穿故障和沿面闪络故障，请生成一份应急处置方案。',
+    '某线路避雷器同时出现侧闪痕迹和未有效动作故障，请生成一份排查与恢复方案。',
+    '某配电避雷器同时出现脱落接地故障和表面放电异常，请生成一份现场处置方案。'
+  ],
+  杆塔: [
+    '持续暴雨后某杆塔同时出现基础冲刷和构件松动故障，请生成一份应急处置方案。',
+    '某输电杆塔同时出现倾斜迹象、拉线异常和基础开裂，请生成一份抢险方案。',
+    '大风天气后某杆塔同时出现塔材变形和螺栓松动，请生成一份现场处置预案。'
+  ],
+  输电线路: [
+    '某输电线路同时出现雷击跳闸和导线覆冰异常，请生成一份应急处置方案。',
+    '某线路同时出现外力破坏和接地故障，请生成一份现场控制与抢修方案。',
+    '某输电线路同时出现舞动风险、绝缘子闪络和局部放电迹象，请生成一份处置方案。'
+  ]
+};
+
 const ALL_PRESET_QUESTIONS = Object.values(PRESET_QUESTIONS).flat();
+const ALL_MULTI_FAULT_PRESET_QUESTIONS = Object.values(MULTI_FAULT_PRESET_QUESTIONS).flat();
 
 const stageText: Record<PipelineStage, string> = {
   idle: '等待输入',
@@ -361,12 +410,13 @@ function saveSnapshot(question: string, pipeline: PipelineRunResponse) {
   );
 }
 
-function pickRandomPresetQuestion() {
-  if (!ALL_PRESET_QUESTIONS.length) {
+function pickRandomPresetQuestion(enableMultiFault = false) {
+  const pool = enableMultiFault ? ALL_MULTI_FAULT_PRESET_QUESTIONS : ALL_PRESET_QUESTIONS;
+  if (!pool.length) {
     return '';
   }
-  const index = Math.floor(Math.random() * ALL_PRESET_QUESTIONS.length);
-  return ALL_PRESET_QUESTIONS[index];
+  const index = Math.floor(Math.random() * pool.length);
+  return pool[index];
 }
 
 export default function App() {
@@ -766,7 +816,7 @@ export default function App() {
   };
 
   const handleFillExample = () => {
-    setQuestion(pickRandomPresetQuestion());
+    setQuestion(pickRandomPresetQuestion(enableMultiFaultSearch));
   };
 
   const renderPlanPage = () => (

@@ -66,6 +66,12 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
     () => trace?.graph.nodes.filter((node) => node.isHit || node.isFocus).length || 0,
     [trace]
   );
+  const hitFaultNodes = useMemo(
+    () =>
+      trace?.graph.nodes.filter((node) => node.type === 'fault_l2' && (node.isHit || node.isFocus)).map((node) => node.label) ||
+      [],
+    [trace]
+  );
 
   useEffect(() => {
     if (!graphContainerRef.current) return;
@@ -224,8 +230,20 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
             <Tag color="blue">{trace.device || '未识别'}</Tag>
           </p>
           <p>
-            <Typography.Text strong>当前二级故障：</Typography.Text>
+            <Typography.Text strong>主故障二级节点：</Typography.Text>
             <Tag color="red">{trace.fault || '未识别'}</Tag>
+          </p>
+          <p>
+            <Typography.Text strong>命中二级故障：</Typography.Text>
+            {hitFaultNodes.length ? (
+              hitFaultNodes.map((fault) => (
+                <Tag color={fault === trace.fault ? 'red' : 'purple'} key={fault}>
+                  {fault}
+                </Tag>
+              ))
+            ) : (
+              <Tag>未识别</Tag>
+            )}
           </p>
           <p>
             <Typography.Text strong>图谱节点数：</Typography.Text>

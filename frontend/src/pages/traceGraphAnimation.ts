@@ -133,19 +133,26 @@ export function buildTraceAnimationPlans(trace: PlanTrace) {
   const focusEdgeIds = new Set<string>((focusHitPlan?.edgeLevels || []).flat());
   const focusRemainderPlan = filterPlan(focusFullPlan, focusNodeIds, focusEdgeIds);
 
+  const otherHitPlans: BranchPlan[] = [];
   const clockwisePlans: BranchPlan[] = [];
   if (focusIndex >= 0) {
     for (let offset = 1; offset < l1Nodes.length; offset += 1) {
       const nextIndex = (focusIndex + offset) % l1Nodes.length;
       const next = l1Nodes[nextIndex];
       if (!next) continue;
-      const plan = getBranchPlan(trace, next.id, false);
-      plan.edgeLevels[0] = [getRootEdgeId(trace, next.id)].filter(Boolean);
-      clockwisePlans.push(plan);
+      if (next.isHit) {
+        const hitPlan = getBranchPlan(trace, next.id, true);
+        hitPlan.edgeLevels[0] = [getRootEdgeId(trace, next.id)].filter(Boolean);
+        otherHitPlans.push(hitPlan);
+      } else {
+        const plan = getBranchPlan(trace, next.id, false);
+        plan.edgeLevels[0] = [getRootEdgeId(trace, next.id)].filter(Boolean);
+        clockwisePlans.push(plan);
+      }
     }
   }
 
-  return { rootId: root?.id || '', focusHitPlan, focusRemainderPlan, clockwisePlans };
+  return { rootId: root?.id || '', focusHitPlan, focusRemainderPlan, otherHitPlans, clockwisePlans };
 }
 
 export function createTraceAnimationController(params: {
@@ -156,7 +163,7 @@ export function createTraceAnimationController(params: {
   height: number;
 }) {
   const { trace, graph, darkMode, width, height } = params;
-  const { rootId, focusHitPlan, focusRemainderPlan, clockwisePlans } = buildTraceAnimationPlans(trace);
+  const { rootId, focusHitPlan, focusRemainderPlan, otherHitPlans, clockwisePlans } = buildTraceAnimationPlans(trace);
   const { positions } = computeTraceLayout(trace, width, height);
   const { incoming } = buildGraphIndexes(trace);
   const visibleNodeIds = new Set<string>(rootId ? [rootId] : []);
@@ -357,6 +364,9 @@ export function createTraceAnimationController(params: {
     await flush();
     await delay(120);
     await playBranch(focusHitPlan);
+    for (const plan of otherHitPlans) {
+      await playBranch(plan);
+    }
     await playBranch(focusRemainderPlan);
     if (clockwisePlans.length) {
       startClockwiseSequence(clockwisePlans, 0);
