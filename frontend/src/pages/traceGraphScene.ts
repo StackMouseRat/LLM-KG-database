@@ -242,9 +242,7 @@ export function buildTraceGraphData(trace: PlanTrace, darkMode: boolean, width: 
             isHit: Boolean(node.isHit),
             size: getNodeSize(node),
             borderColor: NODE_COLOR_MAP[node.type] || NODE_COLOR_MAP.unknown,
-            stroke: node.isFocus
-              ? '#0f172a'
-              : node.isHit
+            stroke: node.isHit || node.isFocus
                 ? NODE_COLOR_MAP[node.type] || NODE_COLOR_MAP.unknown
                 : darkMode
                   ? '#475569'

@@ -252,13 +252,20 @@ body.theme-dark {
   color: #172033;
 }
 
-body.theme-dark .action-toggle.ant-checkbox-wrapper {
-  color: #dbeafe;
+.action-toggle.ant-checkbox-wrapper span:last-child {
+  color: inherit;
 }
 
-body.theme-dark .action-toggle.ant-checkbox-wrapper .ant-checkbox + span,
-body.theme-dark .action-toggle.ant-checkbox-wrapper span:not(.ant-checkbox) {
-  color: #dbeafe;
+body.theme-dark .action-toggle.ant-checkbox-wrapper,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-checked,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled {
+  color: #dbeafe !important;
+}
+
+body.theme-dark .action-toggle.ant-checkbox-wrapper span:last-child,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-checked span:last-child,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
+  color: #dbeafe !important;
 }
 
 .status-box {

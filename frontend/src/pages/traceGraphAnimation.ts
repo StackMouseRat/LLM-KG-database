@@ -141,7 +141,7 @@ export function buildTraceAnimationPlans(trace: PlanTrace) {
       const next = l1Nodes[nextIndex];
       if (!next) continue;
       if (next.isHit) {
-        const hitPlan = getBranchPlan(trace, next.id, true);
+        const hitPlan = getBranchPlan(trace, next.id, false);
         hitPlan.edgeLevels[0] = [getRootEdgeId(trace, next.id)].filter(Boolean);
         otherHitPlans.push(hitPlan);
       } else {

@@ -579,13 +579,18 @@ def extract_trace_focus_fields(
 ) -> dict:
     parsed = parse_fault_scene(fault_scene)
     graph_material_parsed = parse_fault_scene(graph_material)
+    explicit_space = first_non_empty(
+        graph_material_parsed.get("设备表"),
+        parsed.get("设备表"),
+        graph_material_parsed.get("space"),
+        parsed.get("space"),
+    )
 
     device_name = first_non_empty(
         device_hint,
         parsed.get("故障对象"),
         parsed.get("设备"),
         parsed.get("设备名称"),
-        graph_material_parsed.get("设备表"),
     )
     fault_names = normalize_fault_names(
         parsed.get("主故障二级节点"),
@@ -618,7 +623,7 @@ def extract_trace_focus_fields(
             if fault_name:
                 break
 
-    graph_space = infer_graph_space_with_context(question, fault_scene, graph_material)
+    graph_space = {"space": explicit_space, "device": ""} if explicit_space else infer_graph_space_with_context(question, fault_scene, graph_material)
     return {
         "space": graph_space.get("space") if graph_space else "",
         "device": device_name or (graph_space.get("device") if graph_space else ""),
