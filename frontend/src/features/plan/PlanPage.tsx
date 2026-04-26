@@ -35,8 +35,14 @@ export function PlanPage({ plan, showModeTags, showCompactLayout }: PlanPageProp
     const { Text, Title } = Typography;
     return (
       <div className="preset-popover__content">
-        <div className="preset-popover__group">
-          <Title level={5} className="preset-popover__title">常规单故障问题</Title>
+        <div className="preset-popover__group preset-popover__group--single">
+          <div className="preset-popover__heading">
+            <span className="preset-popover__badge preset-popover__badge--single">单故障</span>
+            <div className="preset-popover__heading-copy">
+              <Title level={5} className="preset-popover__title">常规单故障问题</Title>
+              <Typography.Text className="preset-popover__desc">适合单一主故障场景，生成链路更直接。</Typography.Text>
+            </div>
+          </div>
           {DEVICE_QUESTIONS.map((device) => (
             <div key={`single-${device.device}`} className="preset-popover__section">
               <Text strong className="preset-popover__device preset-popover__device--single">{device.device}</Text>
@@ -52,8 +58,14 @@ export function PlanPage({ plan, showModeTags, showCompactLayout }: PlanPageProp
             </div>
           ))}
         </div>
-        <div className="preset-popover__group">
-          <Title level={5} className="preset-popover__title">常规多故障问题</Title>
+        <div className="preset-popover__group preset-popover__group--multi">
+          <div className="preset-popover__heading">
+            <span className="preset-popover__badge preset-popover__badge--multi">多故障</span>
+            <div className="preset-popover__heading-copy">
+              <Title level={5} className="preset-popover__title">常规多故障问题</Title>
+              <Typography.Text className="preset-popover__desc">适合并发或伴随故障场景，会触发多故障检索思路。</Typography.Text>
+            </div>
+          </div>
           {DEVICE_QUESTIONS.map((device) => (
             <div key={`multi-${device.device}`} className="preset-popover__section">
               <Text strong className="preset-popover__device preset-popover__device--multi">{device.device}</Text>
