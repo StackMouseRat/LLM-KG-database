@@ -216,8 +216,20 @@ def extract_plugin_output(response: dict[str, Any]) -> dict[str, Any]:
     return {}
 
 
+KB_NAME_TO_DEVICE = {
+    "llmkg_breaker": "高压断路器",
+    "llmkg_cable": "电力电缆",
+    "llmkg_transformer": "变压器",
+    "llmkg_surge_arrester": "避雷器",
+    "llmkg_mutual": "互感器",
+    "llmkg_optical_cable": "光缆",
+    "llmkg_ring_main_unit": "环网柜",
+}
+
+
 def extract_basic_fields(plugin_output: dict[str, Any], question: str) -> dict[str, str]:
     fault_scene = str(plugin_output.get("故障类型分析") or "")
+    kb_name = str(plugin_output.get("知识库名") or "")
     if fault_scene:
         try:
             parsed = json.loads(fault_scene)
@@ -232,6 +244,12 @@ def extract_basic_fields(plugin_output: dict[str, Any], question: str) -> dict[s
                     parsed["主故障二级节点"] = normalized_fault_nodes[0]
             elif isinstance(fault_nodes, str) and fault_nodes.strip():
                 parsed.setdefault("主故障二级节点", fault_nodes.strip())
+
+            device_name = str(parsed.get("故障对象") or "").strip()
+            if not device_name or device_name == "未明确" or "kV设备" in device_name or re.search(r"(该|本|某)设备", device_name):
+                resolved = KB_NAME_TO_DEVICE.get(kb_name)
+                if resolved:
+                    parsed["故障对象"] = resolved
             fault_scene = json.dumps(parsed, ensure_ascii=False)
 
     return {
@@ -239,6 +257,7 @@ def extract_basic_fields(plugin_output: dict[str, Any], question: str) -> dict[s
         "故障与场景提取结果": fault_scene,
         "图谱检索方案素材": str(plugin_output.get("图谱检索") or ""),
         "模板文本": str(plugin_output.get("模板文本") or ""),
+        "知识库名": kb_name,
     }
 
 
@@ -598,6 +617,7 @@ def main() -> None:
                     "userQuestion": basic_fields["用户问题"],
                     "faultScene": basic_fields["故障与场景提取结果"],
                     "graphMaterial": basic_fields["图谱检索方案素材"],
+                    "kbName": basic_fields["知识库名"],
                 },
             },
         )

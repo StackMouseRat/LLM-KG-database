@@ -453,6 +453,33 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   box-shadow: 0 16px 48px rgba(2, 6, 23, 0.34);
 }
 
+.app-shell--dark .case-search-card__title,
+.app-shell--dark .case-search-card__pill-value {
+  color: #e2e8f0;
+}
+
+.app-shell--dark .case-search-card__score {
+  color: #60a5fa;
+}
+
+.app-shell--dark .case-search-card__pill {
+  background: rgba(51, 65, 85, 0.55);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.app-shell--dark .case-search-card__pill--score {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.2);
+}
+
+.app-shell--dark .case-search-card__pill-label {
+  color: #94a3b8;
+}
+
+.app-shell--dark .case-search-card__excerpt {
+  background: rgba(15, 23, 42, 0.72);
+}
+
 .app-shell--dark .panel-card .ant-card-head,
 .app-shell--dark .panel-card .ant-card-body,
 .app-shell--dark .panel-card .ant-typography,

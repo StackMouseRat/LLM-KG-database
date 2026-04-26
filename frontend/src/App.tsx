@@ -811,6 +811,11 @@ export default function App() {
       setStage('error');
       setNodeStageLabel('生成失败');
       const err = error instanceof Error ? error.message : '未知错误';
+      if ((error as any).isUnauthorized) {
+        setLoggedOut();
+        message.error('登录已过期，请重新登录');
+        return;
+      }
       message.error(err);
     } finally {
       setLoading(false);
@@ -938,7 +943,7 @@ export default function App() {
               pipeline.caseSearch.status === 'done' && caseCards.length > 0 ? (
                 <>
                   <div className="chapter-meta">
-                    知识库：{pipeline.caseSearch.kbName || '-'} · 查询：{pipeline.caseSearch.queryQuestion || '-'}
+                    知识库：{pipeline.caseSearch.displayName || pipeline.caseSearch.kbName || '-'} · 查询：{pipeline.caseSearch.queryQuestion || '-'}
                   </div>
                   <div className="case-card-grid">
                     {caseCards.map((card, index) => (
@@ -989,7 +994,9 @@ export default function App() {
                   案例检索失败：{pipeline.caseSearch.error || '未知错误'}
                 </Typography.Text>
               ) : (
-                <Typography.Text type="secondary">等待开始案例检索。</Typography.Text>
+                <Typography.Text type="secondary">
+                  {stage !== 'idle' ? '等待识别设备…' : '等待开始案例检索。'}
+                </Typography.Text>
               )
             ) : (
               <Typography.Text type="secondary">未开启案例搜索。</Typography.Text>

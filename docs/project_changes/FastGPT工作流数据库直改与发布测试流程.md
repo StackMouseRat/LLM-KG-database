@@ -150,7 +150,7 @@ print(JSON.stringify(app));
 1. 读取当前 `apps` 草稿
 2. 取出：
    - `modules`
-   - `edges`
+   - `edges` （**必须显式取出，不可省略**）
    - `chatConfig`
    - `tmbId`
    - `teamId`
@@ -158,14 +158,59 @@ print(JSON.stringify(app));
 4. 设置：
    - `appId`
    - `nodes = app.modules`
-   - `edges = app.edges`
+   - `edges = app.edges` （**必须显式赋值，不能依赖隐式继承**）
    - `chatConfig = app.chatConfig`
    - `teamId = app.teamId`
    - `isPublish = true`
    - `versionName = 当前时间`
    - `time = 当前时间`
+5. **发布后立即校验** `edges` 是否存在且长度 > 0
 
 ### 6.3 关键坑
+
+**坑1：edges 丢失导致工作流链路断开**
+
+发布时如果 `edges` 字段遗漏为 `undefined` 或空数组，工作流中节点之间没有连接关系，FastGPT 只会执行到入口节点 `pluginInput` 就停止，下游的 `chatNode`、`pluginOutput` 等全部不执行。
+
+**症状**：API 返回 `responseData` 只有一条 `workflow:template.plugin_start / pluginInput`，`choices[0].message.content` 为空。
+
+**原因**：构建新 `app_versions` 记录时忘记显式设置 `edges` 字段，或从旧版本读取时未正确取出。
+
+**修复**：从旧版本复制 `edges` 数组覆盖新版本即可，不需要重建 `nodes`。
+
+```bash
+sudo docker exec fastgpt-mongo mongo -u myusername -p mypassword \
+  --authenticationDatabase admin fastgpt --quiet --eval '
+var oldV = db.app_versions.findOne({_id: ObjectId("<旧版本_id>")});
+var newV = db.app_versions.findOne({_id: ObjectId("<新版本_id>")});
+if (!newV.edges || newV.edges.length === 0) {
+  db.app_versions.updateOne(
+    {_id: ObjectId("<新版本_id>")},
+    {$set: {edges: oldV.edges}}
+  );
+}
+'
+```
+
+**预防**：发布脚本中构建 `newVersion` 对象时，务必显式包含 `edges` 字段并发布后校验：
+
+```javascript
+var newVersion = {
+  ...
+  edges: latestVersion.edges,  // 必须显式赋值，不能省略
+  ...
+};
+var result = db.app_versions.insertOne(newVersion);
+// 立即校验
+var verify = db.app_versions.findOne({_id: result.insertedId});
+if (!verify.edges || verify.edges.length === 0) {
+  print("ERROR: edges missing!");
+}
+```
+
+---
+
+**坑2：tmbId 类型错误**
 
 `app_versions.tmbId` 不能写成：
 
@@ -350,8 +395,9 @@ curl --location --request POST 'http://127.0.0.1:3000/api/v1/chat/completions' \
 ### 9.2 已踩过的坑
 
 1. 只改 `apps.modules`，API 不生效
-2. 手工发布时 `tmbId` 写错成 `ObjectId("...")` 字符串，会导致团队云端版本页面报错
-3. FastGPT HTTP 节点里带变量的 nGQL，如果用双引号包变量，运行时可能变成 `\"变量值\"`，进而导致 Nebula 语法错误
+2. **发布 `app_versions` 时 `edges` 字段遗漏为 `undefined`**，导致工作流节点断开，API 只执行入口节点就停止，下游 chatNode 不执行，前端收不到生成内容（2026-04-26，并行生成插件）
+3. 手工发布时 `tmbId` 写错成 `ObjectId("...")` 字符串，会导致团队云端版本页面报错
+4. FastGPT HTTP 节点里带变量的 nGQL，如果用双引号包变量，运行时可能变成 `\"变量值\"`，进而导致 Nebula 语法错误
 
 ### 9.3 已验证有效的方式
 
@@ -363,10 +409,11 @@ curl --location --request POST 'http://127.0.0.1:3000/api/v1/chat/completions' \
 
 1. 备份 `apps` 和 `app_versions`
 2. 修改 `apps.modules`
-3. 新增 `app_versions` 实现发布
-4. 用 API 跑 `detail=true` 测试
-5. 如果失败，修正后再次发布
-6. 如果需要回滚，从旧版本恢复并重新发布
+3. 新增 `app_versions` 实现发布（**显式保证 `edges`、`tmbId`、`teamId` 字段完整**）
+4. 发布后立即校验新版本的 `edges` 非空、`tmbId` 格式正确
+5. 用 API 跑 `detail=true` 测试
+6. 如果失败，修正后再次发布
+7. 如果需要回滚，从旧版本恢复并重新发布
 
 ## 11. 风险提示
 

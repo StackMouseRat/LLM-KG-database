@@ -79,7 +79,14 @@ export async function runPipeline(payload: PipelineRunRequest): Promise<Pipeline
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `请求失败：${response.status}`);
+    let message = text || `请求失败：${response.status}`;
+    try {
+      const parsed = JSON.parse(text);
+      message = parsed?.message || message;
+    } catch {}
+    const error = new Error(message);
+    if (response.status === 401) (error as any).isUnauthorized = true;
+    throw error;
   }
 
   const data = await response.json();
@@ -119,7 +126,14 @@ export async function runPipelineStream(
 
   if (!response.ok || !response.body) {
     const text = await response.text();
-    throw new Error(text || `请求失败：${response.status}`);
+    let message = text || `请求失败：${response.status}`;
+    try {
+      const parsed = JSON.parse(text);
+      message = parsed?.message || message;
+    } catch {}
+    const error = new Error(message);
+    if (response.status === 401) (error as any).isUnauthorized = true;
+    throw error;
   }
 
   const reader = response.body.getReader();

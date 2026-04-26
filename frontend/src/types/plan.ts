@@ -49,6 +49,7 @@ export interface PipelineCaseSearchResult {
   enabled: boolean;
   status: 'idle' | 'running' | 'done' | 'skipped' | 'error';
   kbName?: string;
+  displayName?: string;
   datasetId?: string;
   queryQuestion?: string;
   outputText?: string;
