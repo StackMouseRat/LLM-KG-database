@@ -59,7 +59,7 @@ PROMPT_DEFAULTS = {
         "id": "tpl_prompt_evaluate",
         "prompt_key": "evaluate_prompt",
         "title": "评估提示词",
-        "prompt_text": "请对预案正文进行质量评估：\n1. 检查结构是否完整\n2. 检查章节编号是否连续\n3. 检查是否存在重复、缺项、逻辑跳跃\n4. 检查应急动作是否可执行\n5. 输出简短的质量结论与修改建议\n\n若提供了\"故障与场景背景\"和\"图谱检索背景\"，评估时应参考这些背景信息：\n- 对照故障场景背景，检查正文中设备名称、故障类型、响应等级是否一致\n- 对照图谱检索背景，检查正文是否遗漏了关键的故障原因、应对措施或安全风险\n- 如发现遗漏应在修改建议中指出具体缺项",
+        "prompt_text": "请对预案正文进行质量评估：\n1. 检查结构是否完整\n2. 检查章节编号是否连续\n3. 检查是否存在重复、缺项、逻辑跳跃\n4. 检查应急动作是否可执行\n5. 输出简短的质量结论与修改建议\n\n关于来源标记[KG]/[GEN]/[FIX]的检查：\n- 不要建议去除这些标记，它们有专门的后处理环节\n- 检查[KG]标记的内容是否与图谱检索背景中的故障原因、现象、措施、后果、风险、资源对应\n- 检查[GEN]标记的内容是否是模型根据场景推导生成的\n- 检查[FIX]标记的内容是否确实是模板中的固定文本\n- 如发现标记与内容来源不符，在修改建议中指出\n\n若提供了\"故障与场景背景\"和\"图谱检索背景\"，评估时应参考这些背景信息：\n- 对照故障场景背景，检查正文中设备名称、故障类型、响应等级是否一致\n- 对照图谱检索背景，检查正文是否遗漏了关键的故障原因、应对措施或安全风险\n- 如发现遗漏应在修改建议中指出具体缺项",
         "order_no": 20,
     },
 }
@@ -1132,18 +1132,21 @@ def extract_plugin_text(response: dict) -> tuple[str, str]:
 
 
 def run_format_review_sync(prompt: str, content: str, fault_scene: str = "", graph_material: str = "") -> dict:
-    variables: dict[str, str] = {
-        "提示词": prompt,
-        "当前需求": content,
-    }
+    background_parts: list[str] = []
     if fault_scene:
-        variables["故障与场景背景"] = fault_scene
+        background_parts.append(f"【故障与场景背景】\n{fault_scene}")
     if graph_material:
-        variables["图谱检索背景"] = graph_material
+        background_parts.append(f"【图谱检索背景】\n{graph_material}")
+    if background_parts:
+        prompt = prompt + "\n\n" + "\n\n".join(background_parts)
+
     payload = {
         "stream": False,
         "detail": True,
-        "variables": variables,
+        "variables": {
+            "提示词": prompt,
+            "当前需求": content,
+        },
     }
     req = Request(
         FORMAT_REVIEW_PLUGIN_URL,
@@ -1171,18 +1174,21 @@ def run_format_review_sync(prompt: str, content: str, fault_scene: str = "", gra
 
 
 def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: str, mode: str, fault_scene: str = "", graph_material: str = "") -> None:
-    variables: dict[str, str] = {
-        "提示词": prompt,
-        "当前需求": content,
-    }
+    background_parts: list[str] = []
     if fault_scene:
-        variables["故障与场景背景"] = fault_scene
+        background_parts.append(f"【故障与场景背景】\n{fault_scene}")
     if graph_material:
-        variables["图谱检索背景"] = graph_material
+        background_parts.append(f"【图谱检索背景】\n{graph_material}")
+    if background_parts:
+        prompt = prompt + "\n\n" + "\n\n".join(background_parts)
+
     payload = {
         "stream": True,
         "detail": True,
-        "variables": variables,
+        "variables": {
+            "提示词": prompt,
+            "当前需求": content,
+        },
     }
     req = Request(
         FORMAT_REVIEW_PLUGIN_URL,

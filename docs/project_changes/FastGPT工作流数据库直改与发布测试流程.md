@@ -106,6 +106,7 @@ db.app_versions.find({appId:appId}).sort({time:-1}).forEach(function(v){printjso
 ### 5.1 原则
 
 - 只修改目标节点，不改无关模块
+- **修改提示词前必须先检查所有 `{{$...$}}` 变量引用，确保修改后的文本中引用完整保留**
 - 优先改 `modules[*].inputs[*].value`
 - 修改后同步更新 `apps.updateTime`
 - 修改前必须备份
@@ -125,7 +126,32 @@ print(JSON.stringify(app));
 
 ### 5.3 修改示例
 
-典型场景是改 HTTP 节点的请求体：
+典型场景是改 contentExtract 节点的提示词（`description` 字段）：
+
+**步骤：**
+
+1. 读取 `apps` 中目标应用
+2. 遍历 `modules`，按 `name` 找到目标节点
+3. **先检查该节点所有 inputs 中包含哪些 `{{$...$}}` 变量引用**（常见于 `description`、`content` 字段）：
+   ```bash
+   sudo docker exec fastgpt-mongo mongo ... --eval '
+   v.nodes.forEach(function(n) {
+     if (n.name && n.name.indexOf("目标节点名") !== -1) {
+       n.inputs.forEach(function(inp) {
+         if (typeof inp.value === "string" && inp.value.indexOf("{{$") !== -1) {
+           print(inp.key + ": " + inp.value);
+         }
+       });
+     }
+   });
+   '
+   ```
+4. 修改提示词文本时**确保所有 `{{$nodeId.key$}}` 引用完整保留**，不能删除、截断或误改
+5. 执行修改前全文 diff 确认只有预期内容变化
+6. `db.apps.updateOne(...)` 更新草稿
+7. 发布新版 `app_versions` 并校验 edges 非空
+
+**改 HTTP 节点请求体同理：**
 
 - `system_httpJsonBody`
 - `system_httpReqUrl`
@@ -395,9 +421,10 @@ curl --location --request POST 'http://127.0.0.1:3000/api/v1/chat/completions' \
 ### 9.2 已踩过的坑
 
 1. 只改 `apps.modules`，API 不生效
-2. **发布 `app_versions` 时 `edges` 字段遗漏为 `undefined`**，导致工作流节点断开，API 只执行入口节点就停止，下游 chatNode 不执行，前端收不到生成内容（2026-04-26，并行生成插件）
-3. 手工发布时 `tmbId` 写错成 `ObjectId("...")` 字符串，会导致团队云端版本页面报错
-4. FastGPT HTTP 节点里带变量的 nGQL，如果用双引号包变量，运行时可能变成 `\"变量值\"`，进而导致 Nebula 语法错误
+2. **发布 `app_versions` 时 `edges` 字段遗漏为 `undefined`**，导致工作流节点断开，API 只执行入口节点就停止（2026-04-26，并行生成插件 & 基本信息获取插件各一次）
+3. **修改 contentExtract 节点 `description` 时未检查 `{{$...$}}` 变量引用**，改完后引用断裂导致上游数据无法传入（2026-04-26，设备识别节点）
+4. 手工发布时 `tmbId` 写错成 `ObjectId("...")` 字符串，会导致团队云端版本页面报错
+5. FastGPT HTTP 节点里带变量的 nGQL，如果用双引号包变量，运行时可能变成 `\"变量值\"`，进而导致 Nebula 语法错误
 
 ### 9.3 已验证有效的方式
 
