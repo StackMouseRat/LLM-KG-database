@@ -129,7 +129,29 @@ GRAPH_SPACE_HINTS = [
     {
         "space": "llmkg_transmission_line",
         "device": "输电线路",
-        "keywords": ["输电线路", "导线", "雷击跳闸", "覆冰", "外力破坏"],
+        "keywords": [
+            "输电线路",
+            "导线",
+            "雷击跳闸",
+            "雷击闪络",
+            "感应雷",
+            "反击雷",
+            "绕击雷",
+            "避雷线",
+            "覆冰",
+            "覆冰过荷载",
+            "脱冰跳跃",
+            "污闪",
+            "积污污闪",
+            "风害",
+            "风偏闪络",
+            "舞动",
+            "鸟害",
+            "外力破坏",
+            "吊车碰线",
+            "山火",
+            "烟火短路",
+        ],
     },
 ]
 TRACE_EDGE_LABELS = {
@@ -636,6 +658,17 @@ def query_rows(space: str, ngql: str) -> list[dict[str, str]]:
     return parse_table(gql(space, ngql)["stdout"])
 
 
+def get_trace_candidate_spaces(preferred_space: str = "") -> list[str]:
+    spaces: list[str] = []
+    if preferred_space:
+        spaces.append(preferred_space)
+    for item in GRAPH_SPACE_HINTS:
+        space = str(item.get("space") or "").strip()
+        if space and space not in spaces:
+            spaces.append(space)
+    return spaces
+
+
 def add_trace_node(
     nodes: dict[str, dict],
     node_id: str,
@@ -698,8 +731,6 @@ def build_trace_subgraph(
     device_name: str = "",
     hit_fault_names: list[str] | None = None,
 ) -> dict:
-    if not space:
-        raise RuntimeError("trace graph space is empty")
     if not fault_name:
         raise RuntimeError("trace fault name is empty")
 
@@ -709,33 +740,53 @@ def build_trace_subgraph(
         "id(l1) AS l1_id, l1.fault_l1.name AS l1_name, l1.fault_l1.node_desc AS l1_desc, "
         "id(l2) AS l2_id, l2.fault_l2.name AS l2_name, l2.fault_l2.node_desc AS l2_desc;"
     )
-    upstream_rows = query_rows(space, upstream_ngql)
-    if not upstream_rows:
-        raise RuntimeError(f"trace root path not found for fault: {fault_name}")
-
     normalized_fault = fault_name.strip()
     normalized_hit_faults = normalize_fault_names(hit_fault_names or [], normalized_fault)
     normalized_hit_fault_set = set(normalized_hit_faults)
-    filtered_rows = [
-        item for item in upstream_rows
-        if str(item.get("l2_name") or "").strip() == normalized_fault
-    ]
-    if device_name:
-        filtered_rows = [
-            item for item in filtered_rows
-            if device_name in str(item.get("root_name") or "")
-        ] or filtered_rows
-    if not filtered_rows:
-        filtered_rows = [
-            item for item in upstream_rows
-            if normalized_fault in str(item.get("l2_name") or "")
+
+    effective_space = ""
+    upstream_rows: list[dict[str, str]] = []
+    filtered_rows: list[dict[str, str]] = []
+    last_error = ""
+
+    for candidate_space in get_trace_candidate_spaces(space):
+        try:
+            candidate_rows = query_rows(candidate_space, upstream_ngql)
+        except Exception as exc:
+            last_error = str(exc)
+            continue
+        if not candidate_rows:
+            continue
+
+        candidate_filtered_rows = [
+            item for item in candidate_rows
+            if str(item.get("l2_name") or "").strip() == normalized_fault
         ]
         if device_name:
-            filtered_rows = [
-                item for item in filtered_rows
+            candidate_filtered_rows = [
+                item for item in candidate_filtered_rows
                 if device_name in str(item.get("root_name") or "")
-            ] or filtered_rows
+            ] or candidate_filtered_rows
+        if not candidate_filtered_rows:
+            candidate_filtered_rows = [
+                item for item in candidate_rows
+                if normalized_fault in str(item.get("l2_name") or "")
+            ]
+            if device_name:
+                candidate_filtered_rows = [
+                    item for item in candidate_filtered_rows
+                    if device_name in str(item.get("root_name") or "")
+                ] or candidate_filtered_rows
+
+        if candidate_filtered_rows:
+            effective_space = candidate_space
+            upstream_rows = candidate_rows
+            filtered_rows = candidate_filtered_rows
+            break
+
     if not filtered_rows:
+        if last_error:
+            raise RuntimeError(f"trace root path not found for fault: {fault_name}; last error: {last_error}")
         raise RuntimeError(f"trace root path not found for fault: {fault_name}")
 
     row = filtered_rows[0]
@@ -813,7 +864,7 @@ def build_trace_subgraph(
         )
 
     cause_rows = query_rows(
-        space,
+        effective_space,
         (
             "MATCH (l2:fault_l2)-[:caused_by]->(c:fault_cause) "
             "RETURN id(l2) AS l2_id, id(c) AS cause_id, "
@@ -838,7 +889,7 @@ def build_trace_subgraph(
         add_trace_edge(edges, current_l2_id, cause_id, "caused_by", is_hit=is_hit)
 
     symptom_rows = query_rows(
-        space,
+        effective_space,
         (
             "MATCH (l2:fault_l2)-[:caused_by]->(c:fault_cause)-[:has_symptom]->(s:fault_symptom) "
             "RETURN id(l2) AS l2_id, id(c) AS cause_id, id(s) AS symptom_id, "
@@ -864,7 +915,7 @@ def build_trace_subgraph(
         add_trace_edge(edges, cause_id, symptom_id, "has_symptom", is_hit=is_hit)
 
     consequence_rows = query_rows(
-        space,
+        effective_space,
         (
             "MATCH (l2:fault_l2)-[:caused_by]->(c:fault_cause)-[:results_in]->(co:fault_consequence) "
             "RETURN id(l2) AS l2_id, id(c) AS cause_id, id(co) AS consequence_id, "
@@ -890,7 +941,7 @@ def build_trace_subgraph(
         add_trace_edge(edges, cause_id, consequence_id, "results_in", is_hit=is_hit)
 
     measure_rows = query_rows(
-        space,
+        effective_space,
         (
             "MATCH (l2:fault_l2)-[:handled_by]->(m:response_measure) "
             "RETURN id(l2) AS l2_id, id(m) AS measure_id, "
@@ -915,7 +966,7 @@ def build_trace_subgraph(
         add_trace_edge(edges, current_l2_id, measure_id, "handled_by", is_hit=is_hit)
 
     risk_rows = query_rows(
-        space,
+        effective_space,
         (
             "MATCH (l2:fault_l2)-[:handled_by]->(m:response_measure)-[:has_risk]->(r:safety_risk) "
             "RETURN id(l2) AS l2_id, id(m) AS measure_id, id(r) AS risk_id, "
@@ -941,7 +992,7 @@ def build_trace_subgraph(
         add_trace_edge(edges, measure_id, risk_id, "has_risk", is_hit=is_hit)
 
     resource_rows = query_rows(
-        space,
+        effective_space,
         (
             "MATCH (l2:fault_l2)-[:handled_by]->(m:response_measure)-[:needs_resource]->(er:emergency_resource) "
             "RETURN id(l2) AS l2_id, id(m) AS measure_id, id(er) AS resource_id, "
@@ -978,7 +1029,7 @@ def build_trace_subgraph(
             "edges": list(edges.values()),
         },
         "rawDetail": {
-            "space": space,
+            "space": effective_space,
             "deviceHint": device_name,
             "faultHint": fault_name,
             "faultHints": normalized_hit_faults,

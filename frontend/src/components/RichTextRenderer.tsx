@@ -41,6 +41,7 @@ function normalizeRenderedOutput(text: string) {
   const raw = String(text || '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
+    .replace(/([^\n])(\[(?:KG|GEN|FIX)\])/g, '$1\n$2')
     .replace(/([^\n])(#{1,4}\s+)/g, '$1\n$2')
     .replace(/([^\n])(第[一二三四五六七八九十0-9]+章)/g, '$1\n$2')
     .replace(/([^\n])(案例[一二三四五六七八九十百千0-9]+[：:\s])/g, '$1\n$2')
@@ -58,6 +59,15 @@ function normalizeRenderedOutput(text: string) {
 
   const startIndex = match[1] ? match.index + match[1].length : match.index;
   return promoteStructuredHeadings(raw.slice(startIndex).trimStart());
+}
+
+function splitTagLeadingParagraphs(text: string) {
+  return String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\s*(\[(?:KG|GEN|FIX)\])\s*/g, '\n$1 ')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
 }
 
 function cleanupInlineMetaLines(text: string) {
@@ -152,7 +162,8 @@ export function RichTextRenderer({
   showModeTags?: boolean;
 }) {
   const rawText = normalize ? normalizeRenderedOutput(text) : String(text || '');
-  const normalizedText = stripMeta ? cleanupInlineMetaLines(rawText) : rawText;
+  const lineSplitText = splitTagLeadingParagraphs(rawText);
+  const normalizedText = stripMeta ? cleanupInlineMetaLines(lineSplitText) : lineSplitText;
 
   if (!normalizedText.trim()) {
     return <Typography.Text type="secondary">{emptyText}</Typography.Text>;

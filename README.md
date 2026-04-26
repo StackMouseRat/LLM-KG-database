@@ -17,6 +17,7 @@
 - 已完成断路器、输电线两类设备的 FastGPT 知识库导入包整理，包含结构化 CSV、上传 TXT、检索配置和槽位 schema。
 - 已完成 Nebula 图数据库的导入、索引与校验脚本沉淀，断路器图谱导入链路已验证可复现。
 - 已打通 FastGPT 通过 HTTP 节点调用 Nebula 查询的原型链路。
+- 已形成论文演示版前端，支持登录、预案生成、图谱溯源、模板查看以及格式优化与质量评估。
 
 ### 正在推进
 
@@ -31,128 +32,57 @@
 - 第三阶段：FastGPT 工作流与图查询链路，已完成可运行版本。
 - 第四阶段：原型联调、案例验证、评测与论文实验，进行中。
 
-## FastGPT 工作流现状
+## 当前工作流流程
 
-`fastGPT_json/` 目录下当前共有 4 个工作流 JSON。下面按文件逐一列出节点排布和连线关系。
+当前以 `frontend/` 中的前端实现作为工作流事实来源，不再以仓库中的历史 FastGPT JSON 导出文件作为主说明依据。实际入口、阶段流转和页面衔接如下。
 
-### `fastGPT_json/测试.json`
+### 1. 前端入口与路由
 
-节点从左到右排布如下：
+- 应用入口在 `frontend/src/App.tsx`。
+- 登录态通过 `/api/auth/me`、`/api/auth/login`、`/api/auth/logout` 维护。
+- 登录成功后默认进入 `/plan`，其余工作流页面为 `/trace`、`/quality`、`/template`。
 
-1. `common:core.module.template.system_config`，类型 `userGuide`
-2. `common:core.module.template.work_start`，类型 `workflowStart`
-3. `问题优化`，类型 `cfr`
-4. `文本内容提取`，类型 `contentExtract`
-5. `知识库搜索`，类型 `datasetSearchNode`
-6. `提取数据清洗`，类型 `contentExtract`
-7. `最终生成`，类型 `chatNode`
+### 2. 预案生成主流程
 
-主连线顺序如下：
+`/plan` 页面是当前主工作流入口。用户输入故障问题后，前端调用 `runPipelineStream`，请求 `/api/pipeline/run`。开发环境下由 `frontend/server/proxy.mjs` 做简化代理；当前更完整的实际部署链路由 `docker/frontend-proxy/server.py` 承担鉴权、SSE 转发、案例检索协同、多故障分支控制以及后续 `/trace`、`/quality`、`/template` 等接口聚合，并统一调度 `scripts/run_parallel_generation_pipeline.py`。
 
-1. `workflowStart -> 问题优化`
-2. `问题优化 -> 文本内容提取`
-3. `文本内容提取 -> 知识库搜索`
-4. `知识库搜索 -> 提取数据清洗`
-5. `提取数据清洗 -> 最终生成`
+当前前端识别并展示的流水线阶段为：
 
-### `fastGPT_json/断路器测试工作流.json`
+1. `basic_info`：获取基本信息，提取用户问题、故障场景、图谱检索素材。
+2. `template_split`：切分模板，返回模板 ID、模板名、版本和章节数，并初始化章节列表。
+3. `parallel_generating`：并行生成章节，逐章接收 `chapter_started`、`chapter_chunk`、`chapter_done` 事件，前端实时拼接每章输出。
+4. `case_search`：可选案例检索阶段，返回知识库、检索问题、命中文档卡片和摘要。
+5. `done`：流水线完成，前端合并章节结果并进入可复用状态。
 
-顶层节点从左到右排布如下：
+前端提交参数当前包括：
 
-1. `common:core.module.template.system_config`，类型 `userGuide`
-2. `common:core.module.template.work_start`，类型 `workflowStart`
-3. `缓存初始化数据`，类型 `ifElseNode`
-4. `基础数据获取`，类型 `httpRequest468`
-5. `基础数据清洗`，类型 `code`
-6. `基础数据更新`，类型 `variableUpdate`
-7. `故障类型分析`，类型 `contentExtract`
-8. `下游节点获取`，类型 `httpRequest468`
-9. `下游节点数据清洗`，类型 `code`
-10. `最终生成`，类型 `chatNode`
-11. `指定回复`，类型 `answerNode`
+- `question`：用户输入的问题。
+- `enableCaseSearch`：是否开启案例检索。
+- `enableMultiFaultSearch`：是否开启多故障检索。
 
-主连线顺序如下：
+### 3. 结果沉淀与后续页面
 
-1. `workflowStart -> 缓存初始化数据`
-2. `缓存初始化数据 -> 基础数据获取`
-3. `基础数据获取 -> 基础数据清洗`
-4. `基础数据清洗 -> 基础数据更新`
-5. `基础数据更新 -> 故障类型分析`
-6. `缓存初始化数据 -> 故障类型分析`
-7. `故障类型分析 -> 下游节点获取`
-8. `下游节点获取 -> 下游节点数据清洗`
-9. `下游节点数据清洗 -> 最终生成`
-10. `最终生成 -> 指定回复`
+`/plan` 生成完成后，前端会把 `question + pipeline` 快照写入浏览器本地存储 `llmkg_saved_plan_snapshot_v1`。后续页面都基于这个快照继续工作，而不是要求用户重复输入。
 
-### `fastGPT_json/测试 Copy.json`
+- `/trace`：调用 `/api/trace/subgraph`，利用上一步得到的 `question`、`faultScene`、`graphMaterial` 查询 Nebula 子图，展示设备根节点、主故障二级节点、命中节点与关系边。
+- `/quality`：读取已生成章节，调用 `/api/quality/review` 对每章执行格式优化、原文评估和优化后评估，并支持流式返回推理与输出。
+- `/template`：调用 `/api/template/sections`、`/api/template/section/save`、`/api/template/section/reset` 查看和维护模板配置。
 
-顶层节点从左到右排布如下：
+### 4. 代理与后端衔接
 
-1. `common:core.module.template.system_config`，类型 `userGuide`
-2. `common:core.module.template.work_start`，类型 `workflowStart`
-3. `缓存初始化数据`，类型 `ifElseNode`
-4. `基础数据获取`，类型 `httpRequest468`
-5. `基础数据清洗`，类型 `code`
-6. `基础数据更新`，类型 `variableUpdate`
-7. `计划器`，类型 `contentExtract`
-8. `批量执行`，类型 `loop`
+前端本地代理位于 `frontend/server/proxy.mjs`，主要用于本地开发时转发主流水线请求；当前部署环境中的完整代理位于 `docker/frontend-proxy/server.py`。两者当前确认的职责包括：
 
-`批量执行` 循环子图内部节点从左到右排布如下：
+1. 接收 `/api/pipeline/run` 和 `/api/plan/generate` 请求。
+2. 以子进程方式执行 `scripts/run_parallel_generation_pipeline.py`。
+3. 在非流式模式下直接返回 `pipeline_result.json`。
+4. 在流式模式下将脚本输出转换为 SSE 事件，推送给前端页面。
+5. 在部署代理中额外提供 `/api/auth/*`、`/api/trace/subgraph`、`/api/quality/review`、`/api/template/*` 等接口。
+6. 根据 `enableCaseSearch` 与 `enableMultiFaultSearch` 参数协同触发案例检索与多故障查询分支。
 
-1. `开始`，类型 `loopStart`
-2. `循环提取`，类型 `contentExtract`
-3. `HTTP 请求`，类型 `httpRequest468`
-4. `查询后处理`，类型 `chatNode`
-5. `变量更新`，类型 `variableUpdate`
-6. `结束`，类型 `loopEnd`
+### 5. 与历史 FastGPT JSON 的关系
 
-顶层与循环子图的主连线顺序如下：
-
-1. `workflowStart -> 缓存初始化数据`
-2. `缓存初始化数据 -> 基础数据获取`
-3. `基础数据获取 -> 基础数据清洗`
-4. `基础数据清洗 -> 基础数据更新`
-5. `基础数据更新 -> 计划器`
-6. `缓存初始化数据 -> 计划器`
-7. `计划器 -> 批量执行`
-8. `开始 -> 循环提取`
-9. `循环提取 -> HTTP 请求`
-10. `HTTP 请求 -> 查询后处理`
-11. `查询后处理 -> 变量更新`
-12. `变量更新 -> 结束`
-
-### `fastGPT_json/多设备测试工作流.json`
-
-顶层节点从左到右排布如下：
-
-1. `common:core.module.template.system_config`，类型 `userGuide`
-2. `common:core.module.template.work_start`，类型 `workflowStart`
-3. `设备表初始化`，类型 `ifElseNode`
-4. `获取全体设备表`，类型 `httpRequest468`
-5. `清洗设备表数据`，类型 `code`
-6. `设备识别`，类型 `contentExtract`
-7. `基础数据获取`，类型 `httpRequest468`
-8. `基础数据清洗`，类型 `code`
-9. `故障类型分析`，类型 `contentExtract`
-10. `下游节点获取`，类型 `httpRequest468`
-11. `下游节点数据清洗`，类型 `code`
-12. `最终生成`，类型 `chatNode`
-13. `指定回复`，类型 `answerNode`
-
-主连线顺序如下：
-
-1. `workflowStart -> 设备表初始化`
-2. `设备表初始化 -> 获取全体设备表`
-3. `获取全体设备表 -> 清洗设备表数据`
-4. `清洗设备表数据 -> 设备识别`
-5. `设备表初始化 -> 设备识别`
-6. `设备识别 -> 基础数据获取`
-7. `基础数据获取 -> 基础数据清洗`
-8. `基础数据清洗 -> 故障类型分析`
-9. `故障类型分析 -> 下游节点获取`
-10. `下游节点获取 -> 下游节点数据清洗`
-11. `下游节点数据清洗 -> 最终生成`
-12. `最终生成 -> 指定回复`
+- `fastGPT_json/` 仍保留多份历史工作流导出文件，用于实验记录和节点设计参考。
+- 当前 README 中描述的“工作流流程”以前端实际运行链路为准，即 `App.tsx -> planApi.ts -> /api/pipeline/run -> run_parallel_generation_pipeline.py -> trace/quality/template`。
 
 ## 核心技术链路
 
@@ -161,6 +91,31 @@
 3. 将图谱数据导入 Nebula，使用 `nebula-docker-compose/` 中的 DDL、DML、索引和校验脚本完成建库。
 4. 通过 `scripts/nebula_http_gateway.py` 提供 HTTP 查询入口。
 5. 在 FastGPT 中使用内容提取、HTTP、代码、循环、变量更新、回答生成等节点拼接完整问答流程。
+
+## 前端原型现状
+
+前端代码位于 `frontend/`，是一个基于 `React 19 + Vite + Ant Design + G6` 的论文演示版原型。当前实现已经不止“结果展示页”，而是覆盖了从登录到生成、再到溯源和质检的完整前端操作链路。
+
+### 当前已实现页面
+
+- `/login`：账号登录页，前端会调用 `/api/auth/me`、`/api/auth/login`、`/api/auth/logout` 做基础身份校验。
+- `/plan`：预案生成主页面，支持输入故障场景、随机填充示例问题、开启案例搜索、开启多故障检索、流式展示章节生成结果、复制全部结果、下载 Markdown，以及在本地缓存最近一次生成结果。
+- `/trace`：图谱溯源页，会基于最近一次生成结果中的设备与故障信息请求 `/api/trace/subgraph`，并用 G6 展示命中故障节点、上下游关系和子图统计信息。
+- `/quality`：格式优化与质量评估页，支持按章节流式执行“格式优化 / 原文评估 / 优化后评估”，也支持批量并发处理；顶部提示词可加载、缓存、编辑和保存。
+- `/template`：模板查看页，展示章节模板配置；管理员可修改 `source_type`、`fixed_text`、`gen_instruction`，也可恢复默认值。
+
+### 当前前端串接的后端能力
+
+- `frontend/server/proxy.mjs` 已接通 `/api/pipeline/run`，适合作为本地开发时的最小代理。
+- `docker/frontend-proxy/server.py` 已接通登录鉴权、主流水线、案例检索、图谱溯源、质量评估和模板管理，是当前更完整的部署侧接口实现。
+- 前端已为案例检索预留完整展示区域，可显示知识库名称、查询问题、命中文档卡片、相关性和摘要内容。
+- 前端已支持从最近一次预案结果继续进入图谱溯源和质量评估，不需要用户重复录入问题。
+
+### 当前边界与说明
+
+- 目前仓库内已经包含较完整的部署代理实现 `docker/frontend-proxy/server.py`，但其运行仍依赖当前服务器环境中的 FastGPT、Nebula HTTP Gateway、密钥文件和模板图空间等外部运行条件。
+- 前端已有管理员/普通用户权限分层，但更完整的历史记录管理、在线协作编辑、移动端适配和复杂执行路径调试视图仍未固化为成熟产品能力。
+- `docs/frontend/README.md` 中“当前前端只交付两大功能”的表述已经落后于代码，现阶段应以 `frontend/src/` 的实际实现和本 README 为准。
 
 ## 主要仓库结构
 

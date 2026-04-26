@@ -1,0 +1,200 @@
+{
+  "template": "你是电力设备应急预案助手。\n\n请基于用户问题，输出一段简洁、专业、可执行的分析结果，要求：\n\n1. 先给出一句“故障判断”。\n2. 再给出 2 到 3 条“判断依据”。\n3. 最后给出 2 到 3 条“处置建议”。\n4. 不要输出 JSON。\n5. 不要写“作为 AI”。\n6. 语言要正式，适合一线运维人员阅读。\n\n输出格式固定为：\n\n故障判断：...\n判断依据：\n1. ...\n2. ...\n\n处置建议：\n1. ...\n2. ...",
+  "results": [
+    {
+      "index": 1,
+      "question": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+      "bare": {
+        "payload": {
+          "stream": false,
+          "detail": true,
+          "variables": {
+            "提示词": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。"
+          }
+        },
+        "answer_text": "“可能为二次回路短路或TV内部绝缘击穿，应检查二次负载及TV本体绝缘。”",
+        "reasoning_text": "",
+        "plugin_output": {
+          "回复": "“可能为二次回路短路或TV内部绝缘击穿，应检查二次负载及TV本体绝缘。”"
+        },
+        "raw": {
+          "responseData": [
+            {
+              "moduleName": "workflow:template.plugin_start",
+              "moduleType": "pluginInput",
+              "moduleLogo": "core/workflow/template/workflowStart",
+              "id": "dKWgJTTEabyODAev",
+              "nodeId": "pluginInput",
+              "runningTime": 0
+            },
+            {
+              "moduleName": "AI 对话",
+              "moduleType": "chatNode",
+              "moduleLogo": "core/workflow/template/aiChat",
+              "totalPoints": 0,
+              "model": "DS3.2",
+              "inputTokens": 26,
+              "outputTokens": 22,
+              "query": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+              "reasoningText": "",
+              "historyPreview": [
+                {
+                  "obj": "System",
+                  "value": "\n"
+                },
+                {
+                  "obj": "Human",
+                  "value": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。"
+                },
+                {
+                  "obj": "AI",
+                  "value": "“可能为二次回路短路或TV内部绝缘击穿，应检查二次负载及TV本体绝缘。”"
+                }
+              ],
+              "contextTotalLen": 3,
+              "finishReason": "stop",
+              "llmRequestIds": [
+                "7_ZbBh30YRUG-BRF"
+              ],
+              "id": "kEVjpmYeQYJfwyZD",
+              "nodeId": "kRoXnDgYj0x8L2BY",
+              "runningTime": 1.89
+            },
+            {
+              "moduleName": "common:core.module.template.self_output",
+              "moduleType": "pluginOutput",
+              "moduleLogo": "core/workflow/template/pluginOutput",
+              "pluginOutput": {
+                "回复": "“可能为二次回路短路或TV内部绝缘击穿，应检查二次负载及TV本体绝缘。”"
+              },
+              "id": "fP8r40hUAwxeHgTx",
+              "nodeId": "pluginOutput",
+              "runningTime": 0
+            }
+          ],
+          "newVariables": {},
+          "id": "",
+          "model": "",
+          "usage": {
+            "prompt_tokens": 1,
+            "completion_tokens": 1,
+            "total_tokens": 1
+          },
+          "choices": [
+            {
+              "message": {
+                "role": "assistant",
+                "content": "“可能为二次回路短路或TV内部绝缘击穿，应检查二次负载及TV本体绝缘。”"
+              },
+              "finish_reason": "stop",
+              "index": 0
+            }
+          ]
+        },
+        "summary": {
+          "char_count": 36,
+          "line_count": 1,
+          "has_numbered_steps": false,
+          "has_section_judgment": false,
+          "has_section_action": false
+        }
+      },
+      "templated": {
+        "payload": {
+          "stream": false,
+          "detail": true,
+          "variables": {
+            "提示词": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+            "模板": "你是电力设备应急预案助手。\n\n请基于用户问题，输出一段简洁、专业、可执行的分析结果，要求：\n\n1. 先给出一句“故障判断”。\n2. 再给出 2 到 3 条“判断依据”。\n3. 最后给出 2 到 3 条“处置建议”。\n4. 不要输出 JSON。\n5. 不要写“作为 AI”。\n6. 语言要正式，适合一线运维人员阅读。\n\n输出格式固定为：\n\n故障判断：...\n判断依据：\n1. ...\n2. ...\n\n处置建议：\n1. ...\n2. ..."
+          }
+        },
+        "answer_text": "故障判断：35kV母线TV可能存在内部绝缘缺陷、谐振过电压或一次系统接地故障，导致熔丝反复熔断及二次电压异常。\n\n判断依据：\n1. 熔丝反复熔断表明故障电流持续存在，非偶然性过载，通常指向TV内部故障（如匝间短路、绝缘劣化）或外部系统异常。\n2. 二次电压异常伴随熔丝熔断，可印证一次侧故障已影响计量与保护回路，需排查系统是否存在谐振或单相接地等过电压工况。\n\n处置建议：\n1. 立即申请停运该母线TV，使用2500V及以上绝缘电阻表测量TV一次绕组对地及绕组间绝缘电阻，值应符合规程要求（通常不低于1000MΩ），并检查二次回路有无短路。\n2. 检查系统消谐装置是否正常投入，并在TV停运后测试系统电容电流，评估是否存在铁磁谐振条件，必要时更换为消谐型TV或加装一次消谐器。",
+        "reasoning_text": "",
+        "plugin_output": {
+          "回复": "故障判断：35kV母线TV可能存在内部绝缘缺陷、谐振过电压或一次系统接地故障，导致熔丝反复熔断及二次电压异常。\n\n判断依据：\n1. 熔丝反复熔断表明故障电流持续存在，非偶然性过载，通常指向TV内部故障（如匝间短路、绝缘劣化）或外部系统异常。\n2. 二次电压异常伴随熔丝熔断，可印证一次侧故障已影响计量与保护回路，需排查系统是否存在谐振或单相接地等过电压工况。\n\n处置建议：\n1. 立即申请停运该母线TV，使用2500V及以上绝缘电阻表测量TV一次绕组对地及绕组间绝缘电阻，值应符合规程要求（通常不低于1000MΩ），并检查二次回路有无短路。\n2. 检查系统消谐装置是否正常投入，并在TV停运后测试系统电容电流，评估是否存在铁磁谐振条件，必要时更换为消谐型TV或加装一次消谐器。"
+        },
+        "raw": {
+          "responseData": [
+            {
+              "moduleName": "workflow:template.plugin_start",
+              "moduleType": "pluginInput",
+              "moduleLogo": "core/workflow/template/workflowStart",
+              "id": "zkqxtkGU9AkN5vUY",
+              "nodeId": "pluginInput",
+              "runningTime": 0
+            },
+            {
+              "moduleName": "AI 对话",
+              "moduleType": "chatNode",
+              "moduleLogo": "core/workflow/template/aiChat",
+              "totalPoints": 0,
+              "model": "DS3.2",
+              "inputTokens": 150,
+              "outputTokens": 210,
+              "query": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+              "reasoningText": "",
+              "historyPreview": [
+                {
+                  "obj": "System",
+                  "value": "你是电力设备应急预案助手。\n\n请基于用户问题，输出一段简洁、专业、可执行的分析结果，要求：\n\n1. 先给出一句“故障判断”。\n2. 再给出 2 到 3 条“判断依据”。\n3. 最后给出 2 到 3 条“处置建议”。\n4. 不要输出 JSON。\n5. 不要写“作为 AI”。\n6. 语言要正式，适合一线运维人员阅读。\n\n输出格式固定为：\n\n故障判断：...\n判断依据：\n1. ...\n2. ...\n\n处置建议：\n1. ...\n2. ...\n"
+                },
+                {
+                  "obj": "Human",
+                  "value": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。"
+                },
+                {
+                  "obj": "AI",
+                  "value": "故障判断：35kV母线TV可能存在内部绝缘缺陷、谐振过电压或一次系统接地故障，导致熔丝反复熔断及二次电压异常。\n\n判断依据：\n1. 熔丝反复熔断表明故障电流持续存在，非偶然性过载，通常指向TV内部故障（如匝间短路、绝缘劣化）或外部系统异常。\n2. 二次电压异常伴随熔丝熔断，可印证一次侧故障已影响计量与保护回路，需排查系统是否存在谐振或单相接地等过电压工况。\n\n处置建议：\n1. 立即申请停运该母线TV，使用2500V及以上绝缘电阻表测量TV一次绕组对地及绕组间绝缘电阻，值应符合规程要求（通常不低于1000MΩ），并检查二次回路有无短路。\n2. 检查系统消谐装置是否正常投入，并在TV停运后测试系统电容电流，评估是否存在铁磁谐振条件，必要时更换为消谐型TV或加装一次消谐器。"
+                }
+              ],
+              "contextTotalLen": 3,
+              "finishReason": "stop",
+              "llmRequestIds": [
+                "sKVqM0x4_ogPWTMg"
+              ],
+              "id": "qVi6Sw4R6c5XhWtF",
+              "nodeId": "kRoXnDgYj0x8L2BY",
+              "runningTime": 12.01
+            },
+            {
+              "moduleName": "common:core.module.template.self_output",
+              "moduleType": "pluginOutput",
+              "moduleLogo": "core/workflow/template/pluginOutput",
+              "pluginOutput": {
+                "回复": "故障判断：35kV母线TV可能存在内部绝缘缺陷、谐振过电压或一次系统接地故障，导致熔丝反复熔断及二次电压异常。\n\n判断依据：\n1. 熔丝反复熔断表明故障电流持续存在，非偶然性过载，通常指向TV内部故障（如匝间短路、绝缘劣化）或外部系统异常。\n2. 二次电压异常伴随熔丝熔断，可印证一次侧故障已影响计量与保护回路，需排查系统是否存在谐振或单相接地等过电压工况。\n\n处置建议：\n1. 立即申请停运该母线TV，使用2500V及以上绝缘电阻表测量TV一次绕组对地及绕组间绝缘电阻，值应符合规程要求（通常不低于1000MΩ），并检查二次回路有无短路。\n2. 检查系统消谐装置是否正常投入，并在TV停运后测试系统电容电流，评估是否存在铁磁谐振条件，必要时更换为消谐型TV或加装一次消谐器。"
+              },
+              "id": "fF10TDoEaL0SoD2i",
+              "nodeId": "pluginOutput",
+              "runningTime": 0
+            }
+          ],
+          "newVariables": {},
+          "id": "",
+          "model": "",
+          "usage": {
+            "prompt_tokens": 1,
+            "completion_tokens": 1,
+            "total_tokens": 1
+          },
+          "choices": [
+            {
+              "message": {
+                "role": "assistant",
+                "content": "故障判断：35kV母线TV可能存在内部绝缘缺陷、谐振过电压或一次系统接地故障，导致熔丝反复熔断及二次电压异常。\n\n判断依据：\n1. 熔丝反复熔断表明故障电流持续存在，非偶然性过载，通常指向TV内部故障（如匝间短路、绝缘劣化）或外部系统异常。\n2. 二次电压异常伴随熔丝熔断，可印证一次侧故障已影响计量与保护回路，需排查系统是否存在谐振或单相接地等过电压工况。\n\n处置建议：\n1. 立即申请停运该母线TV，使用2500V及以上绝缘电阻表测量TV一次绕组对地及绕组间绝缘电阻，值应符合规程要求（通常不低于1000MΩ），并检查二次回路有无短路。\n2. 检查系统消谐装置是否正常投入，并在TV停运后测试系统电容电流，评估是否存在铁磁谐振条件，必要时更换为消谐型TV或加装一次消谐器。"
+              },
+              "finish_reason": "stop",
+              "index": 0
+            }
+          ]
+        },
+        "summary": {
+          "char_count": 338,
+          "line_count": 7,
+          "has_numbered_steps": true,
+          "has_section_judgment": true,
+          "has_section_action": true
+        }
+      }
+    }
+  ]
+}

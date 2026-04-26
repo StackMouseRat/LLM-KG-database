@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -360,6 +361,14 @@ def extract_parallel_text(response: dict[str, Any]) -> str:
     return ""
 
 
+def sanitize_generated_output(text: str) -> str:
+    value = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    sanitized_lines: list[str] = []
+    for line in value.split("\n"):
+        sanitized_lines.append(re.sub(r"^(\s*)-\s+", r"\1", line))
+    return "\n".join(sanitized_lines)
+
+
 def build_generation_graph_material(graph_material_text: str) -> str:
     value = str(graph_material_text or "").strip()
     if not value:
@@ -454,7 +463,7 @@ def generate_one_chapter(
         "template_text": chapter["template_text"],
         "elapsed_sec": elapsed,
         "response": response,
-        "output_text": extract_parallel_text(response),
+        "output_text": sanitize_generated_output(extract_parallel_text(response)),
     }
 
 

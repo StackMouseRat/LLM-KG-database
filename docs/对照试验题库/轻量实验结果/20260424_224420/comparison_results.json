@@ -1,0 +1,200 @@
+{
+  "template": "## 第3章 处置程序\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求",
+  "results": [
+    {
+      "index": 1,
+      "question": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+      "bare": {
+        "payload": {
+          "stream": false,
+          "detail": true,
+          "variables": {
+            "提示词": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。"
+          }
+        },
+        "answer_text": "**【故障判断】** 母线可能存在间歇性接地或铁磁谐振，导致TV绕组过电压，从而引发熔丝反复熔断及二次电压异常。",
+        "reasoning_text": "",
+        "plugin_output": {
+          "回复": "**【故障判断】** 母线可能存在间歇性接地或铁磁谐振，导致TV绕组过电压，从而引发熔丝反复熔断及二次电压异常。"
+        },
+        "raw": {
+          "responseData": [
+            {
+              "moduleName": "workflow:template.plugin_start",
+              "moduleType": "pluginInput",
+              "moduleLogo": "core/workflow/template/workflowStart",
+              "id": "n1BLxyYCuZe2yUgC",
+              "nodeId": "pluginInput",
+              "runningTime": 0
+            },
+            {
+              "moduleName": "AI 对话",
+              "moduleType": "chatNode",
+              "moduleLogo": "core/workflow/template/aiChat",
+              "totalPoints": 0,
+              "model": "DS3.2",
+              "inputTokens": 26,
+              "outputTokens": 33,
+              "query": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+              "reasoningText": "",
+              "historyPreview": [
+                {
+                  "obj": "System",
+                  "value": "\n"
+                },
+                {
+                  "obj": "Human",
+                  "value": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。"
+                },
+                {
+                  "obj": "AI",
+                  "value": "**【故障判断】** 母线可能存在间歇性接地或铁磁谐振，导致TV绕组过电压，从而引发熔丝反复熔断及二次电压异常。"
+                }
+              ],
+              "contextTotalLen": 3,
+              "finishReason": "stop",
+              "llmRequestIds": [
+                "cHg3NS-9Vy_VrBTx"
+              ],
+              "id": "wIuf2xLRcJoaQqyt",
+              "nodeId": "kRoXnDgYj0x8L2BY",
+              "runningTime": 3.17
+            },
+            {
+              "moduleName": "common:core.module.template.self_output",
+              "moduleType": "pluginOutput",
+              "moduleLogo": "core/workflow/template/pluginOutput",
+              "pluginOutput": {
+                "回复": "**【故障判断】** 母线可能存在间歇性接地或铁磁谐振，导致TV绕组过电压，从而引发熔丝反复熔断及二次电压异常。"
+              },
+              "id": "bVywhbkv1pISIGYW",
+              "nodeId": "pluginOutput",
+              "runningTime": 0
+            }
+          ],
+          "newVariables": {},
+          "id": "",
+          "model": "",
+          "usage": {
+            "prompt_tokens": 1,
+            "completion_tokens": 1,
+            "total_tokens": 1
+          },
+          "choices": [
+            {
+              "message": {
+                "role": "assistant",
+                "content": "**【故障判断】** 母线可能存在间歇性接地或铁磁谐振，导致TV绕组过电压，从而引发熔丝反复熔断及二次电压异常。"
+              },
+              "finish_reason": "stop",
+              "index": 0
+            }
+          ]
+        },
+        "summary": {
+          "char_count": 56,
+          "line_count": 1,
+          "has_numbered_steps": false,
+          "has_section_judgment": true,
+          "has_section_action": false
+        }
+      },
+      "templated": {
+        "payload": {
+          "stream": false,
+          "detail": true,
+          "variables": {
+            "提示词": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+            "模板": "## 第3章 处置程序\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求"
+          }
+        },
+        "answer_text": "故障判断：可能为TV绕组间绝缘损坏、匝间短路等内部故障，导致励磁电流异常增大，从而引起高压熔丝及二次回路快速熔断。",
+        "reasoning_text": "",
+        "plugin_output": {
+          "回复": "故障判断：可能为TV绕组间绝缘损坏、匝间短路等内部故障，导致励磁电流异常增大，从而引起高压熔丝及二次回路快速熔断。"
+        },
+        "raw": {
+          "responseData": [
+            {
+              "moduleName": "workflow:template.plugin_start",
+              "moduleType": "pluginInput",
+              "moduleLogo": "core/workflow/template/workflowStart",
+              "id": "aJYWVHkqfQBdz2eQ",
+              "nodeId": "pluginInput",
+              "runningTime": 0
+            },
+            {
+              "moduleName": "AI 对话",
+              "moduleType": "chatNode",
+              "moduleLogo": "core/workflow/template/aiChat",
+              "totalPoints": 0,
+              "model": "DS3.2",
+              "inputTokens": 498,
+              "outputTokens": 37,
+              "query": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。",
+              "reasoningText": "",
+              "historyPreview": [
+                {
+                  "obj": "System",
+                  "value": "## 第3章 处置程序\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求\n"
+                },
+                {
+                  "obj": "Human",
+                  "value": "35kV母线TV熔丝反复熔断，二次电压异常，请给出一句故障判断。"
+                },
+                {
+                  "obj": "AI",
+                  "value": "故障判断：可能为TV绕组间绝缘损坏、匝间短路等内部故障，导致励磁电流异常增大，从而引起高压熔丝及二次回路快速熔断。"
+                }
+              ],
+              "contextTotalLen": 3,
+              "finishReason": "stop",
+              "llmRequestIds": [
+                "7_LBndUvV1LXqOO5"
+              ],
+              "id": "ePyQYLF6oPLT3D5l",
+              "nodeId": "kRoXnDgYj0x8L2BY",
+              "runningTime": 27.5
+            },
+            {
+              "moduleName": "common:core.module.template.self_output",
+              "moduleType": "pluginOutput",
+              "moduleLogo": "core/workflow/template/pluginOutput",
+              "pluginOutput": {
+                "回复": "故障判断：可能为TV绕组间绝缘损坏、匝间短路等内部故障，导致励磁电流异常增大，从而引起高压熔丝及二次回路快速熔断。"
+              },
+              "id": "wjG0kxz3YhxMJMad",
+              "nodeId": "pluginOutput",
+              "runningTime": 0
+            }
+          ],
+          "newVariables": {},
+          "id": "",
+          "model": "",
+          "usage": {
+            "prompt_tokens": 1,
+            "completion_tokens": 1,
+            "total_tokens": 1
+          },
+          "choices": [
+            {
+              "message": {
+                "role": "assistant",
+                "content": "故障判断：可能为TV绕组间绝缘损坏、匝间短路等内部故障，导致励磁电流异常增大，从而引起高压熔丝及二次回路快速熔断。"
+              },
+              "finish_reason": "stop",
+              "index": 0
+            }
+          ]
+        },
+        "summary": {
+          "char_count": 57,
+          "line_count": 1,
+          "has_numbered_steps": false,
+          "has_section_judgment": true,
+          "has_section_action": false
+        }
+      }
+    }
+  ]
+}

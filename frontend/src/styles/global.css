@@ -663,6 +663,98 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   color: #1e293b;
 }
 
+.app-shell--dark .quality-plan-card__body {
+  color: #e2e8f0;
+}
+
+.app-shell--dark .quality-actions .ant-btn,
+.app-shell--dark .quality-summary-grid .ant-btn,
+.app-shell--dark .quality-plan-card .ant-btn {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #dbeafe;
+}
+
+.app-shell--dark .quality-actions .ant-btn:hover,
+.app-shell--dark .quality-summary-grid .ant-btn:hover,
+.app-shell--dark .quality-plan-card .ant-btn:hover,
+.app-shell--dark .quality-actions .ant-btn:focus,
+.app-shell--dark .quality-summary-grid .ant-btn:focus,
+.app-shell--dark .quality-plan-card .ant-btn:focus {
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(147, 197, 253, 0.42);
+  color: #f8fafc;
+}
+
+.app-shell--dark .quality-actions .ant-btn-primary,
+.app-shell--dark .quality-summary-grid .ant-btn-primary,
+.app-shell--dark .quality-plan-card .ant-btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: rgba(96, 165, 250, 0.52);
+  color: #f8fafc;
+}
+
+.app-shell--dark .quality-actions .ant-btn-primary:hover,
+.app-shell--dark .quality-summary-grid .ant-btn-primary:hover,
+.app-shell--dark .quality-plan-card .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: rgba(147, 197, 253, 0.6);
+  color: #ffffff;
+}
+
+.app-shell--dark .quality-summary-grid .ant-tag,
+.app-shell--dark .quality-plan-card .ant-tag {
+  color: #dbeafe;
+  background: rgba(51, 65, 85, 0.5);
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+.app-shell--dark .quality-summary-grid .ant-tag-blue,
+.app-shell--dark .quality-plan-card .ant-tag-blue {
+  color: #eff6ff;
+  background: rgba(37, 99, 235, 0.28);
+  border-color: rgba(96, 165, 250, 0.42);
+}
+
+.app-shell--dark .quality-summary-grid .ant-tag-green,
+.app-shell--dark .quality-plan-card .ant-tag-green {
+  color: #dcfce7;
+  background: rgba(22, 163, 74, 0.24);
+  border-color: rgba(74, 222, 128, 0.28);
+}
+
+.app-shell--dark .quality-summary-grid .ant-tag-orange,
+.app-shell--dark .quality-plan-card .ant-tag-orange {
+  color: #ffedd5;
+  background: rgba(249, 115, 22, 0.24);
+  border-color: rgba(251, 146, 60, 0.32);
+}
+
+.app-shell--dark .quality-summary-grid .ant-tag-red,
+.app-shell--dark .quality-plan-card .ant-tag-red {
+  color: #fee2e2;
+  background: rgba(220, 38, 38, 0.24);
+  border-color: rgba(248, 113, 113, 0.34);
+}
+
+.app-shell--dark .quality-plan-card .ant-segmented {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.app-shell--dark .quality-plan-card .ant-segmented .ant-segmented-item-label {
+  color: #cbd5e1;
+}
+
+.app-shell--dark .quality-plan-card .ant-segmented .ant-segmented-item-selected {
+  background: rgba(37, 99, 235, 0.26);
+  box-shadow: none;
+}
+
+.app-shell--dark .quality-plan-card .ant-segmented .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #f8fafc;
+}
+
 .case-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
