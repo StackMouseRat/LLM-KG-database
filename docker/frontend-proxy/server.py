@@ -52,14 +52,14 @@ PROMPT_DEFAULTS = {
         "id": "tpl_prompt_optimize",
         "prompt_key": "optimize_prompt",
         "title": "优化提示词",
-        "prompt_text": "请对预案正文进行格式优化：\n1. 保留原始章节编号和标题层级\n2. 修复换行、标题粘连、列表错位\n3. 删除无意义的元信息噪声\n4. 不改变业务含义和处置步骤\n5. 输出适合正式预案阅读的规范文本",
+        "prompt_text": "请对预案正文进行格式优化：\n1. 保留原始章节编号和标题层级\n2. 修复换行、标题粘连、列表错位\n3. 删除无意义的元信息噪声\n4. 不改变业务含义和处置步骤\n5. 输出适合正式预案阅读的规范文本\n\n若提供了\"故障与场景背景\"和\"图谱检索背景\"，优化时应参考这些背景信息：\n- 故障场景背景含设备名称和故障类型，正文中设备指代应与之一致\n- 图谱检索背景含故障原因、现象、措施等，优化时不应删减或扭曲这些图谱来源内容",
         "order_no": 10,
     },
     "evaluate_prompt": {
         "id": "tpl_prompt_evaluate",
         "prompt_key": "evaluate_prompt",
         "title": "评估提示词",
-        "prompt_text": "请对预案正文进行质量评估：\n1. 检查结构是否完整\n2. 检查章节编号是否连续\n3. 检查是否存在重复、缺项、逻辑跳跃\n4. 检查应急动作是否可执行\n5. 输出简短的质量结论与修改建议",
+        "prompt_text": "请对预案正文进行质量评估：\n1. 检查结构是否完整\n2. 检查章节编号是否连续\n3. 检查是否存在重复、缺项、逻辑跳跃\n4. 检查应急动作是否可执行\n5. 输出简短的质量结论与修改建议\n\n若提供了\"故障与场景背景\"和\"图谱检索背景\"，评估时应参考这些背景信息：\n- 对照故障场景背景，检查正文中设备名称、故障类型、响应等级是否一致\n- 对照图谱检索背景，检查正文是否遗漏了关键的故障原因、应对措施或安全风险\n- 如发现遗漏应在修改建议中指出具体缺项",
         "order_no": 20,
     },
 }
@@ -1131,14 +1131,19 @@ def extract_plugin_text(response: dict) -> tuple[str, str]:
     return output.strip(), reasoning.strip()
 
 
-def run_format_review_sync(prompt: str, content: str) -> dict:
+def run_format_review_sync(prompt: str, content: str, fault_scene: str = "", graph_material: str = "") -> dict:
+    variables: dict[str, str] = {
+        "提示词": prompt,
+        "当前需求": content,
+    }
+    if fault_scene:
+        variables["故障与场景背景"] = fault_scene
+    if graph_material:
+        variables["图谱检索背景"] = graph_material
     payload = {
         "stream": False,
         "detail": True,
-        "variables": {
-            "提示词": prompt,
-            "当前需求": content,
-        },
+        "variables": variables,
     }
     req = Request(
         FORMAT_REVIEW_PLUGIN_URL,
@@ -1165,14 +1170,19 @@ def run_format_review_sync(prompt: str, content: str) -> dict:
     }
 
 
-def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: str, mode: str) -> None:
+def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: str, mode: str, fault_scene: str = "", graph_material: str = "") -> None:
+    variables: dict[str, str] = {
+        "提示词": prompt,
+        "当前需求": content,
+    }
+    if fault_scene:
+        variables["故障与场景背景"] = fault_scene
+    if graph_material:
+        variables["图谱检索背景"] = graph_material
     payload = {
         "stream": True,
         "detail": True,
-        "variables": {
-            "提示词": prompt,
-            "当前需求": content,
-        },
+        "variables": variables,
     }
     req = Request(
         FORMAT_REVIEW_PLUGIN_URL,
@@ -1736,6 +1746,8 @@ class Handler(BaseHTTPRequestHandler):
                 prompt = str(body.get("prompt") or "").strip()
                 content = str(body.get("content") or "").strip()
                 mode = str(body.get("mode") or "optimize").strip() or "optimize"
+                fault_scene = str(body.get("faultScene") or "")
+                graph_material = str(body.get("graphMaterial") or "")
                 if not prompt:
                     self.send_response(400)
                     self._send_common_headers()
@@ -1752,7 +1764,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
 
                 if not body.get("stream"):
-                    result = run_format_review_sync(prompt, content)
+                    result = run_format_review_sync(prompt, content, fault_scene, graph_material)
                     payload = json.dumps({"mode": mode, **result}, ensure_ascii=False).encode("utf-8")
                     self.send_response(200)
                     self._send_common_headers()
@@ -1769,7 +1781,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_stream_headers()
                 self.end_headers()
                 try:
-                    stream_format_review(self, prompt, content, mode)
+                    stream_format_review(self, prompt, content, mode, fault_scene, graph_material)
                 except Exception as exc:
                     send_sse(self, "quality_error", {"mode": mode, "message": str(exc)})
                 finally:

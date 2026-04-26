@@ -5,6 +5,7 @@ import type { PipelineRunResponse } from '../types/plan';
 
 const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
 const PROMPT_CACHE_KEY = 'llmkg_template_prompts_cache_v1';
+const REVIEW_CACHE_KEY = 'llmkg_quality_review_cache_v1';
 const BATCH_REVIEW_CONCURRENCY = 6;
 const { TextArea } = Input;
 
@@ -56,6 +57,35 @@ function savePromptCache(prompts: PromptConfig[]) {
   window.localStorage.setItem(PROMPT_CACHE_KEY, JSON.stringify(prompts));
 }
 
+type ReviewCache = {
+  optimizeStatusMap: Record<string, ReviewStatus>;
+  optimizeReasoningMap: Record<string, string>;
+  optimizedMap: Record<string, string>;
+  rawEvaluateStatusMap: Record<string, ReviewStatus>;
+  rawEvaluateReasoningMap: Record<string, string>;
+  rawEvaluationMap: Record<string, string>;
+  optimizedEvaluateStatusMap: Record<string, ReviewStatus>;
+  optimizedEvaluateReasoningMap: Record<string, string>;
+  optimizedEvaluationMap: Record<string, string>;
+  leftCardViewMap: Record<string, LeftCardView>;
+};
+
+function loadReviewCache(): ReviewCache | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(REVIEW_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as ReviewCache;
+  } catch {
+    return null;
+  }
+}
+
+function saveReviewCache(data: ReviewCache) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(REVIEW_CACHE_KEY, JSON.stringify(data));
+}
+
 function isRunningStatus(status: ReviewStatus) {
   return status === 'started' || status === 'thinking' || status === 'generating';
 }
@@ -71,6 +101,8 @@ export function QualityReviewPage({
 }) {
   const pipeline = useMemo(() => loadSavedPipeline(), []);
   const chapters = pipeline?.chapters || [];
+  const faultScene = pipeline?.basicInfo?.faultScene || '';
+  const graphMaterial = pipeline?.basicInfo?.graphMaterial || '';
   const leftBodyRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const rightBodyRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [prompts, setPrompts] = useState<PromptConfig[]>(() => loadPromptCache() || []);
@@ -78,16 +110,17 @@ export function QualityReviewPage({
   const [editingPromptKey, setEditingPromptKey] = useState('');
   const [promptDrafts, setPromptDrafts] = useState<Record<string, string>>({});
   const [savingPromptKey, setSavingPromptKey] = useState('');
-  const [optimizeReasoningMap, setOptimizeReasoningMap] = useState<Record<string, string>>({});
-  const [rawEvaluateReasoningMap, setRawEvaluateReasoningMap] = useState<Record<string, string>>({});
-  const [optimizedEvaluateReasoningMap, setOptimizedEvaluateReasoningMap] = useState<Record<string, string>>({});
-  const [optimizedMap, setOptimizedMap] = useState<Record<string, string>>({});
-  const [rawEvaluationMap, setRawEvaluationMap] = useState<Record<string, string>>({});
-  const [optimizedEvaluationMap, setOptimizedEvaluationMap] = useState<Record<string, string>>({});
-  const [optimizeStatusMap, setOptimizeStatusMap] = useState<Record<string, ReviewStatus>>({});
-  const [rawEvaluateStatusMap, setRawEvaluateStatusMap] = useState<Record<string, ReviewStatus>>({});
-  const [optimizedEvaluateStatusMap, setOptimizedEvaluateStatusMap] = useState<Record<string, ReviewStatus>>({});
-  const [leftCardViewMap, setLeftCardViewMap] = useState<Record<string, LeftCardView>>({});
+  const reviewCache = useRef(loadReviewCache());
+  const [optimizeReasoningMap, setOptimizeReasoningMap] = useState<Record<string, string>>(reviewCache.current?.optimizeReasoningMap || {});
+  const [rawEvaluateReasoningMap, setRawEvaluateReasoningMap] = useState<Record<string, string>>(reviewCache.current?.rawEvaluateReasoningMap || {});
+  const [optimizedEvaluateReasoningMap, setOptimizedEvaluateReasoningMap] = useState<Record<string, string>>(reviewCache.current?.optimizedEvaluateReasoningMap || {});
+  const [optimizedMap, setOptimizedMap] = useState<Record<string, string>>(reviewCache.current?.optimizedMap || {});
+  const [rawEvaluationMap, setRawEvaluationMap] = useState<Record<string, string>>(reviewCache.current?.rawEvaluationMap || {});
+  const [optimizedEvaluationMap, setOptimizedEvaluationMap] = useState<Record<string, string>>(reviewCache.current?.optimizedEvaluationMap || {});
+  const [optimizeStatusMap, setOptimizeStatusMap] = useState<Record<string, ReviewStatus>>(reviewCache.current?.optimizeStatusMap || {});
+  const [rawEvaluateStatusMap, setRawEvaluateStatusMap] = useState<Record<string, ReviewStatus>>(reviewCache.current?.rawEvaluateStatusMap || {});
+  const [optimizedEvaluateStatusMap, setOptimizedEvaluateStatusMap] = useState<Record<string, ReviewStatus>>(reviewCache.current?.optimizedEvaluateStatusMap || {});
+  const [leftCardViewMap, setLeftCardViewMap] = useState<Record<string, LeftCardView>>(reviewCache.current?.leftCardViewMap || {});
   const [batchOptimizeLoading, setBatchOptimizeLoading] = useState(false);
   const [batchRawEvaluateLoading, setBatchRawEvaluateLoading] = useState(false);
   const [batchOptimizedEvaluateLoading, setBatchOptimizedEvaluateLoading] = useState(false);
@@ -118,9 +151,33 @@ export function QualityReviewPage({
     }
   };
 
+  const reviewSaveCounter = useRef(0);
+  const [reviewSaveTick, setReviewSaveTick] = useState(0);
+
   useEffect(() => {
     void loadPrompts(false);
   }, []);
+
+  const persistReviewCache = () => {
+    reviewSaveCounter.current += 1;
+    setReviewSaveTick(reviewSaveCounter.current);
+  };
+
+  useEffect(() => {
+    if (!reviewSaveCounter.current) return;
+    saveReviewCache({
+      optimizeStatusMap,
+      optimizeReasoningMap,
+      optimizedMap,
+      rawEvaluateStatusMap,
+      rawEvaluateReasoningMap,
+      rawEvaluationMap,
+      optimizedEvaluateStatusMap,
+      optimizedEvaluateReasoningMap,
+      optimizedEvaluationMap,
+      leftCardViewMap,
+    });
+  }, [reviewSaveTick]);
 
   const beginEditPrompt = (prompt: PromptConfig) => {
     setEditingPromptKey(prompt.prompt_key);
@@ -219,7 +276,9 @@ export function QualityReviewPage({
         stream: true,
         mode: target === 'optimize' ? 'optimize' : 'evaluate',
         prompt,
-        content: text
+        content: text,
+        faultScene,
+        graphMaterial
       })
     });
 
@@ -329,6 +388,7 @@ export function QualityReviewPage({
           setOptimizedEvaluationMap((prev) => ({ ...prev, [chapterNo]: outputText || prev[chapterNo] || '' }));
         }
         setStatus('done');
+        persistReviewCache();
         scrollStreamingView(chapterNo, target);
         return;
       }
