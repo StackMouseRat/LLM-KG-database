@@ -1,6 +1,6 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button, Card, Checkbox, Collapse, Input, Layout, message, Space, Switch, Tag, Typography } from 'antd';
+import { Button, Card, Checkbox, Collapse, Input, Layout, Popover, Space, Switch, Tag, Typography, message } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
 import { RichTextRenderer } from './components/RichTextRenderer';
@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage';
 import { fetchCurrentUser, login, logout } from './services/authApi';
 import { runPipelineStream } from './services/planApi';
 import { downloadText } from './utils/download';
+import { DEVICE_QUESTIONS } from './data/presetQuestions';
 
 const { Header, Content } = Layout;
 const { TextArea } = Input;
@@ -35,105 +36,6 @@ const routeItems: Array<{ key: RouteKey; label: string; path: string }> = [
   { key: 'quality', label: '格式优化与质量评估', path: '/quality' },
   { key: 'template', label: '模板查看', path: '/template' }
 ];
-
-const PRESET_QUESTIONS: Record<string, string[]> = {
-  高压断路器: [
-    '雷雨后某 110kV 变电站线路断路器拒合，后台报机构异常，夜间值班，无法立即停电大修，请生成一份现场应急处置方案。',
-    '某 35kV 断路器液压机构渗油，当前仍带负荷运行，需要先控风险再安排检修，请生成一份双阶段处置方案。',
-    '断路器触头发热并伴随异味，运行人员已发现异常但尚未跳闸，请生成一份简短的先期处置和恢复运行方案。'
-  ],
-  变压器: [
-    '暴雨后主变轻瓦斯频繁报警，油位异常，夜间值班且不能长时间停电，请生成一份双阶段处置方案。',
-    '某 220kV 主变套管接点持续过热，现场测温升高，要求生成一份先期控制与后续检修结合的应急方案。',
-    '夏季高负荷下主变油温过高，冷却器运行异常，无法立即更换设备，请生成一份简短应急预案。'
-  ],
-  电力电缆: [
-    '暴雨导致电缆沟进水，开关柜出现绝缘告警，夜间值班，无法立即更换设备，需要一份简短的双阶段处置方案。',
-    '某配电电缆中间接头疑似受潮放电，现场有烧焦气味，请生成一份现场隔离、故障确认和抢修恢复方案。',
-    '电力电缆绝缘劣化与击穿故障导致线路停运，请生成一份包含故障定位、开挖抢修和恢复验证的应急方案。'
-  ],
-  互感器: [
-    '某 110kV 电压互感器接线盒渗油，现场暂无明显发热，请生成一份应急处置与后续检修方案。',
-    '220kV 电流互感器末屏接地异常并伴随放电痕迹，请生成一份风险控制优先的处置预案。',
-    '35kV 母线 TV 高压熔断器熔断后电压异常，要求生成一份现场核查和恢复运行方案。'
-  ],
-  光缆: [
-    '传输机房出现 2M 业务中断，怀疑光缆接续异常，请生成一份夜间现场排查和恢复方案。',
-    '某段光缆疑似被外力损伤导致业务中断，要求生成一份快速定位和抢修恢复方案。',
-    '雨后光缆接头盒附近出现异常告警，怀疑受潮，请生成一份现场检查与应急处置方案。'
-  ],
-  环网柜: [
-    '户外环网柜内部疑似受潮，开闭器动作异常，请生成一份现场隔离与抢修恢复方案。',
-    '环网柜防凝露设计不良导致柜内绝缘风险升高，请生成一份临时控制和后续整改方案。',
-    '某环网柜自动化信号异常并影响运行监视，请生成一份简短应急处置预案。'
-  ],
-  避雷器: [
-    '雷雨天气后避雷器疑似阀片击穿，线路出现接地异常，请生成一份现场应急处置方案。',
-    '某配电线路避雷器表面存在放电痕迹并伴随污闪风险，请生成一份隔离与巡检加强方案。',
-    '降雪后避雷器高压端疑似沿面侧闪，要求生成一份风险控制和恢复运行方案。'
-  ],
-  杆塔: [
-    '持续暴雨后杆塔基础冲刷严重并出现倾斜迹象，请生成一份现场隔离、风险研判和抢修方案。',
-    '大风天气后发现输电杆塔构件松动，线路暂未跳闸，请生成一份先期处置和后续加固方案。',
-    '某塔位附近山体滑坡，杆塔受力异常，要求生成一份夜间应急处置方案。'
-  ],
-  输电线路: [
-    '雷击导致输电线路跳闸并重合不成功，请生成一份故障巡视、研判和恢复运行方案。',
-    '导线覆冰严重，存在舞动和断线风险，请生成一份防风险和应急处置方案。',
-    '外力施工导致输电线路异常停运，要求生成一份现场控制与抢修恢复方案。'
-  ]
-};
-
-const MULTI_FAULT_PRESET_QUESTIONS: Record<string, string[]> = {
-  高压断路器: [
-    '某110kV断路器同时出现控制回路短路故障和合分闸控制回路故障，请生成一份现场应急处置方案。',
-    '某变电站断路器同时出现辅助开关及转换接点异常故障、合分闸线圈故障和拒动故障，请生成一份故障处置与恢复方案。',
-    '某高压断路器同时出现导电回路直阻超标故障、触头及导电连接异常故障和绝缘不良故障，请生成一份应急预案。'
-  ],
-  变压器: [
-    '某主变同时出现轻瓦斯报警和油温过高异常，请生成一份先期控制与后续检修方案。',
-    '某220kV主变同时出现套管接头过热、冷却器运行异常和油位异常，请生成一份应急处置方案。',
-    '某变压器同时出现有载调压异常和渗油缺陷，请生成一份双阶段处置方案。'
-  ],
-  电力电缆: [
-    '某配电电缆同时出现中间接头受潮放电和终端头发热异常，请生成一份现场隔离与抢修方案。',
-    '某电力电缆同时出现绝缘劣化、局部放电和中间接头异味，请生成一份故障确认与恢复方案。',
-    '暴雨后某电缆线路同时出现电缆沟进水和接头击穿故障，请生成一份应急处置预案。'
-  ],
-  互感器: [
-    '某电流互感器同时出现渗油和末屏接地异常，请生成一份应急处置方案。',
-    '某电压互感器同时出现高压熔断器熔断和异常放电痕迹，请生成一份现场处置方案。',
-    '某互感器同时出现发热和绝缘异常告警，请生成一份风险控制与恢复方案。'
-  ],
-  光缆: [
-    '某段光缆同时出现业务中断和接头盒受潮告警，请生成一份排查恢复方案。',
-    '某光缆同时出现外力损伤和接续点衰耗异常，请生成一份应急抢修方案。',
-    '雨后某通信光缆同时出现链路中断与机房告警异常，请生成一份现场处置方案。'
-  ],
-  环网柜: [
-    '某环网柜同时出现柜内受潮和开闭器动作异常，请生成一份应急处置方案。',
-    '某环网柜同时出现绝缘告警、凝露异常和遥信异常，请生成一份现场处置方案。',
-    '某户外环网柜同时出现自动化信号异常和局部放电风险，请生成一份双阶段方案。'
-  ],
-  避雷器: [
-    '雷雨后某避雷器同时出现阀片击穿故障和沿面闪络故障，请生成一份应急处置方案。',
-    '某线路避雷器同时出现侧闪痕迹和未有效动作故障，请生成一份排查与恢复方案。',
-    '某配电避雷器同时出现脱落接地故障和表面放电异常，请生成一份现场处置方案。'
-  ],
-  杆塔: [
-    '持续暴雨后某杆塔同时出现基础冲刷和构件松动故障，请生成一份应急处置方案。',
-    '某输电杆塔同时出现倾斜迹象、拉线异常和基础开裂，请生成一份抢险方案。',
-    '大风天气后某杆塔同时出现塔材变形和螺栓松动，请生成一份现场处置预案。'
-  ],
-  输电线路: [
-    '某输电线路同时出现雷击跳闸和导线覆冰异常，请生成一份应急处置方案。',
-    '某线路同时出现外力破坏和接地故障，请生成一份现场控制与抢修方案。',
-    '某输电线路同时出现舞动风险、绝缘子闪络和局部放电迹象，请生成一份处置方案。'
-  ]
-};
-
-const ALL_PRESET_QUESTIONS = Object.values(PRESET_QUESTIONS).flat();
-const ALL_MULTI_FAULT_PRESET_QUESTIONS = Object.values(MULTI_FAULT_PRESET_QUESTIONS).flat();
 
 const stageText: Record<PipelineStage, string> = {
   idle: '等待输入',
@@ -421,14 +323,6 @@ function saveSnapshot(question: string, pipeline: PipelineRunResponse) {
   );
 }
 
-function pickRandomPresetQuestion(enableMultiFault = false) {
-  const pool = enableMultiFault ? ALL_MULTI_FAULT_PRESET_QUESTIONS : ALL_PRESET_QUESTIONS;
-  if (!pool.length) {
-    return '';
-  }
-  const index = Math.floor(Math.random() * pool.length);
-  return pool[index];
-}
 
 export default function App() {
   const savedSnapshot = loadSavedSnapshot();
@@ -443,7 +337,7 @@ export default function App() {
   const [showModeTags, setShowModeTags] = useState(loadModeTagsVisible);
   const [showCompactLayout, setShowCompactLayout] = useState(loadCompactLayout);
   const [darkMode, setDarkMode] = useState(loadDarkMode);
-  const [question, setQuestion] = useState(savedSnapshot?.question || pickRandomPresetQuestion());
+  const [question, setQuestion] = useState(savedSnapshot?.question || '');
   const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(savedSnapshot?.pipeline || null);
   const [stage, setStage] = useState<PipelineStage>(savedSnapshot?.pipeline ? 'done' : 'idle');
   const [nodeStageLabel, setNodeStageLabel] = useState(savedSnapshot?.pipeline ? '已恢复上次生成结果' : '等待输入');
@@ -602,6 +496,16 @@ export default function App() {
     }
   };
 
+  const setLoggedOut = () => {
+    setCurrentUsername('');
+    setCurrentUserGroup('user');
+    setAuthStatus('unauthenticated');
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/login');
+    }
+    setRoute('login');
+  };
+
   const handleGenerate = async () => {
     if (!question.trim()) {
       message.warning('请先输入故障场景描述');
@@ -631,10 +535,20 @@ export default function App() {
       await runPipelineStream(
         { question, enableCaseSearch, enableMultiFaultSearch },
         {
-          onStage: (nextStage) => {
+          onStage: (nextStage, detail) => {
             if (nextStage === 'basic_info') {
               setStage('basic_info');
               setNodeStageLabel('正在获取基本信息');
+              if (detail?.faultScene || detail?.graphMaterial || detail?.userQuestion) {
+                setPipeline((prev) => ({
+                  ...prev!,
+                  basicInfo: {
+                    userQuestion: detail?.userQuestion || prev?.basicInfo?.userQuestion || '',
+                    faultScene: detail?.faultScene || prev?.basicInfo?.faultScene || '',
+                    graphMaterial: detail?.graphMaterial || prev?.basicInfo?.graphMaterial || ''
+                  }
+                }));
+              }
             }
             if (nextStage === 'template_split') {
               setStage('template_split');
@@ -831,8 +745,56 @@ export default function App() {
     downloadText('并行生成预案.md', mergedOutput);
   };
 
-  const handleFillExample = () => {
-    setQuestion(pickRandomPresetQuestion(enableMultiFaultSearch));
+  const [questionPopoverOpen, setQuestionPopoverOpen] = useState(false);
+
+  const pickQuestion = useCallback((text: string) => {
+    setQuestion(text);
+    setQuestionPopoverOpen(false);
+  }, []);
+
+  const renderPresetPopover = () => {
+    const devices = DEVICE_QUESTIONS;
+    const { Text, Title } = Typography;
+    return (
+      <div style={{ maxWidth: 480, maxHeight: 400, overflow: 'auto' }}>
+        <div style={{ marginBottom: 12 }}>
+          <Title level={5} style={{ margin: '0 0 4px' }}>常规单故障问题</Title>
+          {devices.map((d) => (
+            <div key={`single-${d.device}`} style={{ marginBottom: 8 }}>
+              <Text strong style={{ fontSize: 12, color: '#2563eb' }}>{d.device}</Text>
+              {d.singleFault.map((q, i) => (
+                <div
+                  key={i}
+                  className="preset-item"
+                  onClick={() => pickQuestion(q)}
+                  style={{ cursor: 'pointer', fontSize: 12, lineHeight: 1.5, padding: '3px 6px', margin: '1px 0', borderRadius: 4 }}
+                >
+                  {q.length > 60 ? q.substring(0, 60) + '…' : q}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div>
+          <Title level={5} style={{ margin: '0 0 4px' }}>常规多故障问题</Title>
+          {devices.map((d) => (
+            <div key={`multi-${d.device}`} style={{ marginBottom: 8 }}>
+              <Text strong style={{ fontSize: 12, color: '#dc2626' }}>{d.device}</Text>
+              {d.multiFault.map((q, i) => (
+                <div
+                  key={i}
+                  className="preset-item"
+                  onClick={() => pickQuestion(q)}
+                  style={{ cursor: 'pointer', fontSize: 12, lineHeight: 1.5, padding: '3px 6px', margin: '1px 0', borderRadius: 4 }}
+                >
+                  {q.length > 60 ? q.substring(0, 60) + '…' : q}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const renderPlanPage = () => (
@@ -848,7 +810,16 @@ export default function App() {
               <Button type="primary" icon={<PlayCircleOutlined />} loading={loading} onClick={handleGenerate}>
                 运行流水线
               </Button>
-              <Button onClick={handleFillExample}>填入示例</Button>
+               <Popover
+                content={renderPresetPopover()}
+                trigger="click"
+                open={questionPopoverOpen}
+                onOpenChange={setQuestionPopoverOpen}
+                placement="bottomLeft"
+                destroyTooltipOnHide
+              >
+                <Button>填入示例</Button>
+              </Popover>
               <Button size="small" icon={<CopyOutlined />} disabled={!chapters.length} onClick={handleCopy}>
                 复制全部
               </Button>
