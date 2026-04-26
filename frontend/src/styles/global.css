@@ -552,6 +552,119 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   color: #0f172a;
 }
 
+.app-shell--dark .action-row .ant-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #cbd5e1;
+}
+
+.app-shell--dark .action-row .ant-btn:hover {
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(51, 65, 85, 0.6);
+}
+
+.app-shell--dark .action-row .ant-btn:disabled {
+  color: rgba(148, 163, 184, 0.35);
+  border-color: rgba(148, 163, 184, 0.12);
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.preset-popover .ant-popover-inner {
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.14);
+}
+
+.preset-popover .ant-popover-inner-content {
+  padding: 0;
+}
+
+.preset-popover__content {
+  width: min(480px, calc(100vw - 40px));
+  max-height: 400px;
+  overflow: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.preset-popover__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-popover__title.ant-typography {
+  margin: 0;
+  font-size: 14px;
+}
+
+.preset-popover__section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preset-popover__device.ant-typography {
+  font-size: 12px;
+}
+
+.preset-popover__device--single.ant-typography {
+  color: #2563eb;
+}
+
+.preset-popover__device--multi.ant-typography {
+  color: #dc2626;
+}
+
+.app-shell--dark .preset-popover .ant-popover-inner {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.app-shell--dark .preset-popover .ant-popover-arrow::before {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.app-shell--dark .preset-popover .ant-typography {
+  color: #e2e8f0;
+}
+
+.preset-item {
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 6px 8px;
+  margin: 0;
+  border-radius: 10px;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.58);
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.preset-item:hover {
+  background: #e8f0fe;
+  color: #0f172a;
+  transform: translateX(2px);
+}
+
+.app-shell--dark .preset-item {
+  color: #94a3b8;
+  background: rgba(30, 41, 59, 0.28);
+}
+
+.app-shell--dark .preset-item:hover {
+  background: rgba(51, 65, 85, 0.5) !important;
+  color: #e2e8f0;
+}
+
 .template-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

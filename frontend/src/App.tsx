@@ -1,295 +1,16 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
-import { Button, Card, Checkbox, Collapse, Input, Layout, Popover, Space, Switch, Tag, Typography, message } from 'antd';
-import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import type { PipelineCaseSearchCard, PipelineChapter, PipelineRunResponse, PipelineStage } from './types/plan';
-import { RichTextRenderer } from './components/RichTextRenderer';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Button, Card, Layout, Switch, Tag, Typography } from 'antd';
+import { routeFromPath, routeItems, TraceGraphPage, QualityReviewPage, TemplateViewPage } from './app/routeConfig';
+import type { AppRoute, RouteKey } from './app/routeConfig';
+import { useAuthSession } from './features/auth/useAuthSession';
+import { PlanPage } from './features/plan/PlanPage';
+import { usePlanPipeline } from './features/plan/usePlanPipeline';
 import { LoginPage } from './pages/LoginPage';
-import { fetchCurrentUser, login, logout } from './services/authApi';
-import { runPipelineStream } from './services/planApi';
-import { downloadText } from './utils/download';
-import { DEVICE_QUESTIONS } from './data/presetQuestions';
 
 const { Header, Content } = Layout;
-const { TextArea } = Input;
-const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
 const MODE_TAGS_VISIBLE_KEY = 'llmkg_mode_tags_visible_v1';
 const COMPACT_LAYOUT_KEY = 'llmkg_compact_layout_v1';
 const DARK_MODE_KEY = 'llmkg_dark_mode_v1';
-
-type RouteKey = 'plan' | 'trace' | 'quality' | 'template';
-type AppRoute = RouteKey | 'login';
-type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
-type UserGroup = 'admin' | 'user';
-
-const TraceGraphPage = lazy(() => import('./pages/TraceGraphPage').then((module) => ({ default: module.TraceGraphPage })));
-const QualityReviewPage = lazy(() =>
-  import('./pages/QualityReviewPage').then((module) => ({ default: module.QualityReviewPage }))
-);
-const TemplateViewPage = lazy(() =>
-  import('./pages/TemplateViewPage').then((module) => ({ default: module.TemplateViewPage }))
-);
-
-const routeItems: Array<{ key: RouteKey; label: string; path: string }> = [
-  { key: 'plan', label: '预案生成', path: '/plan' },
-  { key: 'trace', label: '图谱溯源', path: '/trace' },
-  { key: 'quality', label: '格式优化与质量评估', path: '/quality' },
-  { key: 'template', label: '模板查看', path: '/template' }
-];
-
-const stageText: Record<PipelineStage, string> = {
-  idle: '等待输入',
-  basic_info: '正在获取基本信息',
-  template_split: '正在切分模板',
-  parallel_generating: '正在并行生成章节',
-  case_search: '正在检索案例',
-  done: '生成完成',
-  error: '生成失败'
-};
-
-const chapterStatusText: Record<'pending' | 'running' | 'done' | 'error', string> = {
-  pending: '等待中',
-  running: '生成中',
-  done: '已完成',
-  error: '失败'
-};
-
-function renderInlineText(text: string, showModeTags: boolean): ReactNode[] {
-  const parts = text.split(/(\[KG\]|\[GEN\]|\[FIX\]|\*\*[^*]+\*\*)/g);
-  return parts
-    .filter((part) => part !== '')
-    .map((part, index) => {
-      if (part === '[KG]') {
-        if (!showModeTags) return null;
-        return (
-          <Tag color="blue" key={index}>
-            KG
-          </Tag>
-        );
-      }
-      if (part === '[GEN]') {
-        if (!showModeTags) return null;
-        return (
-          <Tag color="orange" key={index}>
-            GEN
-          </Tag>
-        );
-      }
-      if (part === '[FIX]') {
-        if (!showModeTags) return null;
-        return (
-          <Tag color="green" key={index}>
-            FIX
-          </Tag>
-        );
-      }
-      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-        return <strong key={index}>{part.slice(2, -2)}</strong>;
-      }
-      return <span key={index}>{part}</span>;
-    });
-}
-
-function renderMarkedText(text: string, options?: { normalize?: boolean; stripMeta?: boolean; showModeTags?: boolean }) {
-  const rawText = options?.normalize === false ? String(text || '') : normalizeRenderedOutput(text);
-  const lineSplitText = splitTagLeadingParagraphs(rawText);
-  const normalizedText = options?.stripMeta === false ? lineSplitText : cleanupInlineMetaLines(lineSplitText);
-  const showModeTags = options?.showModeTags ?? true;
-  return (
-    <div className="rendered-rich-text">
-      {normalizedText.split('\n').map((line, index) => {
-        const trimmed = line.trim();
-
-        if (!trimmed) {
-          return <div className="render-blank" key={index} />;
-        }
-
-        if (trimmed.startsWith('#### ')) {
-          return (
-            <div className="render-h4" key={index}>
-              {renderInlineText(trimmed.slice(5), showModeTags)}
-            </div>
-          );
-        }
-
-        if (trimmed.startsWith('### ')) {
-          return (
-            <div className="render-h3" key={index}>
-              {renderInlineText(trimmed.slice(4), showModeTags)}
-            </div>
-          );
-        }
-
-        if (trimmed.startsWith('## ')) {
-          return (
-            <div className="render-h2" key={index}>
-              {renderInlineText(trimmed.slice(3), showModeTags)}
-            </div>
-          );
-        }
-
-        if (trimmed.startsWith('# ')) {
-          return (
-            <div className="render-h1" key={index}>
-              {renderInlineText(trimmed.slice(2), showModeTags)}
-            </div>
-          );
-        }
-
-        return (
-          <div className="render-line" key={index}>
-            {renderInlineText(line, showModeTags)}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function normalizeRenderedOutput(text: string) {
-  const raw = String(text || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .replace(/([^\n])(\[(?:KG|GEN|FIX)\])/g, '$1\n$2')
-    .replace(/([^\n])(#{1,4}\s+)/g, '$1\n$2')
-    .replace(/([^\n])(第[一二三四五六七八九十0-9]+章)/g, '$1\n$2')
-    .replace(/([^\n])(案例[一二三四五六七八九十百千0-9]+[：:\s])/g, '$1\n$2')
-    .replace(/([^\n])(---+)/g, '$1\n$2')
-    .replace(/([^\n])(\d+\.\d+\.\d+\s+)/g, '$1\n$2')
-    .replace(/([^\n])(\d+\.\d+\s+)/g, '$1\n$2')
-    .replace(/([^\n])(\d+\.\s+)/g, '$1\n$2')
-    .replace(/([^\n])(内容来源：|图谱字段：|预定义文本：|生成要求：)/g, '$1\n$2');
-  const headingPattern = /(^|\n)(#{1,4}\s+[^\n]+|第[一二三四五六七八九十0-9]+章[^\n]*)/m;
-  const match = raw.match(headingPattern);
-
-  if (!match || typeof match.index !== 'number') {
-    return promoteStructuredHeadings(raw);
-  }
-
-  const startIndex = match[1] ? match.index + match[1].length : match.index;
-  return promoteStructuredHeadings(raw.slice(startIndex).trimStart());
-}
-
-function splitTagLeadingParagraphs(text: string) {
-  return String(text || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .replace(/\s*(\[(?:KG|GEN|FIX)\])\s*/g, '\n$1 ')
-    .replace(/\n{2,}/g, '\n')
-    .trim();
-}
-
-function cleanupInlineMetaLines(text: string) {
-  const patterns = ['内容来源：', '图谱字段：', '预定义文本：', '生成要求：'];
-  return text
-    .split('\n')
-    .filter((line) => {
-      const trimmed = line.trim();
-      if (!trimmed) return true;
-      if (/^!\[.*\]\(.*\)$/.test(trimmed)) return false;
-      if (/^\[图像内容省略\]$/.test(trimmed)) return false;
-      return !patterns.some((marker) => trimmed.includes(marker));
-    })
-    .join('\n');
-}
-
-function promoteStructuredHeadings(text: string) {
-  const lines = text.split('\n');
-  const normalized: string[] = [];
-
-  for (let i = 0; i < lines.length; i += 1) {
-    let line = lines[i].trim();
-
-    if (!line) {
-      normalized.push('');
-      continue;
-    }
-
-    if (/^#{1,6}$/.test(line)) {
-      continue;
-    }
-
-    if (/^GEN/.test(line)) {
-      line = line.replace(/^GEN/, '').trim();
-    } else if (/^KG/.test(line)) {
-      line = line.replace(/^KG/, '').trim();
-    } else if (/^FIX/.test(line)) {
-      line = line.replace(/^FIX/, '').trim();
-    }
-
-    if (!line) {
-      continue;
-    }
-
-    if (/^第[一二三四五六七八九十百千0-9]+章\s+.+$/.test(line)) {
-      normalized.push(`# ${line}`);
-      continue;
-    }
-
-    if (/^案例[一二三四五六七八九十百千0-9]+[：:\s].+$/.test(line)) {
-      normalized.push(`## ${line}`);
-      continue;
-    }
-
-    if (/^\d+\.\d+\.\d+\s+.+$/.test(line)) {
-      normalized.push(`### ${line}`);
-      continue;
-    }
-
-    if (/^\d+\.\d+\s+.+$/.test(line)) {
-      normalized.push(`## ${line}`);
-      continue;
-    }
-
-    if (/^\d+\.\s+.+$/.test(line)) {
-      normalized.push(`### ${line}`);
-      continue;
-    }
-
-    if (/^---+$/.test(line)) {
-      normalized.push('');
-      continue;
-    }
-
-    normalized.push(line);
-  }
-
-  return normalized.join('\n');
-}
-
-function parseFaultScene(text: string) {
-  try {
-    return JSON.parse(text || '{}') as Record<string, unknown>;
-  } catch {
-    return {};
-  }
-}
-
-function routeFromPath(pathname: string): AppRoute {
-  if (pathname === '/login') return 'login';
-  if (pathname === '/trace') return 'trace';
-  if (pathname === '/quality') return 'quality';
-  if (pathname === '/template') return 'template';
-  return 'plan';
-}
-
-function loadSavedSnapshot(): { question: string; pipeline: PipelineRunResponse } | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(PLAN_SNAPSHOT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-    if (typeof parsed.question !== 'string') return null;
-    if (!parsed.pipeline || typeof parsed.pipeline !== 'object') return null;
-    return {
-      question: parsed.question,
-      pipeline: parsed.pipeline as PipelineRunResponse
-    };
-  } catch {
-    return null;
-  }
-}
 
 function loadModeTagsVisible() {
   if (typeof window === 'undefined') return true;
@@ -312,63 +33,25 @@ function loadDarkMode() {
   return raw === '1';
 }
 
-function saveSnapshot(question: string, pipeline: PipelineRunResponse) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(
-    PLAN_SNAPSHOT_KEY,
-    JSON.stringify({
-      question,
-      pipeline
-    })
-  );
-}
-
-
 export default function App() {
-  const savedSnapshot = loadSavedSnapshot();
   const [route, setRoute] = useState<AppRoute>(() =>
     typeof window === 'undefined' ? 'login' : routeFromPath(window.location.pathname)
   );
-  const [authStatus, setAuthStatus] = useState<AuthStatus>('checking');
-  const [currentUsername, setCurrentUsername] = useState('');
-  const [currentUserGroup, setCurrentUserGroup] = useState<UserGroup>('user');
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginErrorMessage, setLoginErrorMessage] = useState('');
   const [showModeTags, setShowModeTags] = useState(loadModeTagsVisible);
   const [showCompactLayout, setShowCompactLayout] = useState(loadCompactLayout);
   const [darkMode, setDarkMode] = useState(loadDarkMode);
-  const [question, setQuestion] = useState(savedSnapshot?.question || '');
-  const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(savedSnapshot?.pipeline || null);
-  const [stage, setStage] = useState<PipelineStage>(savedSnapshot?.pipeline ? 'done' : 'idle');
-  const [nodeStageLabel, setNodeStageLabel] = useState(savedSnapshot?.pipeline ? '已恢复上次生成结果' : '等待输入');
-  const [loading, setLoading] = useState(false);
-  const [enableCaseSearch, setEnableCaseSearch] = useState(false);
-  const [enableMultiFaultSearch, setEnableMultiFaultSearch] = useState(false);
-  const [savedFlag, setSavedFlag] = useState(Boolean(savedSnapshot?.pipeline));
 
-  const chapters = pipeline?.chapters ?? [];
-  const mergedOutput = useMemo(
-    () => chapters.map((item) => `# ${item.chapterNo} ${item.title}\n\n${item.outputText}`).join('\n\n'),
-    [chapters]
-  );
+  const auth = useAuthSession();
 
-  const summaryTags = useMemo(() => {
-    if (!pipeline) return [];
-    const parsed = parseFaultScene(pipeline.basicInfo.faultScene);
-    const faultNodes = parsed['故障二级节点'];
-    const faultTags = Array.isArray(faultNodes)
-      ? faultNodes.map((item) => String(item)).filter(Boolean)
-      : faultNodes
-        ? [String(faultNodes)]
-        : [];
-    return [
-      ...faultTags,
-      parsed['故障对象'] ? String(parsed['故障对象']) : '',
-      pipeline.templateSplit.templateName,
-      `${pipeline.templateSplit.chapterCount}章`
-    ].filter(Boolean) as string[];
-  }, [pipeline]);
-  const caseCards = useMemo(() => pipeline?.caseSearch?.cards || [], [pipeline?.caseSearch?.cards]);
+  const handleUnauthorized = useCallback(() => {
+    auth.setLoggedOut();
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/login');
+    }
+    setRoute('login');
+  }, [auth]);
+
+  const plan = usePlanPipeline({ onUnauthorized: handleUnauthorized });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -397,35 +80,9 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || auth.authStatus === 'checking') return;
 
-    const syncAuth = async () => {
-      try {
-        const session = await fetchCurrentUser();
-        if (session?.username) {
-          setCurrentUsername(session.username);
-          setCurrentUserGroup(session.group);
-          setAuthStatus('authenticated');
-        } else {
-          setCurrentUsername('');
-          setCurrentUserGroup('user');
-          setAuthStatus('unauthenticated');
-        }
-      } catch (error) {
-        setCurrentUsername('');
-        setCurrentUserGroup('user');
-        setAuthStatus('unauthenticated');
-        message.error(error instanceof Error ? error.message : '登录状态校验失败');
-      }
-    };
-
-    void syncAuth();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || authStatus === 'checking') return;
-
-    if (authStatus === 'unauthenticated') {
+    if (auth.authStatus === 'unauthenticated') {
       if (window.location.pathname !== '/login') {
         window.history.replaceState(null, '', '/login');
       }
@@ -440,10 +97,10 @@ export default function App() {
     }
 
     setRoute(routeFromPath(window.location.pathname));
-  }, [authStatus]);
+  }, [auth.authStatus]);
 
   const navigateRoute = (nextRoute: RouteKey) => {
-    if (authStatus !== 'authenticated') return;
+    if (auth.authStatus !== 'authenticated') return;
     const target = routeItems.find((item) => item.key === nextRoute);
     if (!target || typeof window === 'undefined') return;
     if (window.location.pathname !== target.path) {
@@ -453,528 +110,21 @@ export default function App() {
   };
 
   const handleLogin = async (username: string, password: string) => {
-    if (!username || !password) {
-      setLoginErrorMessage('请输入用户名和密码');
-      message.warning('请输入用户名和密码');
-      return;
+    const ok = await auth.handleLogin(username, password);
+    if (!ok) return;
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/plan');
     }
-
-    setLoginLoading(true);
-    setLoginErrorMessage('');
-    try {
-      const session = await login(username, password);
-      setCurrentUsername(session.username);
-      setCurrentUserGroup(session.group);
-      setAuthStatus('authenticated');
-      if (typeof window !== 'undefined') {
-        window.history.replaceState(null, '', '/plan');
-      }
-      setRoute('plan');
-      message.success('登录成功');
-    } catch (error) {
-      const nextMessage = error instanceof Error ? error.message : '登录失败';
-      setLoginErrorMessage(nextMessage);
-      message.error(nextMessage);
-    } finally {
-      setLoginLoading(false);
-    }
+    setRoute('plan');
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : '登出失败');
-    } finally {
-      setCurrentUsername('');
-      setCurrentUserGroup('user');
-      setAuthStatus('unauthenticated');
-      if (typeof window !== 'undefined') {
-        window.history.replaceState(null, '', '/login');
-      }
-      setRoute('login');
-    }
-  };
-
-  const setLoggedOut = () => {
-    setCurrentUsername('');
-    setCurrentUserGroup('user');
-    setAuthStatus('unauthenticated');
+    await auth.handleLogout();
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', '/login');
     }
     setRoute('login');
   };
-
-  const handleGenerate = async () => {
-    if (!question.trim()) {
-      message.warning('请先输入故障场景描述');
-      return;
-    }
-
-    setLoading(true);
-    setPipeline({
-      question,
-      basicInfo: {
-        userQuestion: question,
-        faultScene: '',
-        graphMaterial: ''
-      },
-      templateSplit: {
-        templateId: '',
-        templateName: '',
-        currentVersion: '',
-        chapterCount: 0
-      },
-      chapters: []
-    });
-    setStage('basic_info');
-    setNodeStageLabel('正在获取基本信息');
-
-    try {
-      await runPipelineStream(
-        { question, enableCaseSearch, enableMultiFaultSearch },
-        {
-          onStage: (nextStage, detail) => {
-            if (nextStage === 'basic_info') {
-              setStage('basic_info');
-              setNodeStageLabel('正在获取基本信息');
-              if (detail?.faultScene || detail?.graphMaterial || detail?.userQuestion) {
-                setPipeline((prev) => ({
-                  ...prev!,
-                  basicInfo: {
-                    userQuestion: detail?.userQuestion || prev?.basicInfo?.userQuestion || '',
-                    faultScene: detail?.faultScene || prev?.basicInfo?.faultScene || '',
-                    graphMaterial: detail?.graphMaterial || prev?.basicInfo?.graphMaterial || ''
-                  }
-                }));
-              }
-            }
-            if (nextStage === 'template_split') {
-              setStage('template_split');
-              setNodeStageLabel('正在切分模板');
-            }
-            if (nextStage === 'parallel_generating') {
-              setStage('parallel_generating');
-              setNodeStageLabel('正在并行生成章节');
-            }
-            if (nextStage === 'case_search') {
-              setNodeStageLabel('正在并行生成章节并检索案例');
-            }
-          },
-          onTemplateSplit: (payload) => {
-            setPipeline((prev) => ({
-              question: prev?.question || question,
-              basicInfo: prev?.basicInfo || {
-                userQuestion: question,
-                faultScene: '',
-                graphMaterial: ''
-              },
-              templateSplit: payload?.templateSplit || {
-                templateId: '',
-                templateName: '',
-                currentVersion: '',
-                chapterCount: 0
-              },
-              chapters: (payload?.chapters || []).map((chapter: any) => ({
-                chapterNo: String(chapter.chapterNo || ''),
-                title: String(chapter.title || ''),
-                sectionCount: Number(chapter.sectionCount || 0),
-                templateText: String(chapter.templateText || ''),
-                outputText: '',
-                status: 'pending'
-              })),
-              caseSearch:
-                prev?.caseSearch ||
-                (enableCaseSearch
-                  ? {
-                      enabled: true,
-                      status: 'idle'
-                    }
-                  : undefined)
-            }));
-          },
-          onChapterStarted: (payload) => {
-            setPipeline((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                chapters: prev.chapters.map((chapter) =>
-                  chapter.chapterNo === String(payload?.chapterNo || '')
-                    ? { ...chapter, status: 'running' }
-                    : chapter
-                )
-              };
-            });
-          },
-          onChapterDone: (payload) => {
-            setPipeline((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                chapters: prev.chapters.map((chapter) =>
-                  chapter.chapterNo === String(payload?.chapterNo || '')
-                    ? {
-                        ...chapter,
-                        outputText: String(payload?.outputText || ''),
-                        elapsedSec: typeof payload?.elapsedSec === 'number' ? payload.elapsedSec : undefined,
-                        status: payload?.status === 'error' ? 'error' : 'done'
-                      }
-                    : chapter
-                )
-              };
-            });
-          },
-          onChapterChunk: (payload) => {
-            setPipeline((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                chapters: prev.chapters.map((chapter) =>
-                  chapter.chapterNo === String(payload?.chapterNo || '')
-                    ? {
-                        ...chapter,
-                        outputText: `${chapter.outputText || ''}${String(payload?.chunk || '')}`,
-                        status: 'running'
-                      }
-                    : chapter
-                )
-              };
-            });
-          },
-          onCaseSearchStarted: (payload) => {
-            setNodeStageLabel('正在并行生成章节并检索案例');
-            setPipeline((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                caseSearch: {
-                  enabled: true,
-                  status: 'running',
-                  kbName: payload?.kb_name ? String(payload.kb_name) : undefined,
-                  datasetId: payload?.dataset_id ? String(payload.dataset_id) : undefined,
-                  queryQuestion: payload?.query_question ? String(payload.query_question) : question,
-                  outputText: '',
-                  cards: prev.caseSearch?.cards || []
-                }
-              };
-            });
-          },
-          onCaseSearchDone: (payload) => {
-            setStage('done');
-            setNodeStageLabel('生成完成');
-            setPipeline((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                caseSearch: {
-                  enabled: true,
-                  status: 'done',
-                  kbName: payload?.kb_name ? String(payload.kb_name) : undefined,
-                  datasetId: payload?.dataset_id ? String(payload.dataset_id) : undefined,
-                  queryQuestion: payload?.query_question ? String(payload.query_question) : question,
-                  outputText: payload?.output_text ? String(payload.output_text) : '',
-                  cards: Array.isArray(payload?.cards) ? payload.cards : []
-                }
-              };
-            });
-          },
-          onCaseSearchError: (payload) => {
-            if (payload?.status === 'skipped') {
-              setStage('done');
-              setNodeStageLabel('生成完成');
-            } else {
-              setStage('error');
-              setNodeStageLabel('案例检索失败');
-            }
-            setPipeline((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                caseSearch: {
-                  enabled: true,
-                  status: payload?.status === 'skipped' ? 'skipped' : 'error',
-                  kbName: payload?.kb_name ? String(payload.kb_name) : undefined,
-                  datasetId: payload?.dataset_id ? String(payload.dataset_id) : undefined,
-                  queryQuestion: payload?.query_question ? String(payload.query_question) : question,
-                  outputText: '',
-                  cards: prev.caseSearch?.cards || [],
-                  error: payload?.error ? String(payload.error) : payload?.message ? String(payload.message) : ''
-                }
-              };
-            });
-          },
-          onDone: (result) => {
-            setLoading(false);
-            setPipeline((prev) => {
-              const nextPipeline = {
-                ...result,
-                caseSearch: prev?.caseSearch || result.caseSearch
-              };
-              saveSnapshot(question, nextPipeline);
-              setSavedFlag(true);
-              return nextPipeline;
-            });
-            setStage('done');
-            setNodeStageLabel('生成完成');
-            message.success(`已生成 ${result.chapters.length} 个章节`);
-          }
-        }
-      );
-    } catch (error) {
-      setStage('error');
-      setNodeStageLabel('生成失败');
-      const err = error instanceof Error ? error.message : '未知错误';
-      if ((error as any).isUnauthorized) {
-        setLoggedOut();
-        message.error('登录已过期，请重新登录');
-        return;
-      }
-      message.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(mergedOutput);
-    message.success('已复制全部章节结果');
-  };
-
-  const handleDownload = () => {
-    downloadText('并行生成预案.md', mergedOutput);
-  };
-
-  const [questionPopoverOpen, setQuestionPopoverOpen] = useState(false);
-
-  const pickQuestion = useCallback((text: string) => {
-    setQuestion(text);
-    setQuestionPopoverOpen(false);
-  }, []);
-
-  const renderPresetPopover = () => {
-    const devices = DEVICE_QUESTIONS;
-    const { Text, Title } = Typography;
-    return (
-      <div style={{ maxWidth: 480, maxHeight: 400, overflow: 'auto' }}>
-        <div style={{ marginBottom: 12 }}>
-          <Title level={5} style={{ margin: '0 0 4px' }}>常规单故障问题</Title>
-          {devices.map((d) => (
-            <div key={`single-${d.device}`} style={{ marginBottom: 8 }}>
-              <Text strong style={{ fontSize: 12, color: '#2563eb' }}>{d.device}</Text>
-              {d.singleFault.map((q, i) => (
-                <div
-                  key={i}
-                  className="preset-item"
-                  onClick={() => pickQuestion(q)}
-                  style={{ cursor: 'pointer', fontSize: 12, lineHeight: 1.5, padding: '3px 6px', margin: '1px 0', borderRadius: 4 }}
-                >
-                  {q.length > 60 ? q.substring(0, 60) + '…' : q}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div>
-          <Title level={5} style={{ margin: '0 0 4px' }}>常规多故障问题</Title>
-          {devices.map((d) => (
-            <div key={`multi-${d.device}`} style={{ marginBottom: 8 }}>
-              <Text strong style={{ fontSize: 12, color: '#dc2626' }}>{d.device}</Text>
-              {d.multiFault.map((q, i) => (
-                <div
-                  key={i}
-                  className="preset-item"
-                  onClick={() => pickQuestion(q)}
-                  style={{ cursor: 'pointer', fontSize: 12, lineHeight: 1.5, padding: '3px 6px', margin: '1px 0', borderRadius: 4 }}
-                >
-                  {q.length > 60 ? q.substring(0, 60) + '…' : q}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderPlanPage = () => (
-    <div className="pipeline-page">
-          <Card title="故障场景输入" className="panel-card pipeline-input-card">
-            <TextArea
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              autoSize={{ minRows: 2, maxRows: 4 }}
-              placeholder="请输入故障问题或场景，例如：暴雨导致电缆沟进水..."
-            />
-            <Space className="action-row" wrap>
-              <Button type="primary" icon={<PlayCircleOutlined />} loading={loading} onClick={handleGenerate}>
-                运行流水线
-              </Button>
-               <Popover
-                content={renderPresetPopover()}
-                trigger="click"
-                open={questionPopoverOpen}
-                onOpenChange={setQuestionPopoverOpen}
-                placement="bottomLeft"
-                destroyTooltipOnHide
-              >
-                <Button>填入示例</Button>
-              </Popover>
-              <Button size="small" icon={<CopyOutlined />} disabled={!chapters.length} onClick={handleCopy}>
-                复制全部
-              </Button>
-              <Button size="small" icon={<DownloadOutlined />} disabled={!chapters.length} onClick={handleDownload}>
-                下载全部
-              </Button>
-              <Checkbox
-                className="action-toggle"
-                checked={enableCaseSearch}
-                onChange={(event) => setEnableCaseSearch(event.target.checked)}
-              >
-                开启案例搜索
-              </Checkbox>
-              <Checkbox
-                className="action-toggle"
-                checked={enableMultiFaultSearch}
-                onChange={(event) => setEnableMultiFaultSearch(event.target.checked)}
-              >
-                开启多故障检索
-              </Checkbox>
-            </Space>
-            <div className="status-box">
-              <Tag color={stage === 'error' ? 'red' : stage === 'done' ? 'green' : 'processing'}>
-                {stageText[stage]}
-              </Tag>
-              <Tag>{nodeStageLabel}</Tag>
-              {savedFlag ? <Tag color="success">已保存</Tag> : null}
-              {summaryTags.map((tag) => (
-                <Tag color="purple" key={tag}>
-                  {tag}
-                </Tag>
-              ))}
-            </div>
-          </Card>
-
-          <div
-            className="chapter-row"
-            style={
-              chapters.length
-                ? {
-                    gridTemplateColumns: showCompactLayout
-                      ? 'repeat(3, minmax(0, 1fr))'
-                      : `repeat(${chapters.length}, minmax(0, 1fr))`
-                  }
-                : undefined
-            }
-          >
-            {chapters.length ? (
-              chapters.map((chapter: PipelineChapter) => (
-                <Card
-                  key={`${chapter.chapterNo}-${chapter.title}`}
-                  className="panel-card chapter-panel"
-                  title={`${chapter.chapterNo} ${chapter.title}`}
-                  extra={
-                    <Tag color={chapter.status === 'done' ? 'green' : chapter.status === 'error' ? 'red' : 'processing'}>
-                      {chapterStatusText[chapter.status]}
-                    </Tag>
-                  }
-                >
-                  <div className="chapter-meta">耗时：{chapter.elapsedSec ?? '-'}s · 小节数：{chapter.sectionCount}</div>
-                  <Collapse
-                    size="small"
-                    className="chapter-collapse"
-                    items={[
-                      {
-                        key: 'template',
-                        label: '章节模板',
-                        children: <div className="chapter-template-text">{chapter.templateText}</div>
-                      }
-                    ]}
-                  />
-                    <div className="chapter-panel__body">
-                    {chapter.outputText ? (
-                      <RichTextRenderer text={chapter.outputText} normalize={false} stripMeta showModeTags={showModeTags} />
-                    ) : (
-                      <Typography.Text type="secondary">本章节暂无输出。</Typography.Text>
-                    )}
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="panel-card chapter-empty-card">
-                <Typography.Text type="secondary">
-                  运行后，每个章节会以一个独立竖向输出框显示在这里，并横向排列。
-                </Typography.Text>
-              </Card>
-            )}
-          </div>
-
-          <Card title="案例检索" className="panel-card chapter-empty-card">
-            {pipeline?.caseSearch?.enabled ? (
-              pipeline.caseSearch.status === 'done' && caseCards.length > 0 ? (
-                <>
-                  <div className="chapter-meta">
-                    知识库：{pipeline.caseSearch.displayName || pipeline.caseSearch.kbName || '-'} · 查询：{pipeline.caseSearch.queryQuestion || '-'}
-                  </div>
-                  <div className="case-card-grid">
-                    {caseCards.map((card, index) => (
-                      <div className="case-search-card" key={`${card.id || index}-${card.title}`}>
-                        <div className="case-search-card__header">
-                          <Tag color="blue">命中 {index + 1}</Tag>
-                        </div>
-                        <div className="case-search-card__title">{card.title || '未命名案例'}</div>
-                        <div className="case-search-card__meta-inline">
-                          {card.kbId ? (
-                            <span className="case-search-card__pill">
-                              <span className="case-search-card__pill-label">知识库ID</span>
-                              <span className="case-search-card__pill-value">{card.kbId}</span>
-                            </span>
-                          ) : null}
-                          {card.docId ? (
-                            <span className="case-search-card__pill">
-                              <span className="case-search-card__pill-label">文档ID</span>
-                              <span className="case-search-card__pill-value">{card.docId}</span>
-                            </span>
-                          ) : null}
-                          {card.relevance ? (
-                            <span className="case-search-card__pill case-search-card__pill--score">
-                              <span className="case-search-card__pill-label">相关性</span>
-                              <span className="case-search-card__pill-value">{card.relevance}</span>
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="case-search-card__excerpt">
-                          {card.excerpt ? (
-                            renderMarkedText(card.excerpt, { showModeTags })
-                          ) : (
-                            <Typography.Text type="secondary">无摘要</Typography.Text>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : pipeline.caseSearch.status === 'running' ? (
-                <Typography.Text type="secondary">正在检索案例，请稍候。</Typography.Text>
-              ) : pipeline.caseSearch.status === 'skipped' ? (
-                <Typography.Text type="secondary">
-                  未命中已建立知识库对应设备，已跳过案例检索。
-                </Typography.Text>
-              ) : pipeline.caseSearch.status === 'error' ? (
-                <Typography.Text type="danger">
-                  案例检索失败：{pipeline.caseSearch.error || '未知错误'}
-                </Typography.Text>
-              ) : (
-                <Typography.Text type="secondary">
-                  {stage !== 'idle' ? '等待识别设备…' : '等待开始案例检索。'}
-                </Typography.Text>
-              )
-            ) : (
-              <Typography.Text type="secondary">未开启案例搜索。</Typography.Text>
-            )}
-          </Card>
-        </div>
-  );
 
   return (
     <Layout className={`app-shell ${darkMode ? 'app-shell--dark' : ''}`}>
@@ -985,7 +135,7 @@ export default function App() {
               电力设备智能预案生成系统
             </Typography.Title>
           </div>
-          {authStatus === 'authenticated' ? (
+          {auth.authStatus === 'authenticated' ? (
             <div className="app-header__controls">
               <div className="app-user-bar">
                 <div className="app-user-toggle">
@@ -993,7 +143,7 @@ export default function App() {
                   <Switch size="small" checked={darkMode} onChange={setDarkMode} />
                 </div>
                 <Tag color="blue">
-                  当前用户：{currentUsername} · 用户组：{currentUserGroup}
+                  当前用户：{auth.currentUsername} · 用户组：{auth.currentUserGroup}
                 </Tag>
                 <Button size="small" onClick={handleLogout}>
                   登出
@@ -1011,16 +161,16 @@ export default function App() {
                   </div>
                 </div>
                 <div className="app-route-tabs">
-                {routeItems.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className={`app-route-tab ${route === item.key ? 'app-route-tab--active' : ''}`}
-                    onClick={() => navigateRoute(item.key)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                  {routeItems.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={`app-route-tab ${route === item.key ? 'app-route-tab--active' : ''}`}
+                      onClick={() => navigateRoute(item.key)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1028,16 +178,18 @@ export default function App() {
         </div>
       </Header>
       <Content className="app-content">
-        {authStatus === 'checking' ? (
+        {auth.authStatus === 'checking' ? (
           <Card className="panel-card chapter-empty-card auth-wait-card">
             <Typography.Text type="secondary">正在校验登录状态，请稍候。</Typography.Text>
           </Card>
         ) : null}
-        {authStatus === 'unauthenticated' && route === 'login' ? (
-          <LoginPage loading={loginLoading} errorMessage={loginErrorMessage} onSubmit={handleLogin} />
+        {auth.authStatus === 'unauthenticated' && route === 'login' ? (
+          <LoginPage loading={auth.loginLoading} errorMessage={auth.loginErrorMessage} onSubmit={handleLogin} />
         ) : null}
-        {authStatus === 'authenticated' && route === 'plan' ? renderPlanPage() : null}
-        {authStatus === 'authenticated' && route === 'trace' ? (
+        {auth.authStatus === 'authenticated' && route === 'plan' ? (
+          <PlanPage plan={plan} showModeTags={showModeTags} showCompactLayout={showCompactLayout} />
+        ) : null}
+        {auth.authStatus === 'authenticated' && route === 'trace' ? (
           <Suspense
             fallback={
               <Card className="panel-card chapter-empty-card auth-wait-card">
@@ -1045,10 +197,10 @@ export default function App() {
               </Card>
             }
           >
-            <TraceGraphPage pipeline={pipeline} darkMode={darkMode} />
+            <TraceGraphPage pipeline={plan.pipeline} darkMode={darkMode} />
           </Suspense>
         ) : null}
-        {authStatus === 'authenticated' && route === 'quality' ? (
+        {auth.authStatus === 'authenticated' && route === 'quality' ? (
           <Suspense
             fallback={
               <Card className="panel-card chapter-empty-card auth-wait-card">
@@ -1057,13 +209,13 @@ export default function App() {
             }
           >
             <QualityReviewPage
-              currentUserGroup={currentUserGroup}
+              currentUserGroup={auth.currentUserGroup}
               showModeTags={showModeTags}
               compactLayout={showCompactLayout}
             />
           </Suspense>
         ) : null}
-        {authStatus === 'authenticated' && route === 'template' ? (
+        {auth.authStatus === 'authenticated' && route === 'template' ? (
           <Suspense
             fallback={
               <Card className="panel-card chapter-empty-card auth-wait-card">
@@ -1071,7 +223,7 @@ export default function App() {
               </Card>
             }
           >
-            <TemplateViewPage currentUserGroup={currentUserGroup} />
+            <TemplateViewPage currentUserGroup={auth.currentUserGroup} />
           </Suspense>
         ) : null}
       </Content>
