@@ -1,90 +1,12 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, Empty, Input, Segmented, Space, Tag, Typography, message } from 'antd';
-import { RichTextRenderer } from '../components/RichTextRenderer';
-import type { PipelineRunResponse } from '../types/plan';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { message } from 'antd';
+import { QualityChapterReviewGrid } from '../features/quality/QualityChapterReviewGrid';
+import { QualityPromptPanel } from '../features/quality/QualityPromptPanel';
+import { fetchTemplatePrompts, saveTemplatePrompt } from '../features/quality/qualityApi';
+import { loadPromptCache, loadReviewCache, loadSavedPipeline, savePromptCache, saveReviewCache } from '../features/quality/qualityStorage';
+import type { LeftCardView, PromptConfig, ReviewStatus, StreamTarget } from '../features/quality/types';
 
-const PLAN_SNAPSHOT_KEY = 'llmkg_saved_plan_snapshot_v1';
-const PROMPT_CACHE_KEY = 'llmkg_template_prompts_cache_v1';
-const REVIEW_CACHE_KEY = 'llmkg_quality_review_cache_v1';
 const BATCH_REVIEW_CONCURRENCY = 6;
-const { TextArea } = Input;
-
-type PromptConfig = {
-  prompt_id: string;
-  prompt_key: string;
-  title: string;
-  prompt_text: string;
-  order_no: number;
-  default?: {
-    id?: string;
-    prompt_key?: string;
-    title?: string;
-    prompt_text?: string;
-    order_no?: number;
-  };
-};
-
-type ReviewStatus = 'idle' | 'started' | 'thinking' | 'generating' | 'done' | 'error';
-type LeftCardView = 'raw' | 'rawEvaluation' | 'optimizedEvaluation';
-type StreamTarget = 'optimize' | 'rawEvaluate' | 'optimizedEvaluate';
-
-function loadSavedPipeline(): PipelineRunResponse | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(PLAN_SNAPSHOT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.pipeline && typeof parsed.pipeline === 'object' ? (parsed.pipeline as PipelineRunResponse) : null;
-  } catch {
-    return null;
-  }
-}
-
-function loadPromptCache(): PromptConfig[] | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(PROMPT_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as PromptConfig[]) : null;
-  } catch {
-    return null;
-  }
-}
-
-function savePromptCache(prompts: PromptConfig[]) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(PROMPT_CACHE_KEY, JSON.stringify(prompts));
-}
-
-type ReviewCache = {
-  optimizeStatusMap: Record<string, ReviewStatus>;
-  optimizeReasoningMap: Record<string, string>;
-  optimizedMap: Record<string, string>;
-  rawEvaluateStatusMap: Record<string, ReviewStatus>;
-  rawEvaluateReasoningMap: Record<string, string>;
-  rawEvaluationMap: Record<string, string>;
-  optimizedEvaluateStatusMap: Record<string, ReviewStatus>;
-  optimizedEvaluateReasoningMap: Record<string, string>;
-  optimizedEvaluationMap: Record<string, string>;
-  leftCardViewMap: Record<string, LeftCardView>;
-};
-
-function loadReviewCache(): ReviewCache | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(REVIEW_CACHE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as ReviewCache;
-  } catch {
-    return null;
-  }
-}
-
-function saveReviewCache(data: ReviewCache) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(REVIEW_CACHE_KEY, JSON.stringify(data));
-}
 
 function isRunningStatus(status: ReviewStatus) {
   return status === 'started' || status === 'thinking' || status === 'generating';
@@ -136,12 +58,7 @@ export function QualityReviewPage({
     }
     setPromptLoading(true);
     try {
-      const response = await fetch('/api/template/prompts');
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || `请求失败：${response.status}`);
-      }
-      const items = Array.isArray(data?.prompts) ? (data.prompts as PromptConfig[]) : [];
+      const items = await fetchTemplatePrompts();
       setPrompts(items);
       savePromptCache(items);
     } catch (error) {
@@ -194,21 +111,7 @@ export function QualityReviewPage({
   const savePrompt = async (promptKey: string) => {
     setSavingPromptKey(promptKey);
     try {
-      const response = await fetch('/api/template/prompt/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          prompt_key: promptKey,
-          prompt_text: promptDrafts[promptKey] || ''
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || `请求失败：${response.status}`);
-      }
-      const updated = data?.prompt as PromptConfig;
+      const updated = await saveTemplatePrompt(promptKey, promptDrafts[promptKey] || '');
       setPrompts((prev) => {
         const next = prev.map((item) => (item.prompt_key === promptKey ? updated : item));
         savePromptCache(next);
@@ -565,297 +468,63 @@ export function QualityReviewPage({
 
   return (
     <div className="pipeline-page">
-      <div className="quality-summary-grid">
-        <Card title="格式优化与质量评估" className="panel-card">
-          <Typography.Paragraph className="app-subtitle">
-            当前页面支持对已生成预案按章节执行格式优化与质量评估，结果会流式展示；思考过程先展示 reasoning，随后自动切换为模型正式输出。顶部提示词支持缓存、编辑、保存和刷新。
-          </Typography.Paragraph>
-          <div className="quality-actions">
-            <Space wrap>
-              <Button
-                type="primary"
-                loading={batchOptimizeLoading}
-                disabled={!chapters.length || batchBusy}
-                onClick={() => void runBatchReview('optimize')}
-              >
-                全部优化
-              </Button>
-              <Button
-                loading={batchRawEvaluateLoading}
-                disabled={!hasBatchRawEvaluableChapters || batchBusy}
-                onClick={() => void runBatchReview('rawEvaluate')}
-              >
-                全部评估原文
-              </Button>
-              <Button
-                loading={batchOptimizedEvaluateLoading}
-                disabled={!hasBatchOptimizedEvaluableChapters || batchBusy}
-                onClick={() => void runBatchReview('optimizedEvaluate')}
-              >
-                全部评估优化后
-              </Button>
-            </Space>
-          </div>
-          <div className="status-box">
-            <Tag color="blue">按章流式处理</Tag>
-            <Tag>批量并发数 {BATCH_REVIEW_CONCURRENCY}</Tag>
-            <Tag>{chapters.length} 个章节</Tag>
-            <Tag>{promptLoading ? '正在加载提示词' : `${prompts.length} 条提示词`}</Tag>
-          </div>
-        </Card>
-        {['optimize_prompt', 'evaluate_prompt'].map((promptKey) => {
-          const prompt = prompts.find((item) => item.prompt_key === promptKey);
-          const editing = canManagePrompts && editingPromptKey === promptKey;
-          return (
-            <Card key={promptKey} title={prompt?.title || promptKey} className="panel-card">
-              <div className="quality-actions">
-                <Space wrap>
-                  {canManagePrompts ? (
-                    !editing ? (
-                      <Button size="small" onClick={() => prompt && beginEditPrompt(prompt)}>
-                        编辑
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          size="small"
-                          type="primary"
-                          loading={savingPromptKey === promptKey}
-                          onClick={() => savePrompt(promptKey)}
-                        >
-                          保存
-                        </Button>
-                        <Button size="small" onClick={cancelEditPrompt}>
-                          取消
-                        </Button>
-                      </>
-                    )
-                  ) : null}
-                  <Button size="small" loading={promptLoading} onClick={() => loadPrompts(true)}>
-                    刷新
-                  </Button>
-                </Space>
-              </div>
-              {editing ? (
-                <TextArea
-                  className="quality-prompt-editor"
-                  value={promptDrafts[promptKey] || ''}
-                  autoSize={false}
-                  onChange={(event) =>
-                    setPromptDrafts((prev) => ({
-                      ...prev,
-                      [promptKey]: event.target.value
-                    }))
-                  }
-                />
-              ) : (
-                <div className="template-field__value template-field__value--long quality-prompt-preview">
-                  {prompt?.prompt_text || '暂无提示词内容。'}
-                </div>
-              )}
-            </Card>
-          );
-        })}
-      </div>
+      <QualityPromptPanel
+        chaptersLength={chapters.length}
+        promptLoading={promptLoading}
+        prompts={prompts}
+        canManagePrompts={canManagePrompts}
+        editingPromptKey={editingPromptKey}
+        promptDrafts={promptDrafts}
+        savingPromptKey={savingPromptKey}
+        batchOptimizeLoading={batchOptimizeLoading}
+        batchRawEvaluateLoading={batchRawEvaluateLoading}
+        batchOptimizedEvaluateLoading={batchOptimizedEvaluateLoading}
+        batchBusy={batchBusy}
+        hasBatchRawEvaluableChapters={hasBatchRawEvaluableChapters}
+        hasBatchOptimizedEvaluableChapters={hasBatchOptimizedEvaluableChapters}
+        onRunBatchReview={(target) => void runBatchReview(target)}
+        onBeginEditPrompt={beginEditPrompt}
+        onCancelEditPrompt={cancelEditPrompt}
+        onSavePrompt={(promptKey) => void savePrompt(promptKey)}
+        onLoadPrompts={(forceRefresh) => void loadPrompts(forceRefresh)}
+        onChangePromptDraft={(promptKey, value) =>
+          setPromptDrafts((prev) => ({
+            ...prev,
+            [promptKey]: value
+          }))
+        }
+      />
 
-      {chapters.length ? (
-        <div
-          className="quality-compare-grid"
-          style={
-            compactLayout
-              ? {
-                  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))'
-                }
-              : undefined
-          }
-        >
-          {chapters.map((chapter) => {
-            const leftCardView = leftCardViewMap[chapter.chapterNo] || 'raw';
-            const optimizeReasoningText = optimizeReasoningMap[chapter.chapterNo] || '';
-            const rawEvaluateReasoningText = rawEvaluateReasoningMap[chapter.chapterNo] || '';
-            const optimizedEvaluateReasoningText = optimizedEvaluateReasoningMap[chapter.chapterNo] || '';
-            const optimizedText = optimizedMap[chapter.chapterNo] || '';
-            const rawEvaluationText = rawEvaluationMap[chapter.chapterNo] || '';
-            const optimizedEvaluationText = optimizedEvaluationMap[chapter.chapterNo] || '';
-            const optimizeStatus = optimizeStatusMap[chapter.chapterNo] || 'idle';
-            const rawEvaluateStatus = rawEvaluateStatusMap[chapter.chapterNo] || 'idle';
-            const optimizedEvaluateStatus = optimizedEvaluateStatusMap[chapter.chapterNo] || 'idle';
-            const optimizeRunning = isRunningStatus(optimizeStatus);
-            const rawEvaluateRunning = isRunningStatus(rawEvaluateStatus);
-            const optimizedEvaluateRunning = isRunningStatus(optimizedEvaluateStatus);
-            const cardBusy = optimizeRunning || rawEvaluateRunning || optimizedEvaluateRunning;
-            const canOptimizedEvaluate = Boolean(optimizedText.trim()) && !optimizeRunning;
-            const optimizeDisplayText = optimizedText || optimizeReasoningText;
-            const rawEvaluationDisplayText = rawEvaluationText || rawEvaluateReasoningText;
-            const optimizedEvaluationDisplayText = optimizedEvaluationText || optimizedEvaluateReasoningText;
-            const leftBodyText =
-              leftCardView === 'raw'
-                ? chapter.outputText
-                : leftCardView === 'rawEvaluation'
-                  ? rawEvaluationDisplayText
-                  : optimizedEvaluationDisplayText;
-            const leftEmptyText =
-              leftCardView === 'raw'
-                ? '暂无原文内容。'
-                : leftCardView === 'rawEvaluation'
-                  ? '点击“评估原文”按钮后在此显示原文评估过程与结果。'
-                  : '点击“评估优化后”按钮后在此显示优化后评估过程与结果。';
-            const leftMetaText =
-              leftCardView === 'raw'
-                ? `小节数：${chapter.sectionCount} · 耗时：${chapter.elapsedSec ?? '-'}s`
-                : leftCardView === 'rawEvaluation'
-                  ? '展示原文评估 reasoning 与最终评估结果'
-                  : '展示优化后评估 reasoning 与最终评估结果';
-            const optimizeLabelMap: Record<ReviewStatus, string> = {
-              idle: '待优化',
-              started: '已开始',
-              thinking: '思考中',
-              generating: '优化中',
-              done: '优化完成',
-              error: '优化失败'
-            };
-            const rawEvaluateLabelMap: Record<ReviewStatus, string> = {
-              idle: '待评估原文',
-              started: '已开始',
-              thinking: '思考中',
-              generating: '评估中',
-              done: '原文评估完成',
-              error: '原文评估失败'
-            };
-            const optimizedEvaluateLabelMap: Record<ReviewStatus, string> = {
-              idle: '待评估优化后',
-              started: '已开始',
-              thinking: '思考中',
-              generating: '评估中',
-              done: '优化评估完成',
-              error: '优化评估失败'
-            };
-            const optimizeColorMap: Record<ReviewStatus, string> = {
-              idle: 'default',
-              started: 'processing',
-              thinking: 'purple',
-              generating: 'cyan',
-              done: 'green',
-              error: 'red'
-            };
-            const evaluateColorMap: Record<ReviewStatus, string> = {
-              idle: 'default',
-              started: 'processing',
-              thinking: 'purple',
-              generating: 'cyan',
-              done: 'green',
-              error: 'red'
-            };
-            return (
-              <Fragment key={`quality-${chapter.chapterNo}`}>
-                <div className="quality-card-shell">
-                  <Card
-                    className="panel-card quality-plan-card"
-                    title={`${chapter.chapterNo} ${chapter.title}`}
-                    extra={
-                      <Segmented
-                        size="small"
-                        value={leftCardView}
-                        options={[
-                          { label: '原文', value: 'raw' },
-                          { label: '原文评估', value: 'rawEvaluation' },
-                          { label: '优化评估', value: 'optimizedEvaluation' }
-                        ]}
-                        onChange={(value) =>
-                          setLeftCardViewMap((prev) => ({
-                            ...prev,
-                            [chapter.chapterNo]: value as LeftCardView
-                          }))
-                        }
-                      />
-                    }
-                  >
-                    <div className="chapter-meta">{leftMetaText}</div>
-                    <div className="quality-actions">
-                      <Space wrap>
-                        <Button
-                          size="small"
-                          loading={optimizeRunning}
-                          disabled={cardBusy}
-                          onClick={() => handleOptimize(chapter.chapterNo, chapter.outputText, chapter.templateText)}
-                        >
-                          优化
-                        </Button>
-                        <Button
-                          size="small"
-                          loading={rawEvaluateRunning}
-                          disabled={cardBusy}
-                          onClick={() => handleRawEvaluate(chapter.chapterNo, chapter.outputText, chapter.templateText)}
-                        >
-                          评估原文
-                        </Button>
-                        <Button
-                          size="small"
-                          loading={optimizedEvaluateRunning}
-                          disabled={cardBusy || !canOptimizedEvaluate}
-                          onClick={() =>
-                            handleOptimizedEvaluate(chapter.chapterNo, optimizedText, chapter.templateText)
-                          }
-                        >
-                          评估优化后
-                        </Button>
-                      </Space>
-                    </div>
-                    <div
-                      className="quality-plan-card__body"
-                      ref={(node) => {
-                        leftBodyRefs.current[chapter.chapterNo] = node;
-                      }}
-                    >
-                      <RichTextRenderer
-                        text={leftBodyText}
-                        normalize={false}
-                        stripMeta
-                        emptyText={leftEmptyText}
-                        showModeTags={showModeTags}
-                      />
-                    </div>
-                  </Card>
-                </div>
-
-                <Card
-                  className="panel-card quality-plan-card"
-                  title={`${chapter.chapterNo} ${chapter.title} · 优化后`}
-                  extra={
-                    <Space direction="vertical" size={6}>
-                      <Tag color={optimizeColorMap[optimizeStatus]}>{optimizeLabelMap[optimizeStatus]}</Tag>
-                      <Tag color={evaluateColorMap[rawEvaluateStatus]}>{rawEvaluateLabelMap[rawEvaluateStatus]}</Tag>
-                      <Tag color={evaluateColorMap[optimizedEvaluateStatus]}>
-                        {optimizedEvaluateLabelMap[optimizedEvaluateStatus]}
-                      </Tag>
-                    </Space>
-                  }
-                >
-                  <div className="chapter-meta">展示优化 reasoning 与优化后正文</div>
-                  <div
-                    className="quality-plan-card__body"
-                    ref={(node) => {
-                      rightBodyRefs.current[chapter.chapterNo] = node;
-                    }}
-                  >
-                    <RichTextRenderer
-                      text={optimizeDisplayText}
-                      normalize={false}
-                      stripMeta
-                      emptyText="点击左侧“优化”按钮后在此流式显示优化过程与输出结果。"
-                      showModeTags={showModeTags}
-                    />
-                  </div>
-                </Card>
-              </Fragment>
-            );
-          })}
-        </div>
-      ) : (
-        <Card className="panel-card chapter-empty-card">
-          <Empty description="未发现本地持久化的预案结果，请先在预案生成页完成一次成功生成。" />
-        </Card>
-      )}
+      <QualityChapterReviewGrid
+        chapters={chapters}
+        compactLayout={compactLayout}
+        showModeTags={showModeTags}
+        leftBodyRefs={leftBodyRefs}
+        rightBodyRefs={rightBodyRefs}
+        optimizeReasoningMap={optimizeReasoningMap}
+        rawEvaluateReasoningMap={rawEvaluateReasoningMap}
+        optimizedEvaluateReasoningMap={optimizedEvaluateReasoningMap}
+        optimizedMap={optimizedMap}
+        rawEvaluationMap={rawEvaluationMap}
+        optimizedEvaluationMap={optimizedEvaluationMap}
+        optimizeStatusMap={optimizeStatusMap}
+        rawEvaluateStatusMap={rawEvaluateStatusMap}
+        optimizedEvaluateStatusMap={optimizedEvaluateStatusMap}
+        leftCardViewMap={leftCardViewMap}
+        onChangeLeftCardView={(chapterNo, value) =>
+          setLeftCardViewMap((prev) => ({
+            ...prev,
+            [chapterNo]: value
+          }))
+        }
+        onOptimize={(chapterNo, text, chapterTemplateText) => void handleOptimize(chapterNo, text, chapterTemplateText)}
+        onRawEvaluate={(chapterNo, text, chapterTemplateText) =>
+          void handleRawEvaluate(chapterNo, text, chapterTemplateText)
+        }
+        onOptimizedEvaluate={(chapterNo, text, chapterTemplateText) =>
+          void handleOptimizedEvaluate(chapterNo, text, chapterTemplateText)
+        }
+      />
     </div>
   );
 }

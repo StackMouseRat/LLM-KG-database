@@ -1,53 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Empty, Input, Select, Space, Tag, Typography, message } from 'antd';
-
-const { TextArea } = Input;
-const TEMPLATE_CACHE_KEY = 'llmkg_template_sections_cache_v1';
-
-type TemplateSection = {
-  section_id: string;
-  section_no: string;
-  title: string;
-  level: number;
-  order_no: number;
-  source_type: string;
-  kg_field?: string;
-  fixed_text?: string;
-  gen_instruction?: string;
-  default?: {
-    source_type?: string;
-    fixed_text?: string;
-    gen_instruction?: string;
-  };
-};
-
-const SOURCE_TYPE_OPTIONS = ['KG', 'GEN', 'FIXED', 'KG+GEN', 'FIXED+GEN', 'REFGEN'];
-
-function normalizeSourceType(value: string) {
-  return String(value || '').trim().toUpperCase();
-}
-
-function toStoredSourceType(value: string) {
-  const normalized = normalizeSourceType(value);
-  return normalized === 'REFGEN' ? 'REFGEN' : normalized.toLowerCase();
-}
-
-function loadTemplateCache(): TemplateSection[] | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(TEMPLATE_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as TemplateSection[]) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveTemplateCache(sections: TemplateSection[]) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(TEMPLATE_CACHE_KEY, JSON.stringify(sections));
-}
+import { Button, Card, Empty, Space, Tag, Typography, message } from 'antd';
+import { TemplateSectionCard } from '../features/template/TemplateSectionCard';
+import { fetchTemplateSections, resetTemplateSection, saveTemplateSection } from '../features/template/templateApi';
+import { loadTemplateCache, saveTemplateCache } from '../features/template/templateStorage';
+import type { TemplateSection } from '../features/template/types';
 
 export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admin' | 'user' }) {
   const [sections, setSections] = useState<TemplateSection[]>(() => loadTemplateCache() || []);
@@ -68,12 +24,7 @@ export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admi
     }
     setLoading(true);
     try {
-      const response = await fetch('/api/template/sections');
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || `请求失败：${response.status}`);
-      }
-      const items = Array.isArray(data?.sections) ? data.sections : [];
+      const items = await fetchTemplateSections();
       setSections(items);
       saveTemplateCache(items);
     } catch (error) {
@@ -119,23 +70,7 @@ export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admi
     if (!draft) return;
     setSavingId(sectionId);
     try {
-      const response = await fetch('/api/template/section/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          section_id: sectionId,
-          source_type: toStoredSourceType(draft.source_type || ''),
-          fixed_text: draft.fixed_text || '',
-          gen_instruction: draft.gen_instruction || ''
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || `请求失败：${response.status}`);
-      }
-      const updated = data?.section as TemplateSection;
+      const updated = await saveTemplateSection(sectionId, draft);
       setSections((prev) => {
         const next = prev.map((item) => (item.section_id === sectionId ? updated : item));
         saveTemplateCache(next);
@@ -153,18 +88,7 @@ export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admi
   const resetSection = async (sectionId: string) => {
     setSavingId(sectionId);
     try {
-      const response = await fetch('/api/template/section/reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ section_id: sectionId })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || `请求失败：${response.status}`);
-      }
-      const updated = data?.section as TemplateSection;
+      const updated = await resetTemplateSection(sectionId);
       setSections((prev) => {
         const next = prev.map((item) => (item.section_id === sectionId ? updated : item));
         saveTemplateCache(next);
@@ -209,92 +133,19 @@ export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admi
             const editing = editingId === section.section_id;
             const draft = drafts[section.section_id] || section;
             return (
-              <Card
+              <TemplateSectionCard
                 key={section.section_id}
-                className="panel-card template-card"
-                title={`${section.section_no} ${section.title}`}
-                extra={<Tag color="blue">L{section.level}</Tag>}
-              >
-                <div className="template-card__meta">
-                  <Tag color="purple">{normalizeSourceType(section.source_type) || '未设置'}</Tag>
-                  {section.kg_field ? <Tag color="cyan">{section.kg_field}</Tag> : null}
-                </div>
-
-                <div className="template-card__body">
-                  <div className="template-field">
-                    <div className="template-field__label">source_type</div>
-                    {editing ? (
-                      <Select
-                        value={normalizeSourceType(draft.source_type)}
-                        options={SOURCE_TYPE_OPTIONS.map((item) => ({ value: item, label: item }))}
-                        onChange={(value) => updateDraft(section.section_id, { source_type: value })}
-                      />
-                    ) : (
-                      <div className="template-field__value">{normalizeSourceType(section.source_type) || '-'}</div>
-                    )}
-                  </div>
-
-                  <div className="template-field">
-                    <div className="template-field__label">fixed_text</div>
-                    {editing ? (
-                      <TextArea
-                        value={draft.fixed_text}
-                        autoSize={{ minRows: 4, maxRows: 8 }}
-                        onChange={(event) =>
-                          updateDraft(section.section_id, { fixed_text: event.target.value })
-                        }
-                      />
-                    ) : (
-                      <div className="template-field__value template-field__value--long">
-                        {section.fixed_text || '-'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="template-field">
-                    <div className="template-field__label">gen_instruction</div>
-                    {editing ? (
-                      <TextArea
-                        value={draft.gen_instruction}
-                        autoSize={{ minRows: 4, maxRows: 8 }}
-                        onChange={(event) =>
-                          updateDraft(section.section_id, { gen_instruction: event.target.value })
-                        }
-                      />
-                    ) : (
-                      <div className="template-field__value template-field__value--long">
-                        {section.gen_instruction || '-'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {canManageTemplate ? (
-                  <Space className="template-card__actions" wrap>
-                    {!editing ? (
-                      <Button onClick={() => beginEdit(section)}>编辑</Button>
-                    ) : (
-                      <>
-                        <Button
-                          type="primary"
-                          loading={savingId === section.section_id}
-                          onClick={() => saveSection(section.section_id)}
-                        >
-                          保存
-                        </Button>
-                        <Button onClick={cancelEdit}>取消</Button>
-                      </>
-                    )}
-                    <Button
-                      danger
-                      loading={savingId === section.section_id}
-                      onClick={() => resetSection(section.section_id)}
-                    >
-                      恢复默认
-                    </Button>
-                  </Space>
-                ) : null}
-              </Card>
+                section={section}
+                draft={draft}
+                editing={editing}
+                canManageTemplate={canManageTemplate}
+                saving={savingId === section.section_id}
+                onBeginEdit={beginEdit}
+                onCancelEdit={cancelEdit}
+                onUpdateDraft={updateDraft}
+                onSaveSection={(sectionId) => void saveSection(sectionId)}
+                onResetSection={(sectionId) => void resetSection(sectionId)}
+              />
             );
           })}
         </div>

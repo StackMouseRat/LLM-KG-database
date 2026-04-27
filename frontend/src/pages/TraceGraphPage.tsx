@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Card, Empty, Spin, Tag, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Card, Empty, Spin, Tag, Typography } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
+import {
+  buildTraceCacheSignature,
+  loadTraceCache,
+  markTraceAnimationPlayed,
+  saveTraceCache,
+  saveTraceViewport,
+  type TraceViewport
+} from '../features/trace/traceCache';
 import { fetchTraceSubgraph } from '../services/planApi';
 import type { PipelineRunResponse, PlanTrace, TraceNode } from '../types/plan';
-import { buildTraceAnimationSeedData } from './traceGraphScene';
+import { buildTraceAnimationSeedData, buildTraceGraphData } from './traceGraphScene';
 import { buildTraceAnimationPlans, createTraceAnimationController } from './traceGraphAnimation';
 
 interface TraceGraphPageProps {
@@ -10,53 +19,123 @@ interface TraceGraphPageProps {
   darkMode: boolean;
 }
 
+function readGraphViewport(graph: any): TraceViewport | null {
+  if (!graph) return null;
+  try {
+    const rawPosition = graph.getPosition?.();
+    const position: [number, number] = Array.isArray(rawPosition)
+      ? [Number(rawPosition[0] || 0), Number(rawPosition[1] || 0)]
+      : [Number(rawPosition?.x || 0), Number(rawPosition?.y || 0)];
+    return {
+      zoom: Number(graph.getZoom?.() || 1),
+      position,
+      rotation: typeof graph.getRotation === 'function' ? Number(graph.getRotation() || 0) : undefined
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function restoreGraphViewport(graph: any, viewport?: TraceViewport) {
+  if (!graph || !viewport) return;
+  if (typeof viewport.rotation === 'number' && typeof graph.rotateTo === 'function') {
+    await graph.rotateTo(viewport.rotation);
+  }
+  if (typeof graph.zoomTo === 'function') {
+    await graph.zoomTo(viewport.zoom || 1);
+  }
+  if (typeof graph.translateTo === 'function') {
+    await graph.translateTo(viewport.position);
+  }
+}
+
 export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
   const graphContainerRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<any>(null);
+  const animationCompletedRef = useRef(false);
   const [trace, setTrace] = useState<PlanTrace | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorText, setErrorText] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState('');
+  const [shouldPlayAnimation, setShouldPlayAnimation] = useState(false);
+  const [animationNonce, setAnimationNonce] = useState(0);
   const [graphViewport, setGraphViewport] = useState({ width: 1680, height: 1080 });
+  const traceSignature = useMemo(() => buildTraceCacheSignature(pipeline), [pipeline]);
+
+  const selectDefaultNode = useCallback((nextTrace: PlanTrace) => {
+    const focusNode = nextTrace.graph.nodes.find((node) => node.isFocus) || nextTrace.graph.nodes[0];
+    setSelectedNodeId(focusNode?.id || '');
+  }, []);
+
+  const loadTraceData = useCallback(
+    async (forceRefresh = false) => {
+      if (!pipeline || !traceSignature) {
+        setTrace(null);
+        setSelectedNodeId('');
+        setErrorText('');
+        setShouldPlayAnimation(false);
+        return;
+      }
+
+      if (!forceRefresh) {
+        const cached = loadTraceCache(traceSignature);
+        if (cached?.trace) {
+          setTrace(cached.trace);
+          selectDefaultNode(cached.trace);
+          setErrorText('');
+          animationCompletedRef.current = Boolean(cached.animationPlayed);
+          setShouldPlayAnimation(!cached.animationPlayed);
+          setAnimationNonce((value) => value + 1);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (forceRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setErrorText('');
+
+      try {
+        const nextTrace = await fetchTraceSubgraph({
+          question: pipeline.question,
+          faultScene: pipeline.basicInfo.faultScene,
+          graphMaterial: pipeline.basicInfo.graphMaterial
+        });
+        saveTraceCache(traceSignature, nextTrace, false);
+        animationCompletedRef.current = false;
+        setTrace(nextTrace);
+        selectDefaultNode(nextTrace);
+        setShouldPlayAnimation(true);
+        setAnimationNonce((value) => value + 1);
+      } catch (error) {
+        setTrace(null);
+        setSelectedNodeId('');
+        animationCompletedRef.current = false;
+        setShouldPlayAnimation(false);
+        setErrorText(error instanceof Error ? error.message : '图谱溯源加载失败');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [pipeline, selectDefaultNode, traceSignature]
+  );
 
   useEffect(() => {
     if (!pipeline) {
       setTrace(null);
       setSelectedNodeId('');
       setErrorText('');
+      setShouldPlayAnimation(false);
       return;
     }
 
-    let cancelled = false;
-    setLoading(true);
-    setErrorText('');
-
-    void fetchTraceSubgraph({
-      question: pipeline.question,
-      faultScene: pipeline.basicInfo.faultScene,
-      graphMaterial: pipeline.basicInfo.graphMaterial
-    })
-      .then((nextTrace) => {
-        if (cancelled) return;
-        setTrace(nextTrace);
-        const focusNode = nextTrace.graph.nodes.find((node) => node.isFocus) || nextTrace.graph.nodes[0];
-        setSelectedNodeId(focusNode?.id || '');
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        setTrace(null);
-        setSelectedNodeId('');
-        setErrorText(error instanceof Error ? error.message : '图谱溯源加载失败');
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [pipeline]);
+    void loadTraceData(false);
+  }, [loadTraceData, pipeline]);
 
   const selectedNode = useMemo(
     () => trace?.graph.nodes.find((node) => node.id === selectedNodeId) || null,
@@ -76,16 +155,25 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
   useEffect(() => {
     if (!graphContainerRef.current) return;
     if (!trace?.graph?.nodes?.length) return;
+    const playAnimation = shouldPlayAnimation && !animationCompletedRef.current;
     let cancelled = false;
     let currentGraph: any = null;
     let animationController: { start: () => Promise<void>; stop: () => void } | null = null;
+
+    const persistCurrentViewport = () => {
+      const viewport = readGraphViewport(currentGraph || graphRef.current);
+      if (!viewport) return;
+      saveTraceViewport(traceSignature, viewport);
+    };
 
     void import('@antv/g6').then(async ({ Graph }) => {
       if (cancelled || !graphContainerRef.current) return;
       const width = graphContainerRef.current.clientWidth || 1680;
       const height = graphContainerRef.current.clientHeight || 1080;
       const { rootId } = buildTraceAnimationPlans(trace);
-      const graphData = buildTraceAnimationSeedData(trace, darkMode, width, height, rootId);
+      const graphData = playAnimation
+        ? buildTraceAnimationSeedData(trace, darkMode, width, height, rootId)
+        : buildTraceGraphData(trace, darkMode, width, height).graphData;
       setGraphViewport({ width, height });
 
       const graph = new Graph({
@@ -142,6 +230,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
           setSelectedNodeId(nextId);
         }
       });
+      graph.on('aftertransform', persistCurrentViewport);
 
       await graph.render();
       if (cancelled) {
@@ -150,25 +239,35 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       }
       currentGraph = graph;
       graphRef.current = graph;
-      animationController = createTraceAnimationController({
-        trace,
-        graph,
-        darkMode,
-        width,
-        height
-      });
-      void animationController.start();
+      if (!playAnimation) {
+        await restoreGraphViewport(graph, loadTraceCache(traceSignature)?.viewport);
+      }
+      if (playAnimation) {
+        animationController = createTraceAnimationController({
+          trace,
+          graph,
+          darkMode,
+          width,
+          height
+        });
+        void animationController.start().then(() => {
+          if (cancelled) return;
+          animationCompletedRef.current = true;
+          markTraceAnimationPlayed(traceSignature);
+        });
+      }
     });
 
     return () => {
       cancelled = true;
+      persistCurrentViewport();
       animationController?.stop();
       if (currentGraph) {
         currentGraph.destroy();
       }
       graphRef.current = null;
     };
-  }, [trace, darkMode]);
+  }, [trace, darkMode, shouldPlayAnimation, animationNonce, traceSignature]);
 
   if (!pipeline) {
     return (
@@ -224,7 +323,15 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
   return (
     <div className="trace-grid">
       <div className="trace-side-column">
-        <Card title="本次识别结果" className="panel-card trace-card">
+        <Card
+          title="本次识别结果"
+          className="panel-card trace-card"
+          extra={
+            <Button size="small" icon={<ReloadOutlined />} loading={refreshing} onClick={() => void loadTraceData(true)}>
+              刷新
+            </Button>
+          }
+        >
           <p>
             <Typography.Text strong>设备根节点：</Typography.Text>
             <Tag color="blue">{trace.device || '未识别'}</Tag>

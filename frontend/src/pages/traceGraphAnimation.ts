@@ -344,20 +344,19 @@ export function createTraceAnimationController(params: {
     }
   };
 
-  const startClockwiseSequence = (plans: BranchPlan[], startIndex: number) => {
+  const startClockwiseSequence = async (plans: BranchPlan[], startIndex: number): Promise<void> => {
     const plan = plans[startIndex];
     if (!plan || stopped) return;
-    let nextScheduled = false;
-    void playBranch(plan, () => {
-      if (nextScheduled) return;
-      nextScheduled = true;
-      const nextPlan = plans[startIndex + 1];
-      if (!nextPlan || stopped) return;
+    await playBranch(plan);
+    const nextPlan = plans[startIndex + 1];
+    if (!nextPlan || stopped) return;
+    await new Promise<void>((resolve) => {
       const timer = window.setTimeout(() => {
-        startClockwiseSequence(plans, startIndex + 1);
+        resolve();
       }, 200);
       timers.push(timer);
     });
+    await startClockwiseSequence(plans, startIndex + 1);
   };
 
   const start = async () => {
@@ -369,7 +368,7 @@ export function createTraceAnimationController(params: {
     }
     await playBranch(focusRemainderPlan);
     if (clockwisePlans.length) {
-      startClockwiseSequence(clockwisePlans, 0);
+      await startClockwiseSequence(clockwisePlans, 0);
     }
   };
 
