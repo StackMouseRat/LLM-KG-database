@@ -1200,7 +1200,7 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 
 .experiment-evaluation-panel__comment {
   max-height: 180px;
-  margin-top: 10px;
+  margin: 0;
   overflow: auto;
   color: #475569;
   font-size: 12px;
@@ -1231,6 +1231,10 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 
 .experiment-evaluation-panel__json-collapse {
   margin-top: 2px;
+}
+
+.experiment-evaluation-panel__detail-collapse {
+  margin-top: 8px;
 }
 
 .experiment-evaluation-panel__json-text {
@@ -1362,7 +1366,8 @@ body.theme-dark .experiment-output-preview__question,
 body.theme-dark .experiment-evaluation-panel__prompt-text.ant-typography,
 body.theme-dark .experiment-evaluation-panel__comment,
 body.theme-dark .experiment-evaluation-panel__structured pre,
-body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-header {
+body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-header,
+body.theme-dark .experiment-evaluation-panel__detail-collapse .ant-collapse-header {
   color: #cbd5e1;
 }
 
@@ -1373,7 +1378,10 @@ body.theme-dark .experiment-evaluation-panel__structured {
 
 body.theme-dark .experiment-evaluation-panel__json-collapse,
 body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-item,
-body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-content {
+body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-content,
+body.theme-dark .experiment-evaluation-panel__detail-collapse,
+body.theme-dark .experiment-evaluation-panel__detail-collapse .ant-collapse-item,
+body.theme-dark .experiment-evaluation-panel__detail-collapse .ant-collapse-content {
   background: rgba(15, 23, 42, 0.32);
   border-color: rgba(148, 163, 184, 0.18);
 }

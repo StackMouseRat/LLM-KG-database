@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -58,18 +59,53 @@ def find_result_file(base_dir: Path) -> Path:
     return result_file
 
 
+def compact_reasoning_subscores(reasoning_text: str) -> str:
+    lines = [line.strip() for line in reasoning_text.splitlines() if line.strip()]
+    if len(lines) < 2:
+        return ""
+    score_pattern = re.compile(r"^(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)$")
+    meta_pattern = re.compile(r"(必须|注意|最后一行|严格输出|格式要求|应包含这句话|这里总分应为|用一句话说明|需要写一句话)")
+    blocks: list[str] = []
+    index = 0
+    while index < len(lines) - 1:
+        match = score_pattern.match(lines[index + 1])
+        if not match:
+            index += 1
+            continue
+        name = lines[index]
+        score_text = f"{match.group(1)}/{match.group(2)}"
+        reason_lines: list[str] = []
+        index += 2
+        while index < len(lines):
+            if index < len(lines) - 1 and score_pattern.match(lines[index + 1]):
+                break
+            reason_lines.append(lines[index])
+            index += 1
+        reason_text = "".join(reason_lines)
+        sentences = [item.strip() for item in re.split(r"(?<=[。！？!?])", reason_text) if item.strip()]
+        cleaned = [sentence for sentence in sentences if not meta_pattern.search(sentence)]
+        if not cleaned and "评分输出格式" in name:
+            cleaned = ["评分格式满足要求。"]
+        if not cleaned and sentences:
+            cleaned = [sentences[0]]
+        reason = "".join(cleaned[:2])[:240]
+        blocks.append(f"分项：{name}\n分数：{score_text}\n理由：{reason}")
+    return "\n\n".join(blocks)
+
+
 def build_structured_evaluation_source(result: dict) -> str:
     output_text = str(result.get("output_text") or "").strip()
     reasoning_text = str(result.get("reasoning_text") or "").strip()
     if not reasoning_text:
         return output_text
+    reasoning_source = compact_reasoning_subscores(reasoning_text) or reasoning_text
     if not output_text:
-        return f"【评估推理草稿】\n{reasoning_text}"
+        return f"【评估推理草稿】\n{reasoning_source}"
     return (
         "【最终评估输出】\n"
         f"{output_text}\n\n"
         "【评估推理草稿，仅用于补充分项分数；如与最终评估冲突，以最终评估输出为准】\n"
-        f"{reasoning_text}"
+        f"{reasoning_source}"
     )
 
 
@@ -305,6 +341,29 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
+    def _handle_quality_structured(self) -> None:
+        try:
+            body = self._read_json_body()
+            context = body.get("structuredContext") if isinstance(body.get("structuredContext"), dict) else {}
+            output_text = str(body.get("outputText") or body.get("evaluationText") or "")
+            reasoning_text = str(body.get("reasoningText") or "")
+            evaluation_text = build_structured_evaluation_source({
+                "output_text": output_text,
+                "reasoning_text": reasoning_text,
+            })
+            if not evaluation_text.strip():
+                self._write_bad_request("evaluationText is required")
+                return
+            structured = run_structured_evaluation_sync(
+                evaluation_text=evaluation_text,
+                question=str(context.get("question") or ""),
+                question_group=str(context.get("questionGroup") or ""),
+                experiment_group=str(context.get("experimentGroup") or ""),
+            )
+            self._write_json(200, {"structured_evaluation": structured})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
     def _handle_template_prompt_save(self) -> None:
         try:
             if self._require_admin() is None:
@@ -536,6 +595,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/api/quality/review":
             self._handle_quality_review()
+            return
+
+        if self.path == "/api/quality/structured":
+            self._handle_quality_structured()
             return
 
         if self.path == "/api/template/prompt/save":

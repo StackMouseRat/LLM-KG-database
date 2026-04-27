@@ -72,16 +72,29 @@ def extract_plugin_text(response: dict[str, Any]) -> tuple[str, str]:
 
 
 def extract_structured_evaluation(response: dict[str, Any]) -> dict[str, Any]:
-    for value in (response.get("newVariables") or {}).values():
+    def is_structured_result(value: Any) -> bool:
+        return isinstance(value, dict) and any(key in value for key in ("score", "score_text", "verdict", "summary", "subscores", "needs_review"))
+
+    def maybe_return(value: Any) -> dict[str, Any] | None:
         if isinstance(value, dict):
-            return value
+            for key in ("评估结构化分数", "结构化评估分数"):
+                nested = value.get(key)
+                if is_structured_result(nested):
+                    return nested
+            if is_structured_result(value):
+                return value
         if isinstance(value, str) and value.strip():
             try:
                 parsed = json.loads(value)
             except Exception:
-                continue
-            if isinstance(parsed, dict):
-                return parsed
+                return None
+            return maybe_return(parsed)
+        return None
+
+    for value in (response.get("newVariables") or {}).values():
+        parsed = maybe_return(value)
+        if parsed is not None:
+            return parsed
 
     for node in response.get("responseData", []):
         if not isinstance(node, dict) or node.get("moduleType") != "contentExtract":
@@ -90,19 +103,14 @@ def extract_structured_evaluation(response: dict[str, Any]) -> dict[str, Any]:
         if isinstance(extract_result, dict):
             for key in ("评估结构化分数", "结构化评估分数"):
                 value = extract_result.get(key)
-                if isinstance(value, dict):
-                    return value
+                parsed = maybe_return(value)
+                if parsed is not None:
+                    return parsed
         for key in ("评估结构化分数", "结构化评估分数", "fields"):
             value = node.get(key)
-            if isinstance(value, dict):
-                return value
-            if isinstance(value, str) and value.strip():
-                try:
-                    parsed = json.loads(value)
-                except Exception:
-                    continue
-                if isinstance(parsed, dict):
-                    return parsed
+            parsed = maybe_return(value)
+            if parsed is not None:
+                return parsed
         error_text = str(node.get("errorText") or node.get("system_error_text") or "").strip()
         if error_text:
             raise RuntimeError(error_text)
@@ -113,7 +121,7 @@ def extract_structured_evaluation(response: dict[str, Any]) -> dict[str, Any]:
             parsed = json.loads(output_text)
         except Exception as exc:
             raise RuntimeError(f"structured evaluation returned non-json output: {output_text[:200]}") from exc
-        if isinstance(parsed, dict):
+        if is_structured_result(parsed):
             return parsed
     error_text = str(response.get("error") or "").strip()
     if error_text:

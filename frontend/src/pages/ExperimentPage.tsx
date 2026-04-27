@@ -868,6 +868,18 @@ function getStructuredSubscores(value?: Record<string, any>) {
   return Array.isArray(subscores) ? subscores.filter((item) => item && typeof item === 'object') : [];
 }
 
+function hasInlineSubscores(text: string) {
+  return /(?:^|\n)\s*(?:\*\*)?[^\n：:]{2,40}(?:\*\*)?\s*[：:]?\s*\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?/.test(text);
+}
+
+function isValidStructuredEvaluation(value?: Record<string, any>, sourceText = '') {
+  if (!value || !Object.keys(value).length) return false;
+  const score = Number(value.score);
+  if (!Number.isFinite(score) && !value.score_text) return false;
+  if (hasInlineSubscores(sourceText) && !getStructuredSubscores(value).length) return false;
+  return true;
+}
+
 function runRecordLabel(run: ExperimentRunSummary) {
   const generation = `${run.completedGroups}/${run.totalGroups}`;
   const evaluation = run.totalEvaluations ? ` · 评估 ${run.evaluatedGroups || 0}/${run.totalEvaluations}` : '';
@@ -887,6 +899,7 @@ function ExperimentEvaluationPanel({
   plan,
   evaluationPrompt,
   promptSource,
+  outputState,
   evaluationState,
   runs,
   selectedRunId,
@@ -901,6 +914,7 @@ function ExperimentEvaluationPanel({
   plan: ExperimentPlan;
   evaluationPrompt: string;
   promptSource: string;
+  outputState: ExperimentOutputState;
   evaluationState: ExperimentEvaluationState;
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
@@ -916,6 +930,15 @@ function ExperimentEvaluationPanel({
   const averageScore = getAverageScore(evaluationState);
   const evaluationRuns = runs.filter(hasEvaluationRecord);
   const selectedEvaluationRunId = hasEvaluationRecord(runs.find((run) => run.runId === selectedRunId)) ? selectedRunId : undefined;
+  const [expandedRoundMap, setExpandedRoundMap] = useState<Record<string, boolean>>({});
+  const isRoundExpanded = (round: string) => expandedRoundMap[round] ?? true;
+  const allRoundsExpanded = Boolean(rounds.length) && rounds.every(([round]) => isRoundExpanded(round));
+  const setAllRoundsExpanded = (expanded: boolean) => {
+    setExpandedRoundMap(Object.fromEntries(rounds.map(([round]) => [round, expanded])));
+  };
+  const toggleRoundExpanded = (round: string) => {
+    setExpandedRoundMap((prev) => ({ ...prev, [round]: !(prev[round] ?? true) }));
+  };
 
   return (
     <div className="experiment-evaluation-panel">
@@ -981,6 +1004,11 @@ function ExperimentEvaluationPanel({
             <Tag>{evaluationState.status === 'done' ? '评估完成' : '待启动评估'}</Tag>
           )}
           {typeof averageScore === 'number' ? <Tag color="green">平均分 {averageScore}/10</Tag> : null}
+          {rounds.length ? (
+            <Button size="small" onClick={() => setAllRoundsExpanded(!allRoundsExpanded)}>
+              {allRoundsExpanded ? '收回全部卡片' : '展开全部卡片'}
+            </Button>
+          ) : null}
         </div>
         <Progress percent={evaluationState.progress} size="small" status={getProgressStatus(evaluationState.status === 'error' ? 'error' : evaluationState.status === 'done' ? 'done' : evaluationState.status === 'running' ? 'running' : 'idle')} />
         {evaluationState.message ? <Text type="danger">{evaluationState.message}</Text> : null}
@@ -989,13 +1017,30 @@ function ExperimentEvaluationPanel({
       {rounds.length === 0 ? (
         <div className="experiment-output-preview__empty">点击“启动评估”后，这里会展示每一轮、每一组的得分。</div>
       ) : (
-        rounds.map(([round, groupMap]) => (
+        rounds.map(([round, groupMap]) => {
+          const outputGroupMap = outputState.rounds[round] || {};
+          const questionItem = outputState.roundQuestionItems?.[round] || Object.values(outputGroupMap)[0]?.questionItem;
+          const questionText = outputState.roundQuestions[round] || Object.values(outputGroupMap)[0]?.question || '暂无问题。';
+          const groupLabel = questionItemLabel(questionItem);
+          const roundExpanded = isRoundExpanded(round);
+          return (
           <div className="experiment-evaluation-panel__round" key={round}>
-            <div className="experiment-output-preview__round-title">第 {round} 轮</div>
+            <div className="experiment-output-preview__round-title">
+              第 {round} 轮
+              {groupLabel ? <Tag color="geekblue">{groupLabel}</Tag> : null}
+              <Button size="small" onClick={() => toggleRoundExpanded(round)}>
+                {roundExpanded ? '收回本轮' : '展开本轮'}
+              </Button>
+            </div>
+            <div className="experiment-output-preview__round-question">本轮问题：{questionText}</div>
+            {questionItem?.expectedBehavior ? (
+              <div className="experiment-output-preview__round-meta">预期边界行为：{questionItem.expectedBehavior}</div>
+            ) : null}
             <div className="experiment-evaluation-panel__score-grid">
               {plan.processGroups.map((group) => {
                 const score = groupMap[group.id];
                 const title = splitGroupName(group);
+                const subscores = getStructuredSubscores(score?.structuredEvaluation);
                 return (
                   <div className="experiment-evaluation-panel__score-card" key={group.id}>
                     <div className="experiment-output-preview__group-header">
@@ -1005,6 +1050,8 @@ function ExperimentEvaluationPanel({
                         {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
+                    {roundExpanded ? (
+                    <>
                     <div className="experiment-evaluation-panel__structured">
                       <Text type="secondary">结构化评估</Text>
                       {score?.structuredEvaluation ? (
@@ -1024,16 +1071,28 @@ function ExperimentEvaluationPanel({
                           {score.structuredEvaluation.summary ? (
                             <div className="experiment-evaluation-panel__score-summary-text">{String(score.structuredEvaluation.summary)}</div>
                           ) : null}
-                          {getStructuredSubscores(score.structuredEvaluation).length ? (
-                            <div className="experiment-evaluation-panel__subscores">
-                              {getStructuredSubscores(score.structuredEvaluation).map((item, index) => (
-                                <div className="experiment-evaluation-panel__subscore" key={`${String(item.name || item.label || index)}-${index}`}>
-                                  <span>{String(item.name || item.label || `分项 ${index + 1}`)}</span>
-                                  <strong>{String(item.score ?? '-')}/{String(item.max_score ?? item.maxScore ?? '-')}</strong>
-                                  {item.reason ? <em>{String(item.reason)}</em> : null}
-                                </div>
-                              ))}
-                            </div>
+                          {subscores.length ? (
+                            <Collapse
+                              size="small"
+                              className="experiment-evaluation-panel__detail-collapse"
+                              items={[
+                                {
+                                  key: 'subscores',
+                                  label: `分项打分（${subscores.length} 项）`,
+                                  children: (
+                                    <div className="experiment-evaluation-panel__subscores">
+                                      {subscores.map((item, index) => (
+                                        <div className="experiment-evaluation-panel__subscore" key={`${String(item.name || item.label || index)}-${index}`}>
+                                          <span>{String(item.name || item.label || `分项 ${index + 1}`)}</span>
+                                          <strong>{String(item.score ?? '-')}/{String(item.max_score ?? item.maxScore ?? '-')}</strong>
+                                          {item.reason ? <em>{String(item.reason)}</em> : null}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                }
+                              ]}
+                            />
                           ) : null}
                           <Collapse
                             size="small"
@@ -1054,16 +1113,29 @@ function ExperimentEvaluationPanel({
                       ) : score?.structuredError ? (
                         <Text type="danger">{score.structuredError}</Text>
                       ) : (
-                        <Text type="secondary">等待结构化结果。</Text>
+                          <Text type="secondary">等待结构化结果。</Text>
                       )}
                     </div>
-                    <div className="experiment-evaluation-panel__comment">{score?.comment || '暂无评估说明。'}</div>
+                    <Collapse
+                      size="small"
+                      className="experiment-evaluation-panel__detail-collapse"
+                      items={[
+                        {
+                          key: 'comment',
+                          label: '自然语言评估',
+                          children: <div className="experiment-evaluation-panel__comment">{score?.comment || '暂无评估说明。'}</div>
+                        }
+                      ]}
+                    />
+                    </>
+                    ) : null}
                   </div>
                 );
               })}
             </div>
           </div>
-        ))
+        );
+        })
       )}
     </div>
   );
@@ -1081,7 +1153,7 @@ async function runEvaluationRequest(
   prompt: string,
   content: string,
   context: { question: string; questionGroup?: string; groupLabel: string; groupTitle: string; round: number },
-  onUpdate?: (patch: Partial<Pick<ExperimentEvaluationScore, 'comment' | 'score' | 'structuredEvaluation' | 'structuredError'>>) => void
+  onUpdate?: (patch: Partial<Pick<ExperimentEvaluationScore, 'comment' | 'score'>>) => void
 ) {
   const experimentGroup = `${context.groupLabel} ${context.groupTitle}`.trim();
   const scoringPrompt = `${prompt}\n\n当前评估样本：\n- 轮次：第 ${context.round} 轮\n- 题目分组：${context.questionGroup || '未提供'}\n- 实验组：${context.groupLabel} ${context.groupTitle}\n- 用户问题：${context.question}\n\n请基于上述用户问题、题目分组、实验组和当前输出进行10分制打分。必须在最终答案最后一行输出“总分：N/10”。`;
@@ -1092,7 +1164,7 @@ async function runEvaluationRequest(
     body: JSON.stringify({
       stream: true,
       mode: 'evaluate',
-      structured: true,
+      structured: false,
       structuredContext: {
         question: context.question,
         questionGroup: context.questionGroup || '',
@@ -1112,8 +1184,7 @@ async function runEvaluationRequest(
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
   let outputText = '';
-  let structuredEvaluation: Record<string, any> | undefined;
-  let structuredError = '';
+  let reasoningText = '';
 
   const applyOutput = (text: string) => {
     outputText = text;
@@ -1142,25 +1213,13 @@ async function runEvaluationRequest(
       applyOutput(`${outputText}${String(data?.chunk || '')}`);
       return;
     }
+    if (eventName === 'quality_reasoning_chunk') {
+      reasoningText += String(data?.chunk || '');
+      return;
+    }
     if (eventName === 'quality_done') {
       applyOutput(String(data?.output_text || outputText));
-      return;
-    }
-    if (eventName === 'quality_structured_done') {
-      structuredEvaluation = data?.structured_evaluation && typeof data.structured_evaluation === 'object'
-        ? data.structured_evaluation as Record<string, any>
-        : undefined;
-      const structuredScore = Number(structuredEvaluation?.score);
-      onUpdate?.({
-        structuredEvaluation,
-        structuredError: undefined,
-        score: Number.isFinite(structuredScore) ? Math.max(0, Math.min(10, structuredScore)) : parseEvaluationScore(outputText)
-      });
-      return;
-    }
-    if (eventName === 'quality_structured_error') {
-      structuredError = String(data?.message || '结构化评估失败');
-      onUpdate?.({ structuredError });
+      reasoningText = String(data?.reasoning_text || reasoningText);
       return;
     }
     if (eventName === 'quality_error') {
@@ -1178,13 +1237,58 @@ async function runEvaluationRequest(
   }
   if (buffer.trim()) flushEvent(buffer);
 
-  const structuredScore = Number(structuredEvaluation?.score);
   return {
-    score: Number.isFinite(structuredScore) ? Math.max(0, Math.min(10, structuredScore)) : parseEvaluationScore(outputText),
+    score: parseEvaluationScore(outputText),
     comment: outputText || '评估完成，但未返回说明。',
-    structuredEvaluation,
-    structuredError: structuredError || undefined
+    reasoningText
   };
+}
+
+async function runStructuredEvaluationRequest(
+  context: { question: string; questionGroup?: string; groupLabel: string; groupTitle: string },
+  outputText: string,
+  reasoningText: string
+) {
+  const experimentGroup = `${context.groupLabel} ${context.groupTitle}`.trim();
+  let lastError = '';
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const response = await fetch('/api/quality/structured', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        outputText,
+        reasoningText,
+        structuredContext: {
+          question: context.question,
+          questionGroup: context.questionGroup || '',
+          experimentGroup
+        }
+      })
+    });
+    const text = await response.text();
+    let data: any = {};
+    if (text.trim()) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        lastError = `结构化评估响应不是有效 JSON：${text.slice(0, 160)}`;
+        continue;
+      }
+    }
+    if (!response.ok) {
+      lastError = data?.message || `结构化评估请求失败：${response.status}`;
+      continue;
+    }
+    const structuredEvaluation = data?.structured_evaluation && typeof data.structured_evaluation === 'object'
+      ? data.structured_evaluation as Record<string, any>
+      : undefined;
+    if (isValidStructuredEvaluation(structuredEvaluation, `${outputText}\n${reasoningText}`)) {
+      return structuredEvaluation;
+    }
+    lastError = '结构化评估结果无效，已单独重跑仍未得到有效 JSON';
+  }
+  throw new Error(lastError || '结构化评估失败');
 }
 
 async function streamExperimentRun(
@@ -1504,6 +1608,19 @@ export function ExperimentPage() {
       };
     };
 
+    const patchSavedScore = (task: ExperimentEvaluationTask, patch: Partial<ExperimentEvaluationScore>) => {
+      const roundKey = String(task.round);
+      const current = savedScores[roundKey]?.[task.group.id];
+      if (!current) return;
+      savedScores = {
+        ...savedScores,
+        [roundKey]: {
+          ...(savedScores[roundKey] || {}),
+          [task.group.id]: { ...current, ...patch }
+        }
+      };
+    };
+
     const persistEvaluation = (status: ExperimentEvaluationState['status'], progress: number, message?: string) => {
       const state = { status, progress, scores: savedScores, message };
       void saveExperimentEvaluation(planId, selectedRunId, state).then(() => refreshExperimentRuns(planId)).catch(() => {});
@@ -1530,13 +1647,14 @@ export function ExperimentPage() {
       }));
 
       try {
-        const result = await runEvaluationRequest(planEvaluationPrompt, task.output.outputText, {
+        const evaluationContext = {
           question: task.output.question || outputState.roundQuestions[String(task.round)] || '',
           questionGroup: questionItemLabel(task.output.questionItem || outputState.roundQuestionItems?.[String(task.round)]),
           groupLabel: groupTitle.label,
           groupTitle: groupTitle.title,
           round: task.round
-        }, (patch) => {
+        };
+        const result = await runEvaluationRequest(planEvaluationPrompt, task.output.outputText, evaluationContext, (patch) => {
           updateEvaluationState(planId, (current) => ({
             ...current,
             scores: {
@@ -1559,9 +1677,7 @@ export function ExperimentPage() {
           groupLabel: groupTitle.label,
           status: 'done',
           score: result.score,
-          comment: result.comment,
-          structuredEvaluation: result.structuredEvaluation,
-          structuredError: result.structuredError
+          comment: result.comment
         };
         setSavedScore(task, doneScore);
         updateEvaluationState(planId, (current) => ({
@@ -1574,6 +1690,54 @@ export function ExperimentPage() {
             }
           }
         }));
+        void runStructuredEvaluationRequest(evaluationContext, result.comment, result.reasoningText)
+          .then((structuredEvaluation) => {
+            const structuredScore = Number(structuredEvaluation?.score);
+            const structuredPatch: Partial<ExperimentEvaluationScore> = {
+              structuredEvaluation,
+              structuredError: undefined,
+              score: Number.isFinite(structuredScore) ? Math.max(0, Math.min(10, structuredScore)) : result.score
+            };
+            patchSavedScore(task, structuredPatch);
+            updateEvaluationState(planId, (current) => ({
+              ...current,
+              scores: {
+                ...current.scores,
+                [String(task.round)]: {
+                  ...(current.scores[String(task.round)] || {}),
+                  [task.group.id]: {
+                    ...(current.scores[String(task.round)]?.[task.group.id] || doneScore),
+                    ...structuredPatch,
+                    status: 'done'
+                  }
+                }
+              }
+            }));
+            const progress = Math.round((completed / tasks.length) * 100);
+            persistEvaluation(completed >= tasks.length ? 'done' : 'running', progress);
+          })
+          .catch((error) => {
+            const structuredPatch: Partial<ExperimentEvaluationScore> = {
+              structuredError: error instanceof Error ? error.message : '结构化评估失败'
+            };
+            patchSavedScore(task, structuredPatch);
+            updateEvaluationState(planId, (current) => ({
+              ...current,
+              scores: {
+                ...current.scores,
+                [String(task.round)]: {
+                  ...(current.scores[String(task.round)] || {}),
+                  [task.group.id]: {
+                    ...(current.scores[String(task.round)]?.[task.group.id] || doneScore),
+                    ...structuredPatch,
+                    status: 'done'
+                  }
+                }
+              }
+            }));
+            const progress = Math.round((completed / tasks.length) * 100);
+            persistEvaluation(completed >= tasks.length ? 'done' : 'running', progress);
+          });
       } catch (error) {
         const errorScore: ExperimentEvaluationScore = {
           groupId: task.group.id,
@@ -2001,6 +2165,7 @@ export function ExperimentPage() {
                     plan={plan}
                     evaluationPrompt={getPlanEvaluationPrompt(plan)}
                     promptSource={getPlanEvaluationPromptSource(plan)}
+                    outputState={outputStateMap[plan.id] || defaultOutputState}
                     evaluationState={evaluationStateMap[plan.id] || defaultEvaluationState}
                     runs={runRecordMap[plan.id] || []}
                     selectedRunId={selectedRunIdMap[plan.id]}
