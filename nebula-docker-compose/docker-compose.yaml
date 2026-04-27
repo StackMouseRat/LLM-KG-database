@@ -368,7 +368,9 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ../docker/frontend-proxy/server.py:/app/server.py:ro
+      - ../docker/frontend-proxy/services:/app/services:ro
       - ../scripts/run_parallel_generation_pipeline.py:/app/scripts/run_parallel_generation_pipeline.py:ro
+      - ../scripts/experiment_page_variants:/app/scripts/experiment_page_variants:ro
       - ../docs/project_changes/frontend_pipeline_runs:/app/data/frontend_pipeline_runs
       - ${FASTGPT_KEYS_DIR:-/home/ubuntu/.fastgpt_keys}:/run/fastgpt_keys:ro
     ports:

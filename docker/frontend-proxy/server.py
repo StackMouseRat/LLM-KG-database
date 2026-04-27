@@ -19,6 +19,7 @@ from services.auth_service import (
     validate_credentials,
 )
 from services.case_search_service import infer_dataset, infer_dataset_with_context, run_case_search
+from services.experiment_service import stream_experiment_run
 from services.pipeline_service import run_pipeline_sync, stream_pipeline
 from services.quality_service import run_format_review_sync, stream_format_review
 from services.sse import send_sse
@@ -356,6 +357,24 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
+    def _handle_experiment_run(self) -> None:
+        try:
+            body = self._read_json_body()
+            if not body.get("stream"):
+                self._write_bad_request("stream is required")
+                return
+            self._send_event_stream_headers()
+            try:
+                stream_experiment_run(self, body)
+            except Exception as exc:
+                send_sse(self, "experiment_error", {"message": str(exc)})
+            finally:
+                send_sse(self, "close", {})
+                self.wfile.flush()
+                self.wfile.close()
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
     def do_OPTIONS(self) -> None:
         self.send_response(204)
         self._send_common_headers()
@@ -405,6 +424,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path in ("/api/template/section/save", "/api/template/section/reset"):
             self._handle_template_section_mutation()
+            return
+
+        if self.path == "/api/experiment/run":
+            self._handle_experiment_run()
             return
 
         if self.path not in ("/api/plan/generate", "/api/pipeline/run"):
