@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import { DEVICE_QUESTIONS } from '../../data/presetQuestions';
+import { DEVICE_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../../data/presetQuestions';
 
 type PresetQuestionPopoverProps = {
   onPickQuestion: (question: string) => void;
@@ -56,6 +56,37 @@ export function PresetQuestionPopover({ onPickQuestion }: PresetQuestionPopoverP
           </div>
         ))}
       </div>
+      {EXPERIMENT_QUESTION_GROUPS.map((group, groupIndex) => (
+        <div
+          key={group.key}
+          className={`preset-popover__group ${groupIndex % 2 === 0 ? 'preset-popover__group--single' : 'preset-popover__group--multi'}`}
+        >
+          <div className="preset-popover__heading">
+            <span
+              className={`preset-popover__badge ${groupIndex % 2 === 0 ? 'preset-popover__badge--single' : 'preset-popover__badge--multi'}`}
+            >
+              {group.badge}
+            </span>
+            <div className="preset-popover__heading-copy">
+              <Title level={5} className="preset-popover__title">{group.title}</Title>
+              <Typography.Text className="preset-popover__desc">{group.description}</Typography.Text>
+            </div>
+          </div>
+          <div className="preset-popover__section">
+            <Text
+              strong
+              className={`preset-popover__device ${groupIndex % 2 === 0 ? 'preset-popover__device--single' : 'preset-popover__device--multi'}`}
+            >
+              实验备用题
+            </Text>
+            {group.questions.map((question, index) => (
+              <div key={index} className="preset-item" onClick={() => onPickQuestion(question)}>
+                {question.length > 60 ? `${question.substring(0, 60)}…` : question}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

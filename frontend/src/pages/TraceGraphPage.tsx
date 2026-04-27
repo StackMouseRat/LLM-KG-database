@@ -60,6 +60,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
   const [selectedNodeId, setSelectedNodeId] = useState('');
   const [shouldPlayAnimation, setShouldPlayAnimation] = useState(false);
   const [animationNonce, setAnimationNonce] = useState(0);
+  const [graphReady, setGraphReady] = useState(false);
   const [graphViewport, setGraphViewport] = useState({ width: 1680, height: 1080 });
   const traceSignature = useMemo(() => buildTraceCacheSignature(pipeline), [pipeline]);
 
@@ -75,6 +76,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
         setSelectedNodeId('');
         setErrorText('');
         setShouldPlayAnimation(false);
+        setGraphReady(false);
         return;
       }
 
@@ -116,6 +118,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
         setSelectedNodeId('');
         animationCompletedRef.current = false;
         setShouldPlayAnimation(false);
+        setGraphReady(false);
         setErrorText(error instanceof Error ? error.message : '图谱溯源加载失败');
       } finally {
         setLoading(false);
@@ -131,6 +134,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       setSelectedNodeId('');
       setErrorText('');
       setShouldPlayAnimation(false);
+      setGraphReady(false);
       return;
     }
 
@@ -156,6 +160,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
     if (!graphContainerRef.current) return;
     if (!trace?.graph?.nodes?.length) return;
     const playAnimation = shouldPlayAnimation && !animationCompletedRef.current;
+    setGraphReady(false);
     let cancelled = false;
     let currentGraph: any = null;
     let animationController: { start: () => Promise<void>; stop: () => void } | null = null;
@@ -242,6 +247,9 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
       if (!playAnimation) {
         await restoreGraphViewport(graph, loadTraceCache(traceSignature)?.viewport);
       }
+      window.requestAnimationFrame(() => {
+        if (!cancelled) setGraphReady(true);
+      });
       if (playAnimation) {
         animationController = createTraceAnimationController({
           trace,
@@ -390,7 +398,7 @@ export function TraceGraphPage({ pipeline, darkMode }: TraceGraphPageProps) {
 
       <Card title="图谱溯源可视化" className="panel-card trace-card trace-graph-card">
         <div className="trace-graph-container">
-          <div className="trace-graph-canvas" ref={graphContainerRef} />
+          <div className={`trace-graph-canvas ${graphReady ? 'trace-graph-canvas--ready' : ''}`} ref={graphContainerRef} />
         </div>
       </Card>
     </div>
