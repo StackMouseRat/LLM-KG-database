@@ -21,9 +21,9 @@ from services.auth_service import (
 )
 from services.case_search_service import infer_dataset, infer_dataset_with_context, run_case_search
 from services.evaluation_question_service import get_evaluation_question_suite
-from services.experiment_service import stream_experiment_run
+from services.experiment_service import get_experiment_run, list_experiment_runs, load_evaluation_record, save_evaluation_record, stream_experiment_run
 from services.pipeline_service import run_pipeline_sync, stream_pipeline
-from services.quality_service import run_format_review_sync, stream_format_review
+from services.quality_service import run_format_review_sync, run_structured_evaluation_sync, stream_format_review
 from services.sse import send_sse
 from services.template_service import (
     TEMPLATE_ID,
@@ -252,12 +252,35 @@ class Handler(BaseHTTPRequestHandler):
 
             if not body.get("stream"):
                 result = run_format_review_sync(prompt, content, fault_scene, graph_material)
+                if body.get("structured"):
+                    context = body.get("structuredContext") if isinstance(body.get("structuredContext"), dict) else {}
+                    try:
+                        result["structured_evaluation"] = run_structured_evaluation_sync(
+                            evaluation_text=str(result.get("output_text") or ""),
+                            question=str(context.get("question") or ""),
+                            question_group=str(context.get("questionGroup") or ""),
+                            experiment_group=str(context.get("experimentGroup") or ""),
+                        )
+                    except Exception as exc:
+                        result["structured_error"] = str(exc)
                 self._write_json(200, {"mode": mode, **result})
                 return
 
             self._send_event_stream_headers()
             try:
-                stream_format_review(self, prompt, content, mode, fault_scene, graph_material)
+                result = stream_format_review(self, prompt, content, mode, fault_scene, graph_material)
+                if body.get("structured"):
+                    context = body.get("structuredContext") if isinstance(body.get("structuredContext"), dict) else {}
+                    try:
+                        structured = run_structured_evaluation_sync(
+                            evaluation_text=str(result.get("output_text") or ""),
+                            question=str(context.get("question") or ""),
+                            question_group=str(context.get("questionGroup") or ""),
+                            experiment_group=str(context.get("experimentGroup") or ""),
+                        )
+                        send_sse(self, "quality_structured_done", {"mode": mode, "structured_evaluation": structured})
+                    except Exception as exc:
+                        send_sse(self, "quality_structured_error", {"mode": mode, "message": str(exc)})
             except Exception as exc:
                 send_sse(self, "quality_error", {"mode": mode, "message": str(exc)})
             finally:
@@ -389,6 +412,57 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
+    def _handle_experiment_runs(self) -> None:
+        try:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            plan_id = str((params.get("planId") or [""])[0]).strip()
+            if not plan_id:
+                self._write_bad_request("planId is required")
+                return
+            self._write_json(200, {"runs": list_experiment_runs(plan_id)})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_experiment_run_detail(self) -> None:
+        try:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            plan_id = str((params.get("planId") or [""])[0]).strip()
+            run_id = str((params.get("runId") or [""])[0]).strip()
+            if not plan_id or not run_id:
+                self._write_bad_request("planId and runId are required")
+                return
+            self._write_json(200, get_experiment_run(plan_id, run_id))
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_experiment_evaluation_get(self) -> None:
+        try:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            plan_id = str((params.get("planId") or [""])[0]).strip()
+            run_id = str((params.get("runId") or [""])[0]).strip()
+            if not plan_id or not run_id:
+                self._write_bad_request("planId and runId are required")
+                return
+            self._write_json(200, load_evaluation_record(plan_id, run_id))
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_experiment_evaluation_save(self) -> None:
+        try:
+            body = self._read_json_body()
+            plan_id = str(body.get("planId") or "").strip()
+            run_id = str(body.get("runId") or "").strip()
+            evaluation_state = body.get("evaluationState") if isinstance(body.get("evaluationState"), dict) else {}
+            if not plan_id or not run_id:
+                self._write_bad_request("planId and runId are required")
+                return
+            self._write_json(200, save_evaluation_record(plan_id, run_id, evaluation_state))
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
     def do_OPTIONS(self) -> None:
         self.send_response(204)
         self._send_common_headers()
@@ -413,6 +487,18 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/evaluation/question-suite":
             self._handle_evaluation_question_suite()
+            return
+
+        if path == "/api/experiment/runs":
+            self._handle_experiment_runs()
+            return
+
+        if path == "/api/experiment/run":
+            self._handle_experiment_run_detail()
+            return
+
+        if path == "/api/experiment/evaluation":
+            self._handle_experiment_evaluation_get()
             return
 
         self._write_json(404, {"message": "not found"})
@@ -447,6 +533,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/api/experiment/run":
             self._handle_experiment_run()
+            return
+
+        if self.path == "/api/experiment/evaluation":
+            self._handle_experiment_evaluation_save()
             return
 
         if self.path not in ("/api/plan/generate", "/api/pipeline/run"):

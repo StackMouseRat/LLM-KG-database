@@ -1,9 +1,19 @@
 import type { TemplateSection } from './types';
 import { toStoredSourceType } from './types';
 
+async function readJsonSafely(response: Response) {
+  const text = await response.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`响应不是有效 JSON：${text.slice(0, 160)}`);
+  }
+}
+
 export async function fetchTemplateSections(): Promise<TemplateSection[]> {
   const response = await fetch('/api/template/sections');
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }
@@ -23,7 +33,7 @@ export async function saveTemplateSection(sectionId: string, draft: TemplateSect
       gen_instruction: draft.gen_instruction || ''
     })
   });
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }
@@ -38,7 +48,7 @@ export async function resetTemplateSection(sectionId: string): Promise<TemplateS
     },
     body: JSON.stringify({ section_id: sectionId })
   });
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }

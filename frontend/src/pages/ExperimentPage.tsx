@@ -1,9 +1,9 @@
-import { Button, Card, InputNumber, Popover, Progress, Segmented, Space, Tag, Typography } from 'antd';
+import { Button, Card, InputNumber, Popover, Progress, Segmented, Select, Space, Tag, Typography } from 'antd';
 import { ExperimentOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ALL_MULTI_FAULT_QUESTIONS, ALL_SINGLE_FAULT_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../data/presetQuestions';
 import { ExperimentQuestionPopover } from '../features/experiment/ExperimentQuestionPopover';
-import { fetchExperimentQuestionSuite, type ExperimentQuestionSuite } from '../features/experiment/experimentApi';
+import { fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, saveExperimentEvaluation, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
 import { fetchTemplatePrompts } from '../features/quality/qualityApi';
 import { loadPromptCache, savePromptCache } from '../features/quality/qualityStorage';
 
@@ -21,6 +21,7 @@ type ExperimentStageState = {
 type ExperimentControlState = {
   runCount: number;
   concurrency: number;
+  evaluationConcurrency: number;
   generation: ExperimentStageState;
   evaluation: ExperimentStageState;
 };
@@ -29,9 +30,17 @@ type ExperimentGroupOutput = {
   groupId: string;
   groupLabel: string;
   question: string;
+  questionItem?: ExperimentQuestionItem;
   outputText: string;
   streamingText: string;
   status: 'running' | 'done' | 'terminated' | 'error';
+};
+
+type ExperimentActiveGroup = {
+  key: string;
+  round: number;
+  groupId: string;
+  groupLabel: string;
 };
 
 type ExperimentOutputState = {
@@ -40,8 +49,10 @@ type ExperimentOutputState = {
     groupId: string;
     groupLabel: string;
   };
+  activeGroups?: ExperimentActiveGroup[];
   activeRound?: number;
   roundQuestions: Record<string, string>;
+  roundQuestionItems?: Record<string, ExperimentQuestionItem>;
   rounds: Record<string, Record<string, ExperimentGroupOutput>>;
 };
 
@@ -49,6 +60,8 @@ type ExperimentEvaluationScore = {
   groupId: string;
   groupLabel: string;
   score?: number;
+  structuredEvaluation?: Record<string, any>;
+  structuredError?: string;
   status: 'pending' | 'running' | 'done' | 'error';
   comment?: string;
 };
@@ -63,6 +76,12 @@ type ExperimentEvaluationState = {
   };
   scores: Record<string, Record<string, ExperimentEvaluationScore>>;
   message?: string;
+};
+
+type ExperimentEvaluationTask = {
+  round: number;
+  group: ExperimentProcessGroup;
+  output: ExperimentGroupOutput;
 };
 
 type ExperimentGroupProgress = {
@@ -122,12 +141,15 @@ const defaultStageState: ExperimentStageState = {
 const defaultControlState: ExperimentControlState = {
   runCount: 4,
   concurrency: 2,
+  evaluationConcurrency: 2,
   generation: defaultStageState,
   evaluation: defaultStageState
 };
 
 const defaultOutputState: ExperimentOutputState = {
+  activeGroups: [],
   roundQuestions: {},
+  roundQuestionItems: {},
   rounds: {}
 };
 
@@ -392,14 +414,62 @@ function getProgressStatus(status: ExperimentStageState['status']) {
   return 'normal';
 }
 
-function getSuiteQuestionTexts(suite: ExperimentQuestionSuite | undefined) {
-  return suite?.groups.flatMap((group) => group.questions.filter((question) => question.enabled).map((question) => question.questionText)).filter(Boolean) || [];
+function getSuiteQuestionItems(suite: ExperimentQuestionSuite | undefined): ExperimentQuestionItem[] {
+  return suite?.groups.flatMap((group) => group.questions
+    .filter((question) => question.enabled)
+    .map((question) => ({
+      questionId: question.questionId,
+      questionText: question.questionText,
+      groupId: group.groupId,
+      groupCode: group.code,
+      groupName: group.name,
+      expectedBehavior: question.expectedBehavior || group.expectedBehavior,
+      category: question.category || group.name
+    }))) || [];
 }
 
-function pickRandomQuestions(questions: string[], count: number) {
+function pickRandomQuestionItems(questions: ExperimentQuestionItem[], count: number) {
   return [...questions]
     .sort(() => Math.random() - 0.5)
     .slice(0, count);
+}
+
+function questionItemLabel(item?: ExperimentQuestionItem) {
+  if (!item) return '';
+  return [item.groupCode, item.groupName].filter(Boolean).join(' · ');
+}
+
+function eventQuestionItem(data: any): ExperimentQuestionItem | undefined {
+  return data?.questionItem && typeof data.questionItem === 'object' && String(data.questionItem.questionText || '').trim()
+    ? data.questionItem as ExperimentQuestionItem
+    : undefined;
+}
+
+function mergeRoundQuestionItem(current: ExperimentOutputState, roundKey: string, item?: ExperimentQuestionItem) {
+  return item ? { ...(current.roundQuestionItems || {}), [roundKey]: item } : current.roundQuestionItems;
+}
+
+function getMaxExperimentConcurrency(runCount: number, groupCount: number) {
+  return Math.max(1, Math.min(15, Math.max(1, runCount) * Math.max(1, groupCount)));
+}
+
+function getMaxEvaluationConcurrency() {
+  return 10;
+}
+
+function activeGroupKey(round: number, groupId: string) {
+  return `${round}:${groupId}`;
+}
+
+function addActiveGroup(current: ExperimentOutputState, group: Omit<ExperimentActiveGroup, 'key'>) {
+  const key = activeGroupKey(group.round, group.groupId);
+  const activeGroups = (current.activeGroups || []).filter((item) => item.key !== key);
+  return [...activeGroups, { ...group, key }].sort((a, b) => a.round - b.round || a.groupLabel.localeCompare(b.groupLabel));
+}
+
+function removeActiveGroup(current: ExperimentOutputState, round: number, groupId: string) {
+  const key = activeGroupKey(round, groupId);
+  return (current.activeGroups || []).filter((item) => item.key !== key);
 }
 
 function buildGroupProgress(group: ExperimentProcessGroup, state: ExperimentControlState) {
@@ -514,17 +584,31 @@ function ExperimentFlowDiagram({ planId, group, progress, showStatus = true }: {
 function ExperimentControlPanel({
   plan,
   state,
+  runs,
+  selectedRunId,
+  outputState,
   onUpdateConfig,
-  onRunStage
+  onRunStage,
+  onSelectRun,
+  onLoadRun,
+  onRefreshRuns
 }: {
   plan: ExperimentPlan;
   state: ExperimentControlState;
-  onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency'>>) => void;
-  onRunStage: (stage: ExperimentControlStage) => void;
+  runs: ExperimentRunSummary[];
+  selectedRunId?: string;
+  outputState: ExperimentOutputState;
+  onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency'>>) => void;
+  onRunStage: (stage: ExperimentControlStage, options?: { runId?: string }) => void;
+  onSelectRun: (runId: string) => void;
+  onLoadRun: () => void;
+  onRefreshRuns: () => void;
 }) {
   const totalScripts = Math.max(plan.processGroups.length - 1, 0);
   const generationRunning = state.generation.status === 'running';
   const evaluationRunning = state.evaluation.status === 'running';
+  const maxConcurrency = getMaxExperimentConcurrency(state.runCount, plan.processGroups.length);
+  const activeGroups = outputState.activeGroups || [];
 
   return (
     <div className="experiment-control-console">
@@ -532,7 +616,7 @@ function ExperimentControlPanel({
         <div>
           <Text strong>实验控制台</Text>
           <Paragraph className="experiment-control-console__desc">
-            配置实验次数和脚本并发数后，可分别启动生成阶段和评估阶段。
+            每次生成都会保存服务端记录，可选择历史记录载入、继续生成或启动评估。
           </Paragraph>
         </div>
         <Space wrap>
@@ -545,30 +629,61 @@ function ExperimentControlPanel({
         <label>
           <Text type="secondary">实验次数</Text>
           <InputNumber
-            min={state.concurrency}
+            min={1}
             max={50}
             value={state.runCount}
-            onChange={(value) => onUpdateConfig({ runCount: Math.max(Number(value || state.concurrency), state.concurrency) })}
+            onChange={(value) => onUpdateConfig({ runCount: Math.max(Number(value || 1), 1) })}
           />
         </label>
         <label>
           <Text type="secondary">并发数</Text>
           <InputNumber
             min={1}
-            max={Math.max(state.runCount, 1)}
+            max={maxConcurrency}
             value={state.concurrency}
-            onChange={(value) => onUpdateConfig({ concurrency: Math.min(Number(value || 1), state.runCount) })}
+            onChange={(value) => onUpdateConfig({ concurrency: Math.min(Number(value || 1), maxConcurrency) })}
           />
+          <Text type="secondary">最多 {maxConcurrency} 个组</Text>
         </label>
+        <label>
+          <Text type="secondary">评估并发数</Text>
+          <InputNumber
+            min={1}
+            max={getMaxEvaluationConcurrency()}
+            value={state.evaluationConcurrency}
+            onChange={(value) => onUpdateConfig({ evaluationConcurrency: Math.min(Number(value || 1), getMaxEvaluationConcurrency()) })}
+          />
+          <Text type="secondary">最多 {getMaxEvaluationConcurrency()} 个评分</Text>
+        </label>
+      </div>
+
+      <div className="experiment-control-console__record-row">
+        <Select
+          allowClear
+          placeholder="选择已保存实验结果"
+          value={selectedRunId}
+          onChange={(value) => onSelectRun(value || '')}
+          options={runs.map((run) => ({
+            value: run.runId,
+            label: runRecordLabel(run)
+          }))}
+        />
+        <Button size="small" onClick={onRefreshRuns}>刷新记录</Button>
+        <Button size="small" disabled={!selectedRunId} onClick={onLoadRun}>载入结果</Button>
       </div>
 
       <div className="experiment-control-console__stages">
         <div className="experiment-control-console__stage">
           <div className="experiment-control-console__stage-header">
             <Text strong>阶段一：生成</Text>
-            <Button size="small" type="primary" loading={generationRunning} onClick={() => onRunStage('generation')}>
-              启动生成
-            </Button>
+            <Space size={8} wrap>
+              <Button size="small" type="primary" loading={generationRunning} onClick={() => onRunStage('generation')}>
+                新建生成
+              </Button>
+              <Button size="small" disabled={!selectedRunId} loading={generationRunning} onClick={() => onRunStage('generation', { runId: selectedRunId })}>
+                继续生成
+              </Button>
+            </Space>
           </div>
           <Progress percent={state.generation.progress} size="small" status={getProgressStatus(state.generation.status)} />
           <Text type="secondary">按并发数运行实验脚本，生成各实验组预案正文。</Text>
@@ -578,12 +693,12 @@ function ExperimentControlPanel({
         <div className="experiment-control-console__stage">
           <div className="experiment-control-console__stage-header">
             <Text strong>阶段二：评估</Text>
-            <Button size="small" disabled={state.generation.status === 'idle'} loading={evaluationRunning} onClick={() => onRunStage('evaluation')}>
+            <Button size="small" disabled={!selectedRunId} loading={evaluationRunning} onClick={() => onRunStage('evaluation')}>
               启动评估
             </Button>
           </div>
           <Progress percent={state.evaluation.progress} size="small" status={getProgressStatus(state.evaluation.status)} />
-          <Text type="secondary">复用当前评价标准，对生成结果进行自动评估。</Text>
+          <Text type="secondary">先选择并载入某次实验结果，再对该结果进行自动评估。</Text>
           {state.evaluation.message ? <Text type="danger">{state.evaluation.message}</Text> : null}
         </div>
       </div>
@@ -592,6 +707,14 @@ function ExperimentControlPanel({
         <Text type="secondary">实时进度</Text>
         <div>生成：{getStageStatusText(state.generation.status)} · {state.generation.progress}%</div>
         <div>评估：{getStageStatusText(state.evaluation.status)} · {state.evaluation.progress}%</div>
+        <div className="experiment-control-console__active-groups">
+          <Text type="secondary">当前并发：{activeGroups.length}/{state.concurrency}</Text>
+          <div className="experiment-control-console__active-tags">
+            {activeGroups.length ? activeGroups.map((group) => (
+              <Tag color="blue" key={group.key}>第 {group.round} 轮 · {group.groupLabel}</Tag>
+            )) : <Tag>暂无运行中组</Tag>}
+          </div>
+        </div>
       </div>
 
       <div className="experiment-control-console__groups">
@@ -616,29 +739,69 @@ function ExperimentControlPanel({
   );
 }
 
-function ExperimentOutputPreview({ plan, outputState }: { plan: ExperimentPlan; outputState: ExperimentOutputState }) {
+function ExperimentOutputPreview({
+  plan,
+  outputState,
+  runs,
+  selectedRunId,
+  onSelectRun,
+  onLoadRun,
+  onRefreshRuns
+}: {
+  plan: ExperimentPlan;
+  outputState: ExperimentOutputState;
+  runs: ExperimentRunSummary[];
+  selectedRunId?: string;
+  onSelectRun: (runId: string) => void;
+  onLoadRun: () => void;
+  onRefreshRuns: () => void;
+}) {
   const rounds = Object.entries(outputState.rounds).sort(([a], [b]) => Number(a) - Number(b));
+  const activeGroups = outputState.activeGroups || [];
 
   return (
     <div className="experiment-output-preview">
       <div className="experiment-output-preview__header">
         <Text strong>产出预览</Text>
-        {outputState.activeRound ? (
-          <Tag color="purple">当前第 {outputState.activeRound} 轮</Tag>
-        ) : null}
-        {outputState.current ? (
-          <Tag color="blue">当前：第 {outputState.current.round} 轮 · {outputState.current.groupLabel}</Tag>
+        {activeGroups.length ? (
+          <div className="experiment-output-preview__active-groups">
+            {activeGroups.map((group) => (
+              <Tag color="blue" key={group.key}>运行中：第 {group.round} 轮 · {group.groupLabel}</Tag>
+            ))}
+          </div>
         ) : (
           <Tag>暂无运行中组</Tag>
         )}
       </div>
+      <div className="experiment-control-console__record-row is-preview">
+        <Select
+          allowClear
+          placeholder="选择已保存实验结果"
+          value={selectedRunId}
+          onChange={(value) => onSelectRun(value || '')}
+          options={runs.map((run) => ({
+            value: run.runId,
+            label: runRecordLabel(run)
+          }))}
+        />
+        <Button size="small" onClick={onRefreshRuns}>刷新记录</Button>
+        <Button size="small" type="primary" disabled={!selectedRunId} onClick={onLoadRun}>载入结果</Button>
+      </div>
       {rounds.length === 0 ? (
         <div className="experiment-output-preview__empty">启动生成后，这里会按轮次展示对照组和实验组输出。</div>
       ) : (
-        rounds.map(([round, groupMap]) => (
+        rounds.map(([round, groupMap]) => {
+          const questionItem = outputState.roundQuestionItems?.[round] || Object.values(groupMap)[0]?.questionItem;
+          return (
           <div className="experiment-output-preview__round" key={round}>
-            <div className="experiment-output-preview__round-title">第 {round} 轮</div>
+            <div className="experiment-output-preview__round-title">
+              第 {round} 轮
+              {questionItemLabel(questionItem) ? <Tag color="geekblue">{questionItemLabel(questionItem)}</Tag> : null}
+            </div>
             <div className="experiment-output-preview__round-question">本轮问题：{outputState.roundQuestions[round] || Object.values(groupMap)[0]?.question || '暂无问题。'}</div>
+            {questionItem?.expectedBehavior ? (
+              <div className="experiment-output-preview__round-meta">预期边界行为：{questionItem.expectedBehavior}</div>
+            ) : null}
             <div className="experiment-output-preview__groups">
               {plan.processGroups.map((group) => {
                 const groupOutput = groupMap[group.id];
@@ -661,7 +824,8 @@ function ExperimentOutputPreview({ plan, outputState }: { plan: ExperimentPlan; 
               })}
             </div>
           </div>
-        ))
+        );
+        })
       )}
     </div>
   );
@@ -676,22 +840,106 @@ function getAverageScore(evaluationState: ExperimentEvaluationState) {
   return Math.round((values.reduce((sum, score) => sum + score, 0) / values.length) * 10) / 10;
 }
 
+function formatStructuredEvaluation(value?: Record<string, any>) {
+  if (!value) return '';
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function getVerdictColor(verdict?: string) {
+  if (verdict === 'pass') return 'green';
+  if (verdict === 'partial') return 'gold';
+  if (verdict === 'fail') return 'red';
+  return 'default';
+}
+
+function getVerdictText(verdict?: string) {
+  if (verdict === 'pass') return '通过';
+  if (verdict === 'partial') return '部分通过';
+  if (verdict === 'fail') return '不通过';
+  return '未知';
+}
+
+function getStructuredSubscores(value?: Record<string, any>) {
+  const subscores = value?.subscores;
+  return Array.isArray(subscores) ? subscores.filter((item) => item && typeof item === 'object') : [];
+}
+
+function runRecordLabel(run: ExperimentRunSummary) {
+  const generation = `${run.completedGroups}/${run.totalGroups}`;
+  const evaluation = run.totalEvaluations ? ` · 评估 ${run.evaluatedGroups || 0}/${run.totalEvaluations}` : '';
+  return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 生成 ${generation}${evaluation} · ${run.updatedAt || run.runId}`;
+}
+
 function ExperimentEvaluationPanel({
   plan,
   evaluationPrompt,
   promptSource,
-  evaluationState
+  evaluationState,
+  runs,
+  selectedRunId,
+  evaluationRunning,
+  evaluationConcurrency,
+  onUpdateEvaluationConcurrency,
+  onSelectRun,
+  onLoadRun,
+  onRefreshRuns,
+  onRunEvaluation
 }: {
   plan: ExperimentPlan;
   evaluationPrompt: string;
   promptSource: string;
   evaluationState: ExperimentEvaluationState;
+  runs: ExperimentRunSummary[];
+  selectedRunId?: string;
+  evaluationRunning: boolean;
+  evaluationConcurrency: number;
+  onUpdateEvaluationConcurrency: (value: number) => void;
+  onSelectRun: (runId: string) => void;
+  onLoadRun: () => void;
+  onRefreshRuns: () => void;
+  onRunEvaluation: () => void;
 }) {
   const rounds = Object.entries(evaluationState.scores).sort(([a], [b]) => Number(a) - Number(b));
   const averageScore = getAverageScore(evaluationState);
 
   return (
     <div className="experiment-evaluation-panel">
+      <div className="experiment-evaluation-panel__prompt">
+        <div className="experiment-evaluation-panel__header">
+          <Text strong>选择实验结果</Text>
+          <Tag color={selectedRunId ? 'green' : 'default'}>{selectedRunId ? '已选择' : '未选择'}</Tag>
+        </div>
+        <div className="experiment-control-console__record-row is-evaluation">
+          <Select
+            allowClear
+            placeholder="选择已保存实验结果"
+            value={selectedRunId}
+            onChange={(value) => onSelectRun(value || '')}
+            options={runs.map((run) => ({
+              value: run.runId,
+              label: runRecordLabel(run)
+            }))}
+          />
+          <Button size="small" type="primary" disabled={!selectedRunId} loading={evaluationRunning} onClick={onRunEvaluation}>启动评估</Button>
+          <Button size="small" onClick={onRefreshRuns}>刷新记录</Button>
+          <Button size="small" disabled={!selectedRunId} onClick={onLoadRun}>载入结果</Button>
+          <label className="experiment-evaluation-panel__concurrency">
+            <Text type="secondary">评估并发</Text>
+            <InputNumber
+              size="small"
+              min={1}
+              max={getMaxEvaluationConcurrency()}
+              value={evaluationConcurrency}
+              onChange={(value) => onUpdateEvaluationConcurrency(Math.min(Number(value || 1), getMaxEvaluationConcurrency()))}
+            />
+          </label>
+        </div>
+      </div>
+
       <div className="experiment-evaluation-panel__prompt">
         <div className="experiment-evaluation-panel__header">
           <Text strong>本实验评估提示词</Text>
@@ -735,6 +983,44 @@ function ExperimentEvaluationPanel({
                         {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
+                    <div className="experiment-evaluation-panel__structured">
+                      <Text type="secondary">结构化评估</Text>
+                      {score?.structuredEvaluation ? (
+                        <>
+                          <div className="experiment-evaluation-panel__score-summary">
+                            <div>
+                              <Text type="secondary">格式化分数</Text>
+                              <div className="experiment-evaluation-panel__score-number">
+                                {score.structuredEvaluation.score_text || `${score.structuredEvaluation.score ?? '-'}/10`}
+                              </div>
+                            </div>
+                            <Tag color={getVerdictColor(String(score.structuredEvaluation.verdict || ''))}>
+                              {getVerdictText(String(score.structuredEvaluation.verdict || ''))}
+                            </Tag>
+                            {score.structuredEvaluation.needs_review ? <Tag color="orange">需复核</Tag> : null}
+                          </div>
+                          {score.structuredEvaluation.summary ? (
+                            <div className="experiment-evaluation-panel__score-summary-text">{String(score.structuredEvaluation.summary)}</div>
+                          ) : null}
+                          {getStructuredSubscores(score.structuredEvaluation).length ? (
+                            <div className="experiment-evaluation-panel__subscores">
+                              {getStructuredSubscores(score.structuredEvaluation).map((item, index) => (
+                                <div className="experiment-evaluation-panel__subscore" key={`${String(item.name || item.label || index)}-${index}`}>
+                                  <span>{String(item.name || item.label || `分项 ${index + 1}`)}</span>
+                                  <strong>{String(item.score ?? '-')}/{String(item.max_score ?? item.maxScore ?? '-')}</strong>
+                                  {item.reason ? <em>{String(item.reason)}</em> : null}
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                          <pre>{formatStructuredEvaluation(score.structuredEvaluation)}</pre>
+                        </>
+                      ) : score?.structuredError ? (
+                        <Text type="danger">{score.structuredError}</Text>
+                      ) : (
+                        <Text type="secondary">等待结构化结果。</Text>
+                      )}
+                    </div>
                     <div className="experiment-evaluation-panel__comment">{score?.comment || '暂无评估说明。'}</div>
                   </div>
                 );
@@ -758,21 +1044,110 @@ function parseEvaluationScore(text: string) {
 async function runEvaluationRequest(
   prompt: string,
   content: string,
-  context: { question: string; groupLabel: string; groupTitle: string; round: number }
+  context: { question: string; questionGroup?: string; groupLabel: string; groupTitle: string; round: number },
+  onUpdate?: (patch: Partial<Pick<ExperimentEvaluationScore, 'comment' | 'score' | 'structuredEvaluation' | 'structuredError'>>) => void
 ) {
-  const scoringPrompt = `${prompt}\n\n当前评估样本：\n- 轮次：第 ${context.round} 轮\n- 实验组：${context.groupLabel} ${context.groupTitle}\n- 用户问题：${context.question}\n\n请基于上述用户问题、实验组和当前输出进行10分制打分。必须在最终答案最后一行输出“总分：N/10”。`;
+  const experimentGroup = `${context.groupLabel} ${context.groupTitle}`.trim();
+  const scoringPrompt = `${prompt}\n\n当前评估样本：\n- 轮次：第 ${context.round} 轮\n- 题目分组：${context.questionGroup || '未提供'}\n- 实验组：${context.groupLabel} ${context.groupTitle}\n- 用户问题：${context.question}\n\n请基于上述用户问题、题目分组、实验组和当前输出进行10分制打分。必须在最终答案最后一行输出“总分：N/10”。`;
   const response = await fetch('/api/quality/review', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stream: false, mode: 'evaluate', prompt: scoringPrompt, content })
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify({
+      stream: true,
+      mode: 'evaluate',
+      structured: true,
+      structuredContext: {
+        question: context.question,
+        questionGroup: context.questionGroup || '',
+        experimentGroup
+      },
+      prompt: scoringPrompt,
+      content
+    })
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data?.message || `请求失败：${response.status}`);
-  const outputText = String(data?.output_text || '');
+
+  if (!response.ok || !response.body) {
+    const text = await response.text();
+    throw new Error(text || `请求失败：${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  let outputText = '';
+  let structuredEvaluation: Record<string, any> | undefined;
+  let structuredError = '';
+
+  const applyOutput = (text: string) => {
+    outputText = text;
+    onUpdate?.({ comment: outputText || '评估中...', score: parseEvaluationScore(outputText) });
+  };
+
+  const flushEvent = (rawChunk: string) => {
+    const lines = rawChunk.split('\n').map((line) => line.trim()).filter(Boolean);
+    let eventName = '';
+    const dataLines: string[] = [];
+    for (const line of lines) {
+      if (line.startsWith('event:')) eventName = line.slice(6).trim();
+      if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+    }
+    if (!eventName || eventName === 'close') return;
+    const dataText = dataLines.join('\n');
+    let data: any = {};
+    if (dataText) {
+      try {
+        data = JSON.parse(dataText);
+      } catch {
+        data = dataText;
+      }
+    }
+    if (eventName === 'quality_output_chunk') {
+      applyOutput(`${outputText}${String(data?.chunk || '')}`);
+      return;
+    }
+    if (eventName === 'quality_done') {
+      applyOutput(String(data?.output_text || outputText));
+      return;
+    }
+    if (eventName === 'quality_structured_done') {
+      structuredEvaluation = data?.structured_evaluation && typeof data.structured_evaluation === 'object'
+        ? data.structured_evaluation as Record<string, any>
+        : undefined;
+      const structuredScore = Number(structuredEvaluation?.score);
+      onUpdate?.({
+        structuredEvaluation,
+        structuredError: undefined,
+        score: Number.isFinite(structuredScore) ? Math.max(0, Math.min(10, structuredScore)) : parseEvaluationScore(outputText)
+      });
+      return;
+    }
+    if (eventName === 'quality_structured_error') {
+      structuredError = String(data?.message || '结构化评估失败');
+      onUpdate?.({ structuredError });
+      return;
+    }
+    if (eventName === 'quality_error') {
+      throw new Error(data?.message || '评估插件执行失败');
+    }
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split('\n\n');
+    buffer = parts.pop() || '';
+    parts.forEach((part) => part.trim() && flushEvent(part));
+  }
+  if (buffer.trim()) flushEvent(buffer);
+
+  const structuredScore = Number(structuredEvaluation?.score);
   return {
-    score: parseEvaluationScore(outputText),
-    comment: outputText || '评估完成，但未返回说明。'
+    score: Number.isFinite(structuredScore) ? Math.max(0, Math.min(10, structuredScore)) : parseEvaluationScore(outputText),
+    comment: outputText || '评估完成，但未返回说明。',
+    structuredEvaluation,
+    structuredError: structuredError || undefined
   };
 }
 
@@ -783,6 +1158,8 @@ async function streamExperimentRun(
     runCount: number;
     concurrency: number;
     questions: string[];
+    questionItems: ExperimentQuestionItem[];
+    runId?: string;
   },
   onEvent: (eventName: string, data: any) => void
 ) {
@@ -854,7 +1231,9 @@ export function ExperimentPage() {
   const [evaluationStateMap, setEvaluationStateMap] = useState<Record<string, ExperimentEvaluationState>>({});
   const [questionSuiteMap, setQuestionSuiteMap] = useState<Record<string, ExperimentQuestionSuite>>({});
   const [questionSuiteErrorMap, setQuestionSuiteErrorMap] = useState<Record<string, string>>({});
-  const [sampledInputMap, setSampledInputMap] = useState<Record<string, string[]>>({});
+  const [sampledQuestionMap, setSampledQuestionMap] = useState<Record<string, ExperimentQuestionItem[]>>({});
+  const [runRecordMap, setRunRecordMap] = useState<Record<string, ExperimentRunSummary[]>>({});
+  const [selectedRunIdMap, setSelectedRunIdMap] = useState<Record<string, string>>({});
   const databaseQuestionCount = Object.values(questionSuiteMap).reduce((total, suite) => total + suite.questionCount, 0) || experimentQuestionCount;
   const controlTimerMap = useRef<Record<string, number>>({});
 
@@ -875,6 +1254,12 @@ export function ExperimentPage() {
   }, []);
 
   useEffect(() => {
+    experimentPlans.forEach((plan) => {
+      void refreshExperimentRuns(plan.id);
+    });
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     experimentPlans
       .filter((plan) => plan.questionSuiteId)
@@ -884,9 +1269,9 @@ export function ExperimentPage() {
           .then((suite) => {
             if (cancelled) return;
             setQuestionSuiteMap((prev) => ({ ...prev, [plan.id]: suite }));
-            setSampledInputMap((prev) => ({
+            setSampledQuestionMap((prev) => ({
               ...prev,
-              [plan.id]: pickRandomQuestions(getSuiteQuestionTexts(suite), 3)
+              [plan.id]: pickRandomQuestionItems(getSuiteQuestionItems(suite), 3)
             }));
           })
           .catch((error) => {
@@ -904,7 +1289,13 @@ export function ExperimentPage() {
 
   const getControlState = (planId: string) => controlStateMap[planId] || defaultControlState;
 
-  const getPlanInputs = (plan: ExperimentPlan) => sampledInputMap[plan.id]?.length ? sampledInputMap[plan.id] : plan.inputs;
+  const getPlanInputs = (plan: ExperimentPlan) => sampledQuestionMap[plan.id]?.length ? sampledQuestionMap[plan.id].map((item) => item.questionText) : plan.inputs;
+
+  const getPlanQuestionItems = (plan: ExperimentPlan): ExperimentQuestionItem[] => {
+    const suiteItems = getSuiteQuestionItems(questionSuiteMap[plan.id]);
+    if (suiteItems.length) return suiteItems;
+    return plan.inputs.map((questionText) => ({ questionText }));
+  };
 
   const getPlanEvaluationPrompt = (plan: ExperimentPlan) => {
     if (plan.questionSuiteId) return questionSuiteMap[plan.id]?.evaluationPrompt || '';
@@ -920,7 +1311,37 @@ export function ExperimentPage() {
     return '通用评估提示词';
   };
 
-  const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency'>>) => {
+  const refreshExperimentRuns = async (planId: string) => {
+    try {
+      const runs = await fetchExperimentRuns(planId);
+      setRunRecordMap((prev) => ({ ...prev, [planId]: runs }));
+    } catch {
+      setRunRecordMap((prev) => ({ ...prev, [planId]: prev[planId] || [] }));
+    }
+  };
+
+  const loadExperimentRun = async (plan: ExperimentPlan) => {
+    const runId = selectedRunIdMap[plan.id];
+    if (!runId) return;
+    const detail = await fetchExperimentRunDetail(plan.id, runId);
+    setOutputStateMap((prev) => ({ ...prev, [plan.id]: detail.outputState as ExperimentOutputState }));
+    setEvaluationStateMap((prev) => ({ ...prev, [plan.id]: (detail.evaluationState as ExperimentEvaluationState) || defaultEvaluationState }));
+    setControlStateMap((prev) => ({
+      ...prev,
+      [plan.id]: {
+        ...(prev[plan.id] || defaultControlState),
+        runCount: detail.run.runCount || defaultControlState.runCount,
+        concurrency: Math.min(detail.run.concurrency || defaultControlState.concurrency, getMaxExperimentConcurrency(detail.run.runCount || defaultControlState.runCount, plan.processGroups.length)),
+        generation: { status: detail.run.status === 'done' ? 'done' : 'idle', progress: detail.run.totalGroups ? Math.round((detail.run.completedGroups / detail.run.totalGroups) * 100) : 0 },
+        evaluation: detail.evaluationState
+          ? { status: detail.evaluationState.status === 'done' ? 'done' : detail.evaluationState.status === 'error' ? 'error' : 'idle', progress: Number(detail.evaluationState.progress || 0), message: detail.evaluationState.message }
+          : defaultStageState
+      }
+    }));
+  };
+
+  const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency'>>) => {
+    const groupCount = experimentPlans.find((plan) => plan.id === planId)?.processGroups.length || 1;
     setControlStateMap((prev) => ({
       ...prev,
       [planId]: (() => {
@@ -929,10 +1350,12 @@ export function ExperimentPage() {
           ...(prev[planId] || {}),
           ...patch
         };
+        const maxConcurrency = getMaxExperimentConcurrency(next.runCount, groupCount);
         return {
           ...next,
-          runCount: Math.max(next.runCount, next.concurrency),
-          concurrency: Math.min(next.concurrency, next.runCount)
+          runCount: Math.max(next.runCount, 1),
+          concurrency: Math.min(Math.max(next.concurrency, 1), maxConcurrency),
+          evaluationConcurrency: Math.min(Math.max(next.evaluationConcurrency, 1), getMaxEvaluationConcurrency())
         };
       })()
     }));
@@ -954,35 +1377,66 @@ export function ExperimentPage() {
 
   const runEvaluationStage = async (plan: ExperimentPlan) => {
     const planId = plan.id;
-    const outputState = outputStateMap[planId] || defaultOutputState;
-    const tasks = Object.entries(outputState.rounds).flatMap(([round, groupMap]) =>
-      plan.processGroups.map((group) => ({
-        round: Number(round),
-        group,
-        output: groupMap[group.id]
-      })).filter((item) => item.round && item.output?.outputText)
-    );
-
-    if (!tasks.length) {
+    const selectedRunId = selectedRunIdMap[planId];
+    const failEvaluation = (message: string) => {
+      const errorState = { ...(evaluationStateMap[planId] || defaultEvaluationState), status: 'error' as const, progress: 0, message };
       setControlStateMap((prev) => ({
         ...prev,
         [planId]: {
           ...(prev[planId] || defaultControlState),
-          evaluation: { status: 'error', progress: 0, message: '暂无可评估的生成结果。' }
+          evaluation: { status: 'error', progress: 0, message }
         }
       }));
+      setEvaluationStateMap((prev) => ({
+        ...prev,
+        [planId]: errorState
+      }));
+      if (selectedRunId) void saveExperimentEvaluation(planId, selectedRunId, errorState).catch(() => {});
+    };
+
+    if (!selectedRunId) {
+      failEvaluation('请先选择一次实验结果。');
+      return;
+    }
+    let outputState = outputStateMap[planId] || defaultOutputState;
+    if (!Object.keys(outputState.rounds).length) {
+      try {
+        const detail = await fetchExperimentRunDetail(planId, selectedRunId);
+        outputState = detail.outputState as ExperimentOutputState;
+        setOutputStateMap((prev) => ({ ...prev, [planId]: outputState }));
+        if (detail.evaluationState) {
+          setEvaluationStateMap((prev) => ({ ...prev, [planId]: detail.evaluationState as ExperimentEvaluationState }));
+        }
+        setControlStateMap((prev) => ({
+          ...prev,
+          [planId]: {
+            ...(prev[planId] || defaultControlState),
+            runCount: detail.run.runCount || defaultControlState.runCount,
+            concurrency: Math.min(detail.run.concurrency || defaultControlState.concurrency, getMaxExperimentConcurrency(detail.run.runCount || defaultControlState.runCount, plan.processGroups.length)),
+            generation: { status: detail.run.status === 'done' ? 'done' : 'idle', progress: detail.run.totalGroups ? Math.round((detail.run.completedGroups / detail.run.totalGroups) * 100) : 0 }
+          }
+        }));
+      } catch (error) {
+        failEvaluation(error instanceof Error ? error.message : '实验结果载入失败。');
+        return;
+      }
+    }
+    const tasks: ExperimentEvaluationTask[] = Object.entries(outputState.rounds).flatMap(([round, groupMap]) =>
+      plan.processGroups.map((group) => ({
+        round: Number(round),
+        group,
+        output: groupMap[group.id]
+      })).filter((item): item is ExperimentEvaluationTask => Boolean(item.round && item.output?.outputText))
+    );
+
+    if (!tasks.length) {
+      failEvaluation('暂无可评估的生成结果。');
       return;
     }
 
     const planEvaluationPrompt = getPlanEvaluationPrompt(plan);
     if (!planEvaluationPrompt) {
-      setControlStateMap((prev) => ({
-        ...prev,
-        [planId]: {
-          ...(prev[planId] || defaultControlState),
-          evaluation: { status: 'error', progress: 0, message: questionSuiteErrorMap[planId] || '本实验专属评估提示词尚未加载。' }
-        }
-      }));
+      failEvaluation(questionSuiteErrorMap[planId] || '本实验专属评估提示词尚未加载。');
       return;
     }
 
@@ -998,8 +1452,33 @@ export function ExperimentPage() {
       [planId]: { status: 'running', progress: 0, scores: {} }
     }));
 
-    for (let index = 0; index < tasks.length; index += 1) {
-      const task = tasks[index];
+    const evaluationConcurrency = Math.min(getControlState(planId).evaluationConcurrency || 1, getMaxEvaluationConcurrency(), tasks.length);
+    let savedScores: ExperimentEvaluationState['scores'] = {};
+    let nextTaskIndex = 0;
+    let completed = 0;
+
+    const setSavedScore = (task: ExperimentEvaluationTask, score: ExperimentEvaluationScore) => {
+      const roundKey = String(task.round);
+      savedScores = {
+        ...savedScores,
+        [roundKey]: {
+          ...(savedScores[roundKey] || {}),
+          [task.group.id]: score
+        }
+      };
+    };
+
+    const persistEvaluation = (status: ExperimentEvaluationState['status'], progress: number, message?: string) => {
+      const state = { status, progress, scores: savedScores, message };
+      void saveExperimentEvaluation(planId, selectedRunId, state).then(() => refreshExperimentRuns(planId)).catch(() => {});
+    };
+
+    persistEvaluation('running', 0);
+
+    const runWorker = async () => {
+      while (nextTaskIndex < tasks.length) {
+        const task = tasks[nextTaskIndex];
+        nextTaskIndex += 1;
       const groupTitle = splitGroupName(task.group);
       updateEvaluationState(planId, (current) => ({
         ...current,
@@ -1017,45 +1496,70 @@ export function ExperimentPage() {
       try {
         const result = await runEvaluationRequest(planEvaluationPrompt, task.output.outputText, {
           question: task.output.question || outputState.roundQuestions[String(task.round)] || '',
+          questionGroup: questionItemLabel(task.output.questionItem || outputState.roundQuestionItems?.[String(task.round)]),
           groupLabel: groupTitle.label,
           groupTitle: groupTitle.title,
           round: task.round
+        }, (patch) => {
+          updateEvaluationState(planId, (current) => ({
+            ...current,
+            scores: {
+              ...current.scores,
+              [String(task.round)]: {
+                ...(current.scores[String(task.round)] || {}),
+                [task.group.id]: {
+                  ...(current.scores[String(task.round)]?.[task.group.id] || {}),
+                  groupId: task.group.id,
+                  groupLabel: groupTitle.label,
+                  status: 'running',
+                  ...patch
+                }
+              }
+            }
+          }));
         });
+        const doneScore: ExperimentEvaluationScore = {
+          groupId: task.group.id,
+          groupLabel: groupTitle.label,
+          status: 'done',
+          score: result.score,
+          comment: result.comment,
+          structuredEvaluation: result.structuredEvaluation,
+          structuredError: result.structuredError
+        };
+        setSavedScore(task, doneScore);
         updateEvaluationState(planId, (current) => ({
           ...current,
           scores: {
             ...current.scores,
             [String(task.round)]: {
               ...(current.scores[String(task.round)] || {}),
-              [task.group.id]: {
-                groupId: task.group.id,
-                groupLabel: groupTitle.label,
-                status: 'done',
-                score: result.score,
-                comment: result.comment
-              }
+              [task.group.id]: doneScore
             }
           }
         }));
       } catch (error) {
+        const errorScore: ExperimentEvaluationScore = {
+          groupId: task.group.id,
+          groupLabel: groupTitle.label,
+          status: 'error',
+          comment: error instanceof Error ? error.message : '评估失败'
+        };
+        setSavedScore(task, errorScore);
         updateEvaluationState(planId, (current) => ({
           ...current,
           scores: {
             ...current.scores,
             [String(task.round)]: {
               ...(current.scores[String(task.round)] || {}),
-              [task.group.id]: {
-                groupId: task.group.id,
-                groupLabel: groupTitle.label,
-                status: 'error',
-                comment: error instanceof Error ? error.message : '评估失败'
-              }
+              [task.group.id]: errorScore
             }
           }
         }));
       }
 
-      const progress = Math.round(((index + 1) / tasks.length) * 100);
+      completed += 1;
+      const progress = Math.round((completed / tasks.length) * 100);
       setControlStateMap((prev) => ({
         ...prev,
         [planId]: {
@@ -1069,10 +1573,14 @@ export function ExperimentPage() {
         progress,
         current: progress >= 100 ? undefined : current.current
       }));
+      persistEvaluation(progress >= 100 ? 'done' : 'running', progress);
     }
+    };
+
+    await Promise.all(Array.from({ length: evaluationConcurrency }, () => runWorker()));
   };
 
-  const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage) => {
+  const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage, options: { runId?: string } = {}) => {
     const planId = plan.id;
     if (stage === 'evaluation') {
       await runEvaluationStage(plan);
@@ -1093,7 +1601,8 @@ export function ExperimentPage() {
     }));
 
     const currentControl = getControlState(planId);
-    if (stage === 'generation') {
+    const effectiveConcurrency = Math.min(currentControl.concurrency, getMaxExperimentConcurrency(currentControl.runCount, plan.processGroups.length));
+    if (stage === 'generation' && !options.runId) {
       setOutputStateMap((prev) => ({ ...prev, [planId]: defaultOutputState }));
     }
 
@@ -1103,11 +1612,26 @@ export function ExperimentPage() {
           planId,
           stage,
           runCount: currentControl.runCount,
-          concurrency: currentControl.concurrency,
-          questions: getPlanInputs(plan)
+          concurrency: effectiveConcurrency,
+          questions: getPlanInputs(plan),
+          questionItems: getPlanQuestionItems(plan),
+          runId: options.runId
         },
         (eventName, data) => {
+          if (data?.runId) {
+            setSelectedRunIdMap((prev) => ({ ...prev, [planId]: String(data.runId) }));
+          }
+
+          if (eventName === 'experiment_stage_started' && data?.outputState) {
+            setOutputStateMap((prev) => ({ ...prev, [planId]: data.outputState as ExperimentOutputState }));
+            return;
+          }
+
           if (eventName === 'experiment_stage_done') {
+            if (data?.outputState) {
+              setOutputStateMap((prev) => ({ ...prev, [planId]: data.outputState as ExperimentOutputState }));
+            }
+            void refreshExperimentRuns(planId);
             setControlStateMap((prev) => ({
               ...prev,
               [planId]: {
@@ -1136,13 +1660,15 @@ export function ExperimentPage() {
           if (eventName === 'experiment_round_started') {
             const round = Number(data.round || 0);
             if (!round) return;
+            const questionItem = eventQuestionItem(data);
             updateOutputState(planId, (current) => ({
               ...current,
               activeRound: round,
               roundQuestions: {
                 ...current.roundQuestions,
                 [String(round)]: String(data.question || '')
-              }
+              },
+              roundQuestionItems: mergeRoundQuestionItem(current, String(round), questionItem)
             }));
             return;
           }
@@ -1151,8 +1677,10 @@ export function ExperimentPage() {
             const round = Number(data.round || 0);
             const groupId = String(data.groupId || '');
             if (!round || !groupId) return;
+            const questionItem = eventQuestionItem(data);
             updateOutputState(planId, (current) => ({
               ...current,
+              activeGroups: addActiveGroup(current, { round, groupId, groupLabel: String(data.groupLabel || '') }),
               current: { round, groupId, groupLabel: String(data.groupLabel || '') },
               rounds: {
                 ...current.rounds,
@@ -1162,6 +1690,7 @@ export function ExperimentPage() {
                     groupId,
                     groupLabel: String(data.groupLabel || ''),
                     question: String(data.question || ''),
+                    questionItem,
                     outputText: '',
                     streamingText: '',
                     status: 'running'
@@ -1171,7 +1700,8 @@ export function ExperimentPage() {
               roundQuestions: {
                 ...current.roundQuestions,
                 [String(round)]: String(data.question || current.roundQuestions[String(round)] || '')
-              }
+              },
+              roundQuestionItems: mergeRoundQuestionItem(current, String(round), questionItem)
             }));
             return;
           }
@@ -1186,6 +1716,7 @@ export function ExperimentPage() {
               if (!existing) return current;
               return {
                 ...current,
+                activeGroups: addActiveGroup(current, { round, groupId, groupLabel: existing.groupLabel }),
                 current: { round, groupId, groupLabel: existing.groupLabel },
                 rounds: {
                   ...current.rounds,
@@ -1201,7 +1732,8 @@ export function ExperimentPage() {
                 roundQuestions: {
                   ...current.roundQuestions,
                   [roundKey]: String(data.question || existing?.question || current.roundQuestions[roundKey] || '')
-                }
+                },
+                roundQuestionItems: mergeRoundQuestionItem(current, roundKey, existing?.questionItem || current.roundQuestionItems?.[roundKey])
               };
             });
             return;
@@ -1211,11 +1743,13 @@ export function ExperimentPage() {
             const round = Number(data.round || 0);
             const groupId = String(data.groupId || '');
             if (!round || !groupId) return;
+            const questionItem = eventQuestionItem(data);
             updateOutputState(planId, (current) => {
               const roundKey = String(round);
               const existing = current.rounds[roundKey]?.[groupId];
               return {
                 ...current,
+                activeGroups: removeActiveGroup(current, round, groupId),
                 current: { round, groupId, groupLabel: String(data.groupLabel || existing?.groupLabel || '') },
                 rounds: {
                   ...current.rounds,
@@ -1225,6 +1759,7 @@ export function ExperimentPage() {
                       groupId,
                       groupLabel: String(data.groupLabel || existing?.groupLabel || ''),
                       question: String(data.question || existing?.question || ''),
+                      questionItem: questionItem || existing?.questionItem,
                       outputText: String(data.outputText || ''),
                       streamingText: existing?.streamingText || '',
                       status: data?.status === 'terminated' ? 'terminated' : 'done'
@@ -1234,7 +1769,8 @@ export function ExperimentPage() {
                 roundQuestions: {
                   ...current.roundQuestions,
                   [roundKey]: String(existing?.question || current.roundQuestions[roundKey] || '')
-                }
+                },
+                roundQuestionItems: mergeRoundQuestionItem(current, roundKey, questionItem || existing?.questionItem || current.roundQuestionItems?.[roundKey])
               };
             });
             return;
@@ -1249,6 +1785,7 @@ export function ExperimentPage() {
               const existing = current.rounds[roundKey]?.[groupId];
               return {
                 ...current,
+                activeGroups: removeActiveGroup(current, round, groupId),
                 current: { round, groupId, groupLabel: existing?.groupLabel || groupId },
                 rounds: {
                   ...current.rounds,
@@ -1271,6 +1808,7 @@ export function ExperimentPage() {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : '实验执行失败';
+      updateOutputState(planId, (current) => ({ ...current, activeGroups: [] }));
       setControlStateMap((prev) => ({
         ...prev,
         [planId]: {
@@ -1402,18 +1940,41 @@ export function ExperimentPage() {
               <ExperimentControlPanel
                 plan={plan}
                 state={getControlState(plan.id)}
+                runs={runRecordMap[plan.id] || []}
+                selectedRunId={selectedRunIdMap[plan.id]}
+                outputState={outputStateMap[plan.id] || defaultOutputState}
                 onUpdateConfig={(patch) => updateControlConfig(plan.id, patch)}
-                onRunStage={(stage) => void runControlStage(plan, stage)}
+                onRunStage={(stage, options) => void runControlStage(plan, stage, options)}
+                onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
+                onLoadRun={() => void loadExperimentRun(plan)}
+                onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
               />
               ) : (
                 cardView === 'preview' ? (
-                  <ExperimentOutputPreview plan={plan} outputState={outputStateMap[plan.id] || defaultOutputState} />
+                  <ExperimentOutputPreview
+                    plan={plan}
+                    outputState={outputStateMap[plan.id] || defaultOutputState}
+                    runs={runRecordMap[plan.id] || []}
+                    selectedRunId={selectedRunIdMap[plan.id]}
+                    onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
+                    onLoadRun={() => void loadExperimentRun(plan)}
+                    onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
+                  />
                 ) : (
                   <ExperimentEvaluationPanel
                     plan={plan}
                     evaluationPrompt={getPlanEvaluationPrompt(plan)}
                     promptSource={getPlanEvaluationPromptSource(plan)}
                     evaluationState={evaluationStateMap[plan.id] || defaultEvaluationState}
+                    runs={runRecordMap[plan.id] || []}
+                    selectedRunId={selectedRunIdMap[plan.id]}
+                    evaluationRunning={getControlState(plan.id).evaluation.status === 'running'}
+                    evaluationConcurrency={getControlState(plan.id).evaluationConcurrency}
+                    onUpdateEvaluationConcurrency={(value) => updateControlConfig(plan.id, { evaluationConcurrency: value })}
+                    onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
+                    onLoadRun={() => void loadExperimentRun(plan)}
+                    onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
+                    onRunEvaluation={() => void runControlStage(plan, 'evaluation')}
                   />
                 )
               )

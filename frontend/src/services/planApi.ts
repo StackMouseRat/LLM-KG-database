@@ -7,6 +7,16 @@ import type {
   PlanTrace
 } from '../types/plan';
 
+async function readJsonSafely(response: Response) {
+  const text = await response.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`响应不是有效 JSON：${text.slice(0, 160)}`);
+  }
+}
+
 function parseBasicInfo(raw: any) {
   const fields = raw?.basic_info?.fields || {};
   return {
@@ -91,7 +101,7 @@ export async function runPipeline(payload: PipelineRunRequest): Promise<Pipeline
     throw error;
   }
 
-  const data = await response.json();
+  const data = await readJsonSafely(response);
 
   return {
     question: String(data?.question || payload.question),
@@ -261,7 +271,7 @@ export async function fetchTraceSubgraph(payload: {
     body: JSON.stringify(payload)
   });
 
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }

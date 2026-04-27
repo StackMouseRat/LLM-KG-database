@@ -3,6 +3,16 @@ export type AuthSession = {
   group: 'admin' | 'user';
 };
 
+async function readJsonSafely(response: Response) {
+  const text = await response.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`响应不是有效 JSON：${text.slice(0, 160)}`);
+  }
+}
+
 export async function fetchCurrentUser(): Promise<AuthSession | null> {
   const response = await fetch('/api/auth/me', {
     method: 'GET',
@@ -13,7 +23,7 @@ export async function fetchCurrentUser(): Promise<AuthSession | null> {
     return null;
   }
 
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }
@@ -37,7 +47,7 @@ export async function login(username: string, password: string): Promise<AuthSes
     })
   });
 
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }
@@ -54,7 +64,7 @@ export async function logout() {
     credentials: 'same-origin'
   });
 
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }

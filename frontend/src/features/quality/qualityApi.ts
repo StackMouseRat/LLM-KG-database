@@ -1,8 +1,18 @@
 import type { PromptConfig } from './types';
 
+async function readJsonSafely(response: Response) {
+  const text = await response.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`响应不是有效 JSON：${text.slice(0, 160)}`);
+  }
+}
+
 export async function fetchTemplatePrompts(): Promise<PromptConfig[]> {
   const response = await fetch('/api/template/prompts');
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }
@@ -20,7 +30,7 @@ export async function saveTemplatePrompt(promptKey: string, promptText: string):
       prompt_text: promptText
     })
   });
-  const data = await response.json();
+  const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);
   }

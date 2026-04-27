@@ -19,14 +19,30 @@ FORMAT_REVIEW_PLUGIN_KEY_FILE = os.getenv(
     "FORMAT_REVIEW_PLUGIN_KEY_FILE",
     "/run/fastgpt_keys/format_review_plugin_api_key",
 )
+STRUCTURED_EVALUATION_PLUGIN_URL = os.getenv(
+    "STRUCTURED_EVALUATION_PLUGIN_URL",
+    FORMAT_REVIEW_PLUGIN_URL,
+)
+STRUCTURED_EVALUATION_PLUGIN_KEY_FILE = os.getenv(
+    "STRUCTURED_EVALUATION_PLUGIN_KEY_FILE",
+    "/run/fastgpt_keys/structured_evaluation_plugin_api_key",
+)
+
+
+def read_key(path_text: str) -> str:
+    path = Path(path_text)
+    key = path.read_text(encoding="utf-8").strip()
+    if not key:
+        raise RuntimeError(f"plugin key file is empty: {path}")
+    return key
 
 
 def read_format_review_key() -> str:
-    path = Path(FORMAT_REVIEW_PLUGIN_KEY_FILE)
-    key = path.read_text(encoding="utf-8").strip()
-    if not key:
-        raise RuntimeError(f"format review plugin key file is empty: {path}")
-    return key
+    return read_key(FORMAT_REVIEW_PLUGIN_KEY_FILE)
+
+
+def read_structured_evaluation_key() -> str:
+    return read_key(STRUCTURED_EVALUATION_PLUGIN_KEY_FILE)
 
 
 def extract_plugin_text(response: dict[str, Any]) -> tuple[str, str]:
@@ -53,6 +69,56 @@ def extract_plugin_text(response: dict[str, Any]) -> tuple[str, str]:
         if node.get("moduleType") == "chatNode" and not reasoning:
             reasoning = str(node.get("reasoningText") or "")
     return output.strip(), reasoning.strip()
+
+
+def extract_structured_evaluation(response: dict[str, Any]) -> dict[str, Any]:
+    for value in (response.get("newVariables") or {}).values():
+        if isinstance(value, dict):
+            return value
+        if isinstance(value, str) and value.strip():
+            try:
+                parsed = json.loads(value)
+            except Exception:
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+
+    for node in response.get("responseData", []):
+        if not isinstance(node, dict) or node.get("moduleType") != "contentExtract":
+            continue
+        extract_result = node.get("extractResult")
+        if isinstance(extract_result, dict):
+            for key in ("评估结构化分数", "结构化评估分数"):
+                value = extract_result.get(key)
+                if isinstance(value, dict):
+                    return value
+        for key in ("评估结构化分数", "结构化评估分数", "fields"):
+            value = node.get(key)
+            if isinstance(value, dict):
+                return value
+            if isinstance(value, str) and value.strip():
+                try:
+                    parsed = json.loads(value)
+                except Exception:
+                    continue
+                if isinstance(parsed, dict):
+                    return parsed
+        error_text = str(node.get("errorText") or node.get("system_error_text") or "").strip()
+        if error_text:
+            raise RuntimeError(error_text)
+
+    output_text, _ = extract_plugin_text(response)
+    if output_text:
+        try:
+            parsed = json.loads(output_text)
+        except Exception as exc:
+            raise RuntimeError(f"structured evaluation returned non-json output: {output_text[:200]}") from exc
+        if isinstance(parsed, dict):
+            return parsed
+    error_text = str(response.get("error") or "").strip()
+    if error_text:
+        raise RuntimeError(error_text)
+    raise RuntimeError("structured evaluation returned no structured result")
 
 
 def with_review_background(prompt: str, fault_scene: str = "", graph_material: str = "") -> str:
@@ -101,7 +167,44 @@ def run_format_review_sync(prompt: str, content: str, fault_scene: str = "", gra
     }
 
 
-def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: str, mode: str, fault_scene: str = "", graph_material: str = "") -> None:
+def run_structured_evaluation_sync(
+    *,
+    evaluation_text: str,
+    question: str = "",
+    question_group: str = "",
+    experiment_group: str = "",
+) -> dict[str, Any]:
+    payload = {
+        "stream": False,
+        "detail": True,
+        "variables": {
+            "评估原文": evaluation_text,
+            "实验组名称": experiment_group,
+            "题目分组": question_group,
+            "原始用户问题": question,
+        },
+    }
+    req = Request(
+        STRUCTURED_EVALUATION_PLUGIN_URL,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {read_structured_evaluation_key()}",
+            "Content-Type": "application/json; charset=utf-8",
+        },
+    )
+    try:
+        with urlopen(req, timeout=180) as resp:
+            body = json.loads(resp.read().decode("utf-8", errors="replace"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"structured evaluation HTTP {exc.code}: {detail[:400]}")
+    except URLError as exc:
+        raise RuntimeError(f"structured evaluation URL error: {exc}")
+    return extract_structured_evaluation(body)
+
+
+def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: str, mode: str, fault_scene: str = "", graph_material: str = "") -> dict[str, Any]:
     prompt = with_review_background(prompt, fault_scene, graph_material)
     payload = {
         "stream": True,
@@ -190,3 +293,4 @@ def stream_format_review(handler: BaseHTTPRequestHandler, prompt: str, content: 
             "reasoning_text": reasoning_text,
         },
     )
+    return {"output_text": output_text, "reasoning_text": reasoning_text}
