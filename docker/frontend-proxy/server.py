@@ -127,43 +127,39 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return session
 
-    def do_OPTIONS(self) -> None:
-        self.send_response(204)
-        self._send_common_headers()
+    def _write_bad_request(self, message: str) -> None:
+        self._write_json(400, {"message": message})
+
+    def _send_event_stream_headers(self) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "keep-alive")
+        self._send_stream_headers()
         self.end_headers()
 
-    def do_GET(self) -> None:
-        if self.path == "/api/auth/me":
-            session = self._authenticated_session()
-            if not session:
-                self._write_json(401, {"message": "未登录", "code": "UNAUTHORIZED"})
-                return
-            self._write_json(
-                200,
-                {
-                    "ok": True,
-                    "username": str(session.get("username") or ""),
-                    "group": str(session.get("group") or ""),
-                },
-            )
+    def _handle_auth_me(self) -> None:
+        session = self._authenticated_session()
+        if not session:
+            self._write_json(401, {"message": "未登录", "code": "UNAUTHORIZED"})
             return
+        self._write_json(
+            200,
+            {
+                "ok": True,
+                "username": str(session.get("username") or ""),
+                "group": str(session.get("group") or ""),
+            },
+        )
 
-        if self.path.startswith("/api/") and self._require_auth() is None:
-            return
+    def _handle_template_prompts(self) -> None:
+        try:
+            prompts = list_template_prompts()
+            self._write_json(200, {"prompts": prompts})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
 
-        if self.path == "/api/template/prompts":
-            try:
-                prompts = list_template_prompts()
-                self._write_json(200, {"prompts": prompts})
-                return
-            except Exception as exc:
-                self._write_json(500, {"message": str(exc)})
-                return
-
-        if self.path != "/api/template/sections":
-            self._write_json(404, {"message": "not found"})
-            return
-
+    def _handle_template_sections(self) -> None:
         try:
             sections = list_template_sections()
             defaults = ensure_template_defaults_snapshot(sections)
@@ -181,202 +177,153 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
-    def do_POST(self) -> None:
-        if self.path == "/api/auth/login":
-            try:
-                body = self._read_json_body()
-                username = str(body.get("username") or "").strip()
-                password = str(body.get("password") or "")
-                if not validate_credentials(username, password):
-                    self._write_json(401, {"message": "用户名或密码错误", "code": "INVALID_CREDENTIALS"})
-                    return
-                token, _ = create_session(username)
-                self._write_json(
-                    200,
-                    {"ok": True, "username": username, "group": get_user_group(username)},
-                    extra_headers=[("Set-Cookie", self._build_session_cookie(token, AUTH_SESSION_TTL))],
-                )
+    def _handle_auth_login(self) -> None:
+        try:
+            body = self._read_json_body()
+            username = str(body.get("username") or "").strip()
+            password = str(body.get("password") or "")
+            if not validate_credentials(username, password):
+                self._write_json(401, {"message": "用户名或密码错误", "code": "INVALID_CREDENTIALS"})
                 return
-            except Exception as exc:
-                self._write_json(500, {"message": str(exc)})
-                return
-
-        if self.path == "/api/auth/logout":
-            destroy_session(self._get_cookie())
+            token, _ = create_session(username)
             self._write_json(
                 200,
-                {"ok": True},
-                extra_headers=[("Set-Cookie", self._build_session_cookie("", 0))],
+                {"ok": True, "username": username, "group": get_user_group(username)},
+                extra_headers=[("Set-Cookie", self._build_session_cookie(token, AUTH_SESSION_TTL))],
             )
-            return
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
 
-        if self.path.startswith("/api/") and self._require_auth() is None:
-            return
+    def _handle_auth_logout(self) -> None:
+        destroy_session(self._get_cookie())
+        self._write_json(
+            200,
+            {"ok": True},
+            extra_headers=[("Set-Cookie", self._build_session_cookie("", 0))],
+        )
 
-        if self.path == "/api/trace/subgraph":
-            try:
-                body = self._read_json_body()
-                question = str(body.get("question") or "").strip()
-                fault_scene = str(body.get("faultScene") or "")
-                graph_material = str(body.get("graphMaterial") or "")
-                focus = extract_trace_focus_fields(question, fault_scene, graph_material)
-                trace = build_trace_subgraph(
-                    space=str(focus.get("space") or ""),
-                    fault_name=str(focus.get("fault") or ""),
-                    graph_query=gql,
-                    device_name=str(focus.get("device") or ""),
-                    hit_fault_names=focus.get("faults") if isinstance(focus.get("faults"), list) else None,
-                )
-                self._write_json(200, trace)
+    def _handle_trace_subgraph(self) -> None:
+        try:
+            body = self._read_json_body()
+            question = str(body.get("question") or "").strip()
+            fault_scene = str(body.get("faultScene") or "")
+            graph_material = str(body.get("graphMaterial") or "")
+            focus = extract_trace_focus_fields(question, fault_scene, graph_material)
+            trace = build_trace_subgraph(
+                space=str(focus.get("space") or ""),
+                fault_name=str(focus.get("fault") or ""),
+                graph_query=gql,
+                device_name=str(focus.get("device") or ""),
+                hit_fault_names=focus.get("faults") if isinstance(focus.get("faults"), list) else None,
+            )
+            self._write_json(200, trace)
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_quality_review(self) -> None:
+        try:
+            body = self._read_json_body()
+            prompt = str(body.get("prompt") or "").strip()
+            content = str(body.get("content") or "").strip()
+            mode = str(body.get("mode") or "optimize").strip() or "optimize"
+            fault_scene = str(body.get("faultScene") or "")
+            graph_material = str(body.get("graphMaterial") or "")
+            if not prompt:
+                self._write_bad_request("prompt is required")
                 return
+            if not content:
+                self._write_bad_request("content is required")
+                return
+
+            if not body.get("stream"):
+                result = run_format_review_sync(prompt, content, fault_scene, graph_material)
+                self._write_json(200, {"mode": mode, **result})
+                return
+
+            self._send_event_stream_headers()
+            try:
+                stream_format_review(self, prompt, content, mode, fault_scene, graph_material)
             except Exception as exc:
-                self._write_json(500, {"message": str(exc)})
+                send_sse(self, "quality_error", {"mode": mode, "message": str(exc)})
+            finally:
+                send_sse(self, "close", {})
+                self.wfile.flush()
+                self.wfile.close()
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_template_prompt_save(self) -> None:
+        try:
+            if self._require_admin() is None:
+                return
+            body = self._read_json_body()
+            prompt_key = str(body.get("prompt_key") or "").strip()
+            prompt_text = str(body.get("prompt_text") or "")
+            if not prompt_key:
+                self._write_bad_request("prompt_key is required")
                 return
 
-        if self.path == "/api/quality/review":
-            try:
-                body = self._read_json_body()
-                prompt = str(body.get("prompt") or "").strip()
-                content = str(body.get("content") or "").strip()
-                mode = str(body.get("mode") or "optimize").strip() or "optimize"
-                fault_scene = str(body.get("faultScene") or "")
-                graph_material = str(body.get("graphMaterial") or "")
-                if not prompt:
-                    self.send_response(400)
-                    self._send_common_headers()
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"message": "prompt is required"}).encode("utf-8"))
-                    return
-                if not content:
-                    self.send_response(400)
-                    self._send_common_headers()
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"message": "content is required"}).encode("utf-8"))
-                    return
+            update_template_prompt(prompt_key, prompt_text)
+            prompts = list_template_prompts()
+            matched = next((item for item in prompts if item["prompt_key"] == prompt_key), None)
+            self._write_json(200, {"ok": True, "prompt": matched})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
 
-                if not body.get("stream"):
-                    result = run_format_review_sync(prompt, content, fault_scene, graph_material)
-                    payload = json.dumps({"mode": mode, **result}, ensure_ascii=False).encode("utf-8")
-                    self.send_response(200)
-                    self._send_common_headers()
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.send_header("Content-Length", str(len(payload)))
-                    self.end_headers()
-                    self.wfile.write(payload)
-                    return
-
-                self.send_response(200)
-                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-                self.send_header("Cache-Control", "no-cache")
-                self.send_header("Connection", "keep-alive")
-                self._send_stream_headers()
-                self.end_headers()
-                try:
-                    stream_format_review(self, prompt, content, mode, fault_scene, graph_material)
-                except Exception as exc:
-                    send_sse(self, "quality_error", {"mode": mode, "message": str(exc)})
-                finally:
-                    send_sse(self, "close", {})
-                    self.wfile.flush()
-                    self.wfile.close()
+    def _handle_template_section_mutation(self) -> None:
+        try:
+            if self._require_admin() is None:
                 return
-            except Exception as exc:
-                self._write_json(500, {"message": str(exc)})
+            body = self._read_json_body()
+            section_id = str(body.get("section_id") or "").strip()
+            if not section_id:
+                self._write_bad_request("section_id is required")
                 return
 
-        if self.path == "/api/template/prompt/save":
-            try:
-                if self._require_admin() is None:
-                    return
-                body = self._read_json_body()
-                prompt_key = str(body.get("prompt_key") or "").strip()
-                prompt_text = str(body.get("prompt_text") or "")
-                if not prompt_key:
-                    self.send_response(400)
-                    self._send_common_headers()
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"message": "prompt_key is required"}).encode("utf-8"))
-                    return
-
-                update_template_prompt(prompt_key, prompt_text)
-                prompts = list_template_prompts()
-                matched = next((item for item in prompts if item["prompt_key"] == prompt_key), None)
-                self._write_json(200, {"ok": True, "prompt": matched})
-                return
-            except Exception as exc:
-                self._write_json(500, {"message": str(exc)})
-                return
-
-        if self.path in ("/api/template/section/save", "/api/template/section/reset"):
-            try:
-                if self._require_admin() is None:
-                    return
-                body = self._read_json_body()
-                section_id = str(body.get("section_id") or "").strip()
-                if not section_id:
-                    self.send_response(400)
-                    self._send_common_headers()
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"message": "section_id is required"}).encode("utf-8"))
-                    return
-
-                if self.path == "/api/template/section/reset":
-                    sections = list_template_sections()
-                    defaults = ensure_template_defaults_snapshot(sections)
-                    default = defaults.get(section_id)
-                    if not default:
-                        raise RuntimeError(f"default template section not found: {section_id}")
-                    update_template_section(
-                        section_id,
-                        str(default.get("source_type") or ""),
-                        str(default.get("fixed_text") or ""),
-                        str(default.get("gen_instruction") or ""),
-                    )
-                else:
-                    update_template_section(
-                        section_id,
-                        str(body.get("source_type") or ""),
-                        str(body.get("fixed_text") or ""),
-                        str(body.get("gen_instruction") or ""),
-                    )
-
+            if self.path == "/api/template/section/reset":
                 sections = list_template_sections()
                 defaults = ensure_template_defaults_snapshot(sections)
-                matched = next((item for item in sections if item["section_id"] == section_id), None)
-                payload = {
-                    "ok": True,
-                    "section": {
-                        **matched,
-                        "default": defaults.get(section_id, {}),
-                    }
-                    if matched
-                    else None,
+                default = defaults.get(section_id)
+                if not default:
+                    raise RuntimeError(f"default template section not found: {section_id}")
+                update_template_section(
+                    section_id,
+                    str(default.get("source_type") or ""),
+                    str(default.get("fixed_text") or ""),
+                    str(default.get("gen_instruction") or ""),
+                )
+            else:
+                update_template_section(
+                    section_id,
+                    str(body.get("source_type") or ""),
+                    str(body.get("fixed_text") or ""),
+                    str(body.get("gen_instruction") or ""),
+                )
+
+            sections = list_template_sections()
+            defaults = ensure_template_defaults_snapshot(sections)
+            matched = next((item for item in sections if item["section_id"] == section_id), None)
+            payload = {
+                "ok": True,
+                "section": {
+                    **matched,
+                    "default": defaults.get(section_id, {}),
                 }
-                self._write_json(200, payload)
-                return
-            except Exception as exc:
-                self._write_json(500, {"message": str(exc)})
-                return
+                if matched
+                else None,
+            }
+            self._write_json(200, payload)
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
 
-        if self.path not in ("/api/plan/generate", "/api/pipeline/run"):
-            self._write_json(404, {"message": "not found"})
-            return
-
+    def _handle_pipeline_run(self) -> None:
         try:
             body = self._read_json_body()
             question = str(body.get("question") or "").strip()
             enable_case_search = bool(body.get("enableCaseSearch"))
             enable_multi_fault_search = bool(body.get("enableMultiFaultSearch"))
             if not question:
-                self.send_response(400)
-                self._send_common_headers()
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"message": "question is required"}).encode("utf-8"))
+                self._write_bad_request("question is required")
                 return
 
             if not body.get("stream"):
@@ -394,12 +341,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._write_json(200, result)
                 return
 
-            self.send_response(200)
-            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-            self.send_header("Cache-Control", "no-cache")
-            self.send_header("Connection", "keep-alive")
-            self._send_stream_headers()
-            self.end_headers()
+            self._send_event_stream_headers()
             stream_pipeline(
                 question,
                 self,
@@ -413,6 +355,63 @@ class Handler(BaseHTTPRequestHandler):
             )
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
+
+    def do_OPTIONS(self) -> None:
+        self.send_response(204)
+        self._send_common_headers()
+        self.end_headers()
+
+    def do_GET(self) -> None:
+        if self.path == "/api/auth/me":
+            self._handle_auth_me()
+            return
+
+        if self.path.startswith("/api/") and self._require_auth() is None:
+            return
+
+        if self.path == "/api/template/prompts":
+            self._handle_template_prompts()
+            return
+
+        if self.path == "/api/template/sections":
+            self._handle_template_sections()
+            return
+
+        self._write_json(404, {"message": "not found"})
+
+    def do_POST(self) -> None:
+        if self.path == "/api/auth/login":
+            self._handle_auth_login()
+            return
+
+        if self.path == "/api/auth/logout":
+            self._handle_auth_logout()
+            return
+
+        if self.path.startswith("/api/") and self._require_auth() is None:
+            return
+
+        if self.path == "/api/trace/subgraph":
+            self._handle_trace_subgraph()
+            return
+
+        if self.path == "/api/quality/review":
+            self._handle_quality_review()
+            return
+
+        if self.path == "/api/template/prompt/save":
+            self._handle_template_prompt_save()
+            return
+
+        if self.path in ("/api/template/section/save", "/api/template/section/reset"):
+            self._handle_template_section_mutation()
+            return
+
+        if self.path not in ("/api/plan/generate", "/api/pipeline/run"):
+            self._write_json(404, {"message": "not found"})
+            return
+
+        self._handle_pipeline_run()
 
 
 def main() -> None:
