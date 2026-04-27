@@ -1229,6 +1229,14 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   white-space: pre-wrap;
 }
 
+.experiment-evaluation-panel__json-collapse {
+  margin-top: 2px;
+}
+
+.experiment-evaluation-panel__json-text {
+  max-height: 220px;
+}
+
 .experiment-evaluation-panel__score-summary {
   display: flex;
   align-items: center;
@@ -1353,11 +1361,19 @@ body.theme-dark .experiment-output-preview__round-meta,
 body.theme-dark .experiment-output-preview__question,
 body.theme-dark .experiment-evaluation-panel__prompt-text.ant-typography,
 body.theme-dark .experiment-evaluation-panel__comment,
-body.theme-dark .experiment-evaluation-panel__structured pre {
+body.theme-dark .experiment-evaluation-panel__structured pre,
+body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-header {
   color: #cbd5e1;
 }
 
 body.theme-dark .experiment-evaluation-panel__structured {
+  background: rgba(15, 23, 42, 0.32);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+body.theme-dark .experiment-evaluation-panel__json-collapse,
+body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-item,
+body.theme-dark .experiment-evaluation-panel__json-collapse .ant-collapse-content {
   background: rgba(15, 23, 42, 0.32);
   border-color: rgba(148, 163, 184, 0.18);
 }

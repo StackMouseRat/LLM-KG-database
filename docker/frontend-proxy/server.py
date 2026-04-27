@@ -58,6 +58,21 @@ def find_result_file(base_dir: Path) -> Path:
     return result_file
 
 
+def build_structured_evaluation_source(result: dict) -> str:
+    output_text = str(result.get("output_text") or "").strip()
+    reasoning_text = str(result.get("reasoning_text") or "").strip()
+    if not reasoning_text:
+        return output_text
+    if not output_text:
+        return f"【评估推理草稿】\n{reasoning_text}"
+    return (
+        "【最终评估输出】\n"
+        f"{output_text}\n\n"
+        "【评估推理草稿，仅用于补充分项分数；如与最终评估冲突，以最终评估输出为准】\n"
+        f"{reasoning_text}"
+    )
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "FrontendProxy/1.0"
 
@@ -256,7 +271,7 @@ class Handler(BaseHTTPRequestHandler):
                     context = body.get("structuredContext") if isinstance(body.get("structuredContext"), dict) else {}
                     try:
                         result["structured_evaluation"] = run_structured_evaluation_sync(
-                            evaluation_text=str(result.get("output_text") or ""),
+                            evaluation_text=build_structured_evaluation_source(result),
                             question=str(context.get("question") or ""),
                             question_group=str(context.get("questionGroup") or ""),
                             experiment_group=str(context.get("experimentGroup") or ""),
@@ -273,7 +288,7 @@ class Handler(BaseHTTPRequestHandler):
                     context = body.get("structuredContext") if isinstance(body.get("structuredContext"), dict) else {}
                     try:
                         structured = run_structured_evaluation_sync(
-                            evaluation_text=str(result.get("output_text") or ""),
+                            evaluation_text=build_structured_evaluation_source(result),
                             question=str(context.get("question") or ""),
                             question_group=str(context.get("questionGroup") or ""),
                             experiment_group=str(context.get("experimentGroup") or ""),

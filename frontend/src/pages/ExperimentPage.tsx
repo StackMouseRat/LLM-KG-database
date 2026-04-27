@@ -1,4 +1,4 @@
-import { Button, Card, InputNumber, Popover, Progress, Segmented, Select, Space, Tag, Typography } from 'antd';
+import { Button, Card, Collapse, InputNumber, Popover, Progress, Segmented, Select, Space, Tag, Typography } from 'antd';
 import { ExperimentOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ALL_MULTI_FAULT_QUESTIONS, ALL_SINGLE_FAULT_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../data/presetQuestions';
@@ -1035,7 +1035,21 @@ function ExperimentEvaluationPanel({
                               ))}
                             </div>
                           ) : null}
-                          <pre>{formatStructuredEvaluation(score.structuredEvaluation)}</pre>
+                          <Collapse
+                            size="small"
+                            className="experiment-evaluation-panel__json-collapse"
+                            items={[
+                              {
+                                key: 'json',
+                                label: '原始 JSON',
+                                children: (
+                                  <pre className="experiment-evaluation-panel__json-text">
+                                    {formatStructuredEvaluation(score.structuredEvaluation)}
+                                  </pre>
+                                )
+                              }
+                            ]}
+                          />
                         </>
                       ) : score?.structuredError ? (
                         <Text type="danger">{score.structuredError}</Text>
