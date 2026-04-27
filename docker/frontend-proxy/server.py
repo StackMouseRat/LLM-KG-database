@@ -1,20 +1,25 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
-from http.cookies import SimpleCookie
 import json
 import os
 import random
-import secrets
-import subprocess
-import sys
-import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from services.auth_service import (
+    AUTH_SESSION_TTL,
+    build_session_cookie,
+    create_session,
+    destroy_session,
+    get_cookie_value,
+    get_user_group,
+    resolve_session,
+    resolve_session_info,
+    validate_credentials,
+)
 from services.case_search_service import infer_dataset, infer_dataset_with_context, run_case_search
-from services.pipeline_service import stream_pipeline
+from services.pipeline_service import run_pipeline_sync, stream_pipeline
 from services.quality_service import run_format_review_sync, stream_format_review
 from services.sse import send_sse
 from services.template_service import (
@@ -30,83 +35,8 @@ from services.trace_service import build_trace_subgraph, extract_trace_focus_fie
 
 
 PORT = int(os.getenv("FRONTEND_PROXY_PORT", "8788"))
-AUTH_USERS_RAW = os.getenv("APP_LOGIN_USERS", "")
-AUTH_USERNAME = os.getenv("APP_LOGIN_USERNAME", "")
-AUTH_PASSWORD = os.getenv("APP_LOGIN_PASSWORD", "")
-AUTH_COOKIE_NAME = os.getenv("APP_LOGIN_COOKIE_NAME", "llmkg_session")
-AUTH_SESSION_TTL = int(os.getenv("APP_LOGIN_SESSION_TTL", "86400"))
 PIPELINE_SCRIPT = os.getenv("PIPELINE_SCRIPT", "/app/scripts/run_parallel_generation_pipeline.py")
 PIPELINE_RUN_DIR = Path(os.getenv("PIPELINE_RUN_DIR", "/app/data/frontend_pipeline_runs"))
-ACTIVE_SESSIONS: dict[str, dict[str, object]] = {}
-SESSION_LOCK = threading.Lock()
-
-def load_auth_users() -> dict[str, str]:
-    users: dict[str, str] = {}
-
-    for item in str(AUTH_USERS_RAW or "").split(","):
-        pair = item.strip()
-        if not pair or ":" not in pair:
-            continue
-        username, password = pair.split(":", 1)
-        username = username.strip()
-        if username:
-            users[username] = password
-
-    if AUTH_USERNAME:
-        users.setdefault(AUTH_USERNAME, AUTH_PASSWORD)
-
-    return users
-
-
-AUTH_USERS = load_auth_users()
-
-
-def get_user_group(username: str) -> str:
-    return "admin" if username == "admin" else "user"
-
-
-def create_session(username: str) -> tuple[str, int]:
-    token = secrets.token_urlsafe(32)
-    expires_at = int(time.time()) + AUTH_SESSION_TTL
-    with SESSION_LOCK:
-        ACTIVE_SESSIONS[token] = {
-            "username": username,
-            "group": get_user_group(username),
-            "expires_at": expires_at,
-        }
-    return token, expires_at
-
-
-def resolve_session_info(token: str | None) -> dict[str, object] | None:
-    if not token:
-        return None
-    now = int(time.time())
-    with SESSION_LOCK:
-        session = ACTIVE_SESSIONS.get(token)
-        if not session:
-            return None
-        expires_at = int(session.get("expires_at") or 0)
-        if expires_at <= now:
-            ACTIVE_SESSIONS.pop(token, None)
-            return None
-        return {
-            "username": str(session.get("username") or ""),
-            "group": str(session.get("group") or get_user_group(str(session.get("username") or ""))),
-        }
-
-
-def resolve_session(token: str | None) -> str | None:
-    session = resolve_session_info(token)
-    if not session:
-        return None
-    return str(session.get("username") or "")
-
-
-def destroy_session(token: str | None) -> None:
-    if not token:
-        return
-    with SESSION_LOCK:
-        ACTIVE_SESSIONS.pop(token, None)
 
 
 def make_run_dir() -> Path:
@@ -123,70 +53,6 @@ def find_result_file(base_dir: Path) -> Path:
     if not result_file.exists():
         raise RuntimeError(f"pipeline result file not found: {result_file}")
     return result_file
-
-
-def run_pipeline_process(question: str, enable_multi_fault_search: bool = False) -> dict:
-    base_dir = make_run_dir()
-    command = [
-        sys.executable,
-        PIPELINE_SCRIPT,
-        "--question",
-        question,
-        "--output-dir",
-        str(base_dir),
-    ]
-    if enable_multi_fault_search:
-        command.append("--multi-fault")
-    completed = subprocess.run(
-        command,
-        check=False,
-        capture_output=True,
-        text=True,
-        env=os.environ.copy(),
-    )
-    if completed.returncode != 0:
-        raise RuntimeError(
-            completed.stderr.strip()
-            or completed.stdout.strip()
-            or f"pipeline exited with code {completed.returncode}"
-        )
-    result_file = find_result_file(base_dir)
-    return json.loads(result_file.read_text(encoding="utf-8"))
-
-
-def run_pipeline_sync(question: str, enable_case_search: bool = False, enable_multi_fault_search: bool = False) -> dict:
-    dataset = infer_dataset_with_context(question) if enable_case_search else None
-    if enable_case_search and dataset is not None:
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            pipeline_future = executor.submit(run_pipeline_process, question, enable_multi_fault_search)
-            case_future = executor.submit(run_case_search, question, dataset)
-            result = pipeline_future.result()
-            try:
-                result["case_search"] = case_future.result()
-            except Exception as exc:
-                result["case_search"] = {
-                    "enabled": True,
-                    "status": "error",
-                    "kb_name": dataset["kb_name"],
-                    "dataset_id": dataset["dataset_id"],
-                    "query_question": question,
-                    "error": str(exc),
-                }
-            return result
-
-    result = run_pipeline_process(question, enable_multi_fault_search)
-    if enable_case_search:
-        dataset = infer_dataset(question, result)
-        if dataset is None:
-            result["case_search"] = {
-                "enabled": True,
-                "status": "skipped",
-                "query_question": question,
-                "error": "未命中已建立知识库对应设备",
-            }
-        else:
-            result["case_search"] = run_case_search(question, dataset)
-    return result
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -231,25 +97,18 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _get_cookie(self, name: str) -> str | None:
+    def _get_cookie(self, name: str = "") -> str | None:
         raw_cookie = self.headers.get("Cookie", "")
-        if not raw_cookie:
-            return None
-        cookie = SimpleCookie()
-        cookie.load(raw_cookie)
-        morsel = cookie.get(name)
-        return morsel.value if morsel else None
+        return get_cookie_value(raw_cookie, name) if name else get_cookie_value(raw_cookie)
 
     def _build_session_cookie(self, token: str, max_age: int) -> str:
-        return (
-            f"{AUTH_COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
-        )
+        return build_session_cookie(token, max_age)
 
     def _authenticated_username(self) -> str | None:
-        return resolve_session(self._get_cookie(AUTH_COOKIE_NAME))
+        return resolve_session(self._get_cookie())
 
     def _authenticated_session(self) -> dict[str, object] | None:
-        return resolve_session_info(self._get_cookie(AUTH_COOKIE_NAME))
+        return resolve_session_info(self._get_cookie())
 
     def _require_auth(self) -> str | None:
         username = self._authenticated_username()
@@ -328,7 +187,7 @@ class Handler(BaseHTTPRequestHandler):
                 body = self._read_json_body()
                 username = str(body.get("username") or "").strip()
                 password = str(body.get("password") or "")
-                if not username or AUTH_USERS.get(username) != password:
+                if not validate_credentials(username, password):
                     self._write_json(401, {"message": "用户名或密码错误", "code": "INVALID_CREDENTIALS"})
                     return
                 token, _ = create_session(username)
@@ -343,7 +202,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
         if self.path == "/api/auth/logout":
-            destroy_session(self._get_cookie(AUTH_COOKIE_NAME))
+            destroy_session(self._get_cookie())
             self._write_json(
                 200,
                 {"ok": True},
@@ -523,6 +382,12 @@ class Handler(BaseHTTPRequestHandler):
             if not body.get("stream"):
                 result = run_pipeline_sync(
                     question,
+                    pipeline_script=PIPELINE_SCRIPT,
+                    make_run_dir=make_run_dir,
+                    find_result_file=find_result_file,
+                    infer_dataset_with_context=infer_dataset_with_context,
+                    infer_dataset=infer_dataset,
+                    run_case_search=run_case_search,
                     enable_case_search=enable_case_search,
                     enable_multi_fault_search=enable_multi_fault_search,
                 )
