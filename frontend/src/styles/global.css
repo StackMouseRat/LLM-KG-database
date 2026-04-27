@@ -984,7 +984,7 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 }
 
 .experiment-control-console__record-row.is-evaluation {
-  grid-template-columns: minmax(220px, 360px) auto auto auto auto;
+  grid-template-columns: minmax(200px, 300px) minmax(200px, 300px) auto auto auto auto;
   margin-top: 10px;
 }
 

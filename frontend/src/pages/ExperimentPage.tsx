@@ -874,6 +874,15 @@ function runRecordLabel(run: ExperimentRunSummary) {
   return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 生成 ${generation}${evaluation} · ${run.updatedAt || run.runId}`;
 }
 
+function evaluationRecordLabel(run: ExperimentRunSummary) {
+  const evaluation = run.totalEvaluations ? `${run.evaluatedGroups || 0}/${run.totalEvaluations}` : '0/0';
+  return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 评估 ${evaluation} · ${run.evaluationUpdatedAt || run.updatedAt || run.runId}`;
+}
+
+function hasEvaluationRecord(run?: ExperimentRunSummary) {
+  return Boolean(run?.evaluationUpdatedAt || run?.totalEvaluations || run?.evaluationStatus && run.evaluationStatus !== 'idle');
+}
+
 function ExperimentEvaluationPanel({
   plan,
   evaluationPrompt,
@@ -905,6 +914,8 @@ function ExperimentEvaluationPanel({
 }) {
   const rounds = Object.entries(evaluationState.scores).sort(([a], [b]) => Number(a) - Number(b));
   const averageScore = getAverageScore(evaluationState);
+  const evaluationRuns = runs.filter(hasEvaluationRecord);
+  const selectedEvaluationRunId = hasEvaluationRecord(runs.find((run) => run.runId === selectedRunId)) ? selectedRunId : undefined;
 
   return (
     <div className="experiment-evaluation-panel">
@@ -923,6 +934,17 @@ function ExperimentEvaluationPanel({
               value: run.runId,
               label: runRecordLabel(run)
             }))}
+          />
+          <Select
+            allowClear
+            placeholder="选择评估记录"
+            value={selectedEvaluationRunId}
+            onChange={(value) => onSelectRun(value || '')}
+            options={evaluationRuns.map((run) => ({
+              value: run.runId,
+              label: evaluationRecordLabel(run)
+            }))}
+            notFoundContent="暂无评估记录"
           />
           <Button size="small" type="primary" disabled={!selectedRunId} loading={evaluationRunning} onClick={onRunEvaluation}>启动评估</Button>
           <Button size="small" onClick={onRefreshRuns}>刷新记录</Button>
