@@ -17,6 +17,12 @@ export type UsePlanPipelineOptions = {
   onUnauthorized?: () => void;
 };
 
+type TerminationInfo = {
+  reason: string;
+  message: string;
+  userQuestion: string;
+};
+
 export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
   const savedSnapshot = loadSavedSnapshot();
   const [question, setQuestion] = useState(savedSnapshot?.question || '');
@@ -28,6 +34,7 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
   const [enableMultiFaultSearch, setEnableMultiFaultSearch] = useState(false);
   const [savedFlag, setSavedFlag] = useState(Boolean(savedSnapshot?.pipeline));
   const [questionPopoverOpen, setQuestionPopoverOpen] = useState(false);
+  const [terminationInfo, setTerminationInfo] = useState<TerminationInfo | null>(null);
 
   const chapters = pipeline?.chapters ?? [];
   const mergedOutput = useMemo(
@@ -54,6 +61,11 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
 
   const caseCards = useMemo(() => pipeline?.caseSearch?.cards || [], [pipeline?.caseSearch?.cards]);
 
+  const updateQuestion = useCallback((nextQuestion: string) => {
+    setQuestion(nextQuestion);
+    setTerminationInfo(null);
+  }, []);
+
   const handleGenerate = useCallback(async () => {
     if (!question.trim()) {
       message.warning('请先输入故障场景描述');
@@ -61,6 +73,7 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
     }
 
     setLoading(true);
+    setTerminationInfo(null);
     setPipeline({
       question,
       basicInfo: {
@@ -273,14 +286,27 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
         }
       );
     } catch (error) {
-      setStage('error');
-      setNodeStageLabel('生成失败');
       const err = error instanceof Error ? error.message : '未知错误';
       if ((error as any).isUnauthorized) {
+        setStage('error');
+        setNodeStageLabel('生成失败');
         options.onUnauthorized?.();
         message.error('登录已过期，请重新登录');
         return;
       }
+      if ((error as any).isBoundaryStop) {
+        setStage('terminated');
+        setNodeStageLabel('已终止生成');
+        setTerminationInfo({
+          reason: String((error as any).reason || ''),
+          message: err,
+          userQuestion: String((error as any).userQuestion || question)
+        });
+        message.warning(err);
+        return;
+      }
+      setStage('error');
+      setNodeStageLabel('生成失败');
       message.error(err);
     } finally {
       setLoading(false);
@@ -298,12 +324,13 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
 
   const pickQuestion = useCallback((text: string) => {
     setQuestion(text);
+    setTerminationInfo(null);
     setQuestionPopoverOpen(false);
   }, []);
 
   return {
     question,
-    setQuestion,
+    setQuestion: updateQuestion,
     pipeline,
     stage,
     nodeStageLabel,
@@ -313,6 +340,7 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
     enableMultiFaultSearch,
     setEnableMultiFaultSearch,
     savedFlag,
+    terminationInfo,
     chapters,
     summaryTags,
     caseCards,

@@ -216,6 +216,29 @@ def extract_plugin_output(response: dict[str, Any]) -> dict[str, Any]:
     return {}
 
 
+BOUNDARY_FAILURE_MESSAGES = {
+    "irrelevant": "请输入电力设备故障、告警、检修或应急处置相关问题。",
+    "unsupported_device": "当前系统暂不支持该设备类型，请改为断路器、电缆、变压器、避雷器、互感器、光缆或环网柜相关问题。",
+    "incompatible_device_fault": "输入中的设备与故障描述可能不匹配，请确认故障主体或故障现象后重新输入。",
+}
+
+
+def extract_boundary_failure(plugin_output: dict[str, Any]) -> dict[str, str] | None:
+    result = str(plugin_output.get("reason") or plugin_output.get("result") or "").strip()
+    if not result or result == "ok":
+        return None
+
+    message = str(plugin_output.get("message") or "").strip()
+    if not message:
+        message = BOUNDARY_FAILURE_MESSAGES.get(result, "当前输入无法进入预案生成链路，请补充电力设备故障相关信息后重试。")
+
+    return {
+        "reason": result,
+        "message": message,
+        "userQuestion": str(plugin_output.get("用户问题") or ""),
+    }
+
+
 KB_NAME_TO_DEVICE = {
     "llmkg_breaker": "高压断路器",
     "llmkg_cable": "电力电缆",
@@ -596,6 +619,12 @@ def main() -> None:
             timeout=args.timeout,
         )
         basic_output = extract_plugin_output(basic_response)
+        boundary_failure = extract_boundary_failure(basic_output)
+        if boundary_failure is not None:
+            emit_event(args.stream_events, "pipeline_error", boundary_failure)
+            log_progress(args.stream_events, boundary_failure["message"])
+            return
+
         basic_fields = extract_basic_fields(basic_output, args.question)
         if args.multi_fault:
             graph_material = build_multi_fault_graph_material(

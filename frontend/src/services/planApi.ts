@@ -220,7 +220,13 @@ export async function runPipelineStream(
     }
     if (eventName === 'pipeline_error') {
       const message = payloadData?.message || '流水线执行失败';
-      throw new Error(message);
+      const error = new Error(message);
+      if (payloadData?.reason) {
+        (error as any).isBoundaryStop = true;
+        (error as any).reason = String(payloadData.reason);
+        (error as any).userQuestion = payloadData?.userQuestion ? String(payloadData.userQuestion) : '';
+      }
+      throw error;
     }
   };
 

@@ -5,6 +5,7 @@ export type PipelineStage =
   | 'parallel_generating'
   | 'case_search'
   | 'done'
+  | 'terminated'
   | 'error';
 
 export interface PipelineRunRequest {

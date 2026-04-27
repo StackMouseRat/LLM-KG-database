@@ -1,4 +1,4 @@
-import { Button, Card, Checkbox, Input, Popover, Space, Tag } from 'antd';
+import { Alert, Button, Card, Checkbox, Input, Popover, Space, Tag } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { PipelineStage } from '../../types/plan';
 import type { UsePlanPipelineResult } from './usePlanPipeline';
@@ -13,6 +13,7 @@ const stageText: Record<PipelineStage, string> = {
   parallel_generating: '正在并行生成章节',
   case_search: '正在检索案例',
   done: '生成完成',
+  terminated: '已终止',
   error: '生成失败'
 };
 
@@ -66,7 +67,7 @@ export function PlanInputCard({ plan }: PlanInputCardProps) {
         </Checkbox>
       </Space>
       <div className="status-box">
-        <Tag color={plan.stage === 'error' ? 'red' : plan.stage === 'done' ? 'green' : 'processing'}>
+        <Tag color={plan.stage === 'error' ? 'red' : plan.stage === 'done' ? 'green' : plan.stage === 'terminated' ? 'orange' : 'processing'}>
           {stageText[plan.stage]}
         </Tag>
         <Tag>{plan.nodeStageLabel}</Tag>
@@ -77,6 +78,15 @@ export function PlanInputCard({ plan }: PlanInputCardProps) {
           </Tag>
         ))}
       </div>
+      {plan.terminationInfo ? (
+        <Alert
+          className="pipeline-termination-alert"
+          type="warning"
+          showIcon
+          message="生成已终止"
+          description={plan.terminationInfo.message}
+        />
+      ) : null}
     </Card>
   );
 }

@@ -1437,6 +1437,7 @@ def stream_pipeline(
 
     error_lines: list[str] = []
     final_result: dict | None = None
+    pipeline_error_sent = False
     send_lock = threading.Lock()
     case_thread: threading.Thread | None = None
     case_started = False
@@ -1489,10 +1490,6 @@ def stream_pipeline(
         case_thread = threading.Thread(target=worker, daemon=True)
         case_thread.start()
 
-    initial_dataset = infer_dataset_with_context(question) if enable_case_search else None
-    if enable_case_search and initial_dataset is not None:
-        start_case_search(initial_dataset)
-
     assert process.stdout is not None
     for raw_line in process.stdout:
         line = raw_line.strip()
@@ -1513,6 +1510,8 @@ def stream_pipeline(
         if not isinstance(event, str):
             continue
         data = payload.get("data", {})
+        if event == "pipeline_error":
+            pipeline_error_sent = True
         if event == "pipeline_done" and isinstance(data, dict):
             final_result = data
         if event == "basic_info_done" and enable_case_search and not case_started and isinstance(data, dict):
@@ -1530,13 +1529,13 @@ def stream_pipeline(
             return
 
     return_code = process.wait()
-    if return_code != 0:
+    if return_code != 0 and not pipeline_error_sent:
         message = "\n".join(error_lines).strip() or f"pipeline exited with code {return_code}"
         try:
             send_sse(handler, "pipeline_error", {"message": message})
         except BrokenPipeError:
             return
-    elif enable_case_search and not case_started:
+    elif enable_case_search and not case_started and not pipeline_error_sent:
         dataset = infer_dataset(question, final_result)
         if dataset is None:
             if not safe_send(

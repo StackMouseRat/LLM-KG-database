@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Button, Card, Layout, Switch, Tag, Typography } from 'antd';
-import { routeFromPath, routeItems, TraceGraphPage, QualityReviewPage, TemplateViewPage } from './app/routeConfig';
+import { routeFromPath, routeItems, TraceGraphPage, QualityReviewPage, TemplateViewPage, ExperimentPage } from './app/routeConfig';
 import type { AppRoute, RouteKey } from './app/routeConfig';
 import { useAuthSession } from './features/auth/useAuthSession';
 import { PlanPage } from './features/plan/PlanPage';
@@ -224,6 +224,17 @@ export default function App() {
             }
           >
             <TemplateViewPage currentUserGroup={auth.currentUserGroup} />
+          </Suspense>
+        ) : null}
+        {auth.authStatus === 'authenticated' && route === 'experiment' ? (
+          <Suspense
+            fallback={
+              <Card className="panel-card chapter-empty-card auth-wait-card">
+                <Typography.Text type="secondary">正在加载对比实验页面，请稍候。</Typography.Text>
+              </Card>
+            }
+          >
+            <ExperimentPage />
           </Suspense>
         ) : null}
       </Content>
