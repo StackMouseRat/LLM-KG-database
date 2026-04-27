@@ -310,16 +310,22 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 }
 
 .experiment-plan-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
 .experiment-plan-card__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
   align-items: start;
+}
+
+.experiment-plan-card__top-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .experiment-plan-card__section {
@@ -349,14 +355,14 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 
 .experiment-plan-card__groups {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-top: 10px;
 }
 
 .experiment-plan-card__group {
   min-width: 0;
-  padding: 12px;
+  padding: 10px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(148, 163, 184, 0.18);
@@ -374,34 +380,189 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 .experiment-plan-card__group-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
-.experiment-plan-card__flow {
-  position: relative;
+.experiment-plan-card__group-header .ant-typography {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.experiment-plan-card__flow-text {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.experiment-plan-card__flow-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.experiment-plan-card__flow-note .ant-tag {
+  margin: 0;
+}
+
+.experiment-plan-card__step-list {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 10px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.experiment-plan-card__flow-step {
+.experiment-plan-card__step-frame {
+  display: flex;
+  flex-direction: column;
+}
+
+.experiment-plan-card__step-item {
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.experiment-plan-card__runtime-strip {
+  display: flex;
+  width: 100%;
+  margin: 6px 0;
+  padding: 5px 8px;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  border-radius: 10px;
+  color: #5b21b6;
+  background: rgba(245, 243, 255, 0.82);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  box-shadow: 0 4px 12px rgba(88, 28, 135, 0.06);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.experiment-plan-card__runtime-strip.is-support-data {
+  color: #1d4ed8;
+  background: rgba(219, 234, 254, 0.9);
+  border-color: rgba(59, 130, 246, 0.22);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.experiment-plan-card__runtime-changes {
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 400;
+  white-space: normal;
+}
+
+.experiment-plan-card__runtime-changes .ant-tag {
+  margin: 0;
+  max-width: 100%;
+  height: auto;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.experiment-plan-card__step-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.experiment-plan-card__step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.experiment-plan-card__step-vars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.experiment-plan-card__step-vars .ant-tag {
+  margin: 0;
+  max-width: 100%;
+  height: auto;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.experiment-plan-card__flow {
   position: relative;
+  min-height: 760px;
+  margin: 10px 0 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background:
+    linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    rgba(248, 250, 252, 0.42);
+  background-size: 20px 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.experiment-plan-card__flow-step {
+  position: absolute;
   z-index: 1;
   min-width: 0;
 }
 
-.experiment-plan-card__flow-step + .experiment-plan-card__flow-step {
-  margin-top: 34px;
+.experiment-plan-card__flow-step.is-template {
+  top: 132px;
+  left: 33%;
+  width: 30%;
+}
+
+.experiment-plan-card__flow-step.is-basic {
+  top: 348px;
+  left: 33%;
+  width: 30%;
+}
+
+.experiment-plan-card__flow-step.is-graph-query {
+  top: 548px;
+  left: 33%;
+  width: 30%;
+}
+
+.experiment-plan-card__flow-step.is-generate {
+  top: 312px;
+  left: 66%;
+  width: 20%;
+}
+
+.experiment-plan-card__flow-step.is-review {
+  top: 528px;
+  left: 66%;
+  width: 20%;
 }
 
 .experiment-plan-card__variable-lines {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   width: 100%;
   height: 100%;
   overflow: visible;
@@ -416,15 +577,111 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   stroke-dasharray: 4 4;
 }
 
+.experiment-plan-card__support-layer,
+.experiment-plan-card__runtime-layer {
+  position: absolute;
+  left: 33%;
+  right: 2%;
+  z-index: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(15, 23, 42, 0.02);
+  color: #334155;
+  font-weight: 700;
+}
+
+.experiment-plan-card__support-layer {
+  top: 18px;
+  height: 78px;
+}
+
+.experiment-plan-card__runtime-layer {
+  bottom: 18px;
+  height: 80px;
+}
+
+.experiment-plan-card__support-layer > span,
+.experiment-plan-card__runtime-layer > span {
+  margin-right: 8px;
+}
+
+.experiment-plan-card__support-layer .ant-tag,
+.experiment-plan-card__runtime-layer .ant-tag {
+  margin: 0;
+}
+
+.experiment-plan-card__static-node {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  font-weight: 700;
+}
+
+.experiment-plan-card__static-node.is-user {
+  top: 388px;
+  left: 4%;
+  width: 22%;
+  height: 104px;
+}
+
+.experiment-plan-card__static-node.is-frontend {
+  top: 344px;
+  right: 2%;
+  width: 13%;
+  height: 110px;
+}
+
+.experiment-plan-card__static-line {
+  position: absolute;
+  z-index: 1;
+  height: 2px;
+  background: rgba(96, 165, 250, 0.66);
+  pointer-events: none;
+}
+
+.experiment-plan-card__static-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  transform: translateY(-50%) rotate(45deg);
+  border-top: 2px solid rgba(96, 165, 250, 0.8);
+  border-right: 2px solid rgba(96, 165, 250, 0.8);
+}
+
+.experiment-plan-card__static-line.is-user-to-basic {
+  top: 440px;
+  left: 26%;
+  width: 7%;
+}
+
+.experiment-plan-card__static-line.is-generate-to-frontend {
+  top: 399px;
+  left: 86%;
+  width: 12%;
+}
+
 .experiment-plan-card__flow-node {
   position: relative;
-  min-height: 230px;
-  padding: 84px 82px 84px 48px;
+  min-height: 168px;
+  padding: 48px 148px 48px 40px;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 12px;
   color: #475569;
-  background: rgba(248, 250, 252, 0.88);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.28);
 }
 
 .experiment-plan-card__flow-index {
@@ -446,36 +703,63 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 
 .experiment-plan-card__plugin-title.ant-typography {
   display: block;
-  margin: 22px 0 0;
+  margin: 6px 0 0;
   color: #0f172a;
   text-align: center;
   font-size: 15px;
 }
 
+.experiment-plan-card__mode-tag.ant-tag {
+  display: flex;
+  width: fit-content;
+  margin: 8px auto 0;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 18px;
+}
+
 .experiment-plan-card__boundary {
   position: absolute;
-  left: 0;
-  right: 0;
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 8px;
   align-items: center;
-  min-height: 48px;
-  max-height: 76px;
-  padding: 7px 14px;
-  overflow: auto;
+  min-height: 38px;
+  max-height: none;
+  padding: 5px 10px;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.94);
   line-height: 1.6;
 }
 
-.experiment-plan-card__boundary.is-input {
+.experiment-plan-card__boundary.is-service {
   top: 0;
+  left: 0;
+  right: 0;
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
-.experiment-plan-card__boundary.is-output {
+.experiment-plan-card__boundary.is-runtime {
   bottom: 0;
+  left: 0;
+  right: 0;
   border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.experiment-plan-card__boundary.is-next {
+  top: 38px;
+  right: 0;
+  bottom: 38px;
+  width: 136px;
+  grid-template-columns: 1fr;
+  align-content: start;
+  max-height: none;
+  border-left: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.experiment-plan-card__boundary.is-next .experiment-plan-card__var-tags {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .experiment-plan-card__boundary-label.ant-tag {
@@ -496,13 +780,12 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
 .experiment-plan-card__var-tags .ant-tag {
   margin: 0;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
   padding: 0 5px;
   font-size: 11px;
   line-height: 18px;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .experiment-plan-card__variables {
@@ -510,7 +793,16 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 8px;
+  padding-right: 6px;
+}
+
+.experiment-plan-card__variables .ant-tag {
+  margin: 0;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 18px;
+  white-space: normal;
 }
 
 .experiment-plan-card__flow-status {
@@ -592,6 +884,34 @@ body.theme-dark .experiment-plan-card__group.is-experiment {
   border-color: rgba(59, 130, 246, 0.22);
 }
 
+body.theme-dark .experiment-plan-card__flow-text {
+  background: rgba(15, 23, 42, 0.34);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.theme-dark .experiment-plan-card__step-item {
+  background: rgba(30, 41, 59, 0.38);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+body.theme-dark .experiment-plan-card__step-body {
+  color: #94a3b8;
+}
+
+body.theme-dark .experiment-plan-card__runtime-strip {
+  color: #ddd6fe;
+  background: rgba(76, 29, 149, 0.26);
+  border-color: rgba(167, 139, 250, 0.2);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+}
+
+body.theme-dark .experiment-plan-card__runtime-strip.is-support-data {
+  color: #bfdbfe;
+  background: rgba(30, 64, 175, 0.26);
+  border-color: rgba(96, 165, 250, 0.24);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+}
+
 body.theme-dark .experiment-plan-card__list {
   color: #94a3b8;
 }
@@ -600,6 +920,27 @@ body.theme-dark .experiment-plan-card__flow-node {
   color: #94a3b8;
   background: rgba(30, 41, 59, 0.38);
   border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.theme-dark .experiment-plan-card__flow {
+  background:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    rgba(15, 23, 42, 0.24);
+  background-size: 20px 20px;
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.theme-dark .experiment-plan-card__support-layer,
+body.theme-dark .experiment-plan-card__runtime-layer,
+body.theme-dark .experiment-plan-card__static-node {
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.44);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.theme-dark .experiment-plan-card__static-line {
+  background: rgba(96, 165, 250, 0.54);
 }
 
 body.theme-dark .experiment-plan-card__plugin-title.ant-typography {
@@ -646,11 +987,7 @@ body.theme-dark .experiment-plan-card__example {
 }
 
 @media (max-width: 1180px) {
-  .experiment-plan-card__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .experiment-plan-card__groups {
+  .experiment-plan-list {
     grid-template-columns: 1fr;
   }
 }
@@ -664,9 +1001,83 @@ body.theme-dark .experiment-plan-card__example {
     grid-template-columns: 1fr;
   }
 
+  .experiment-plan-card__top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .experiment-plan-card__groups {
+    grid-template-columns: 1fr;
+  }
+
+  .experiment-plan-card__flow {
+    min-height: 1220px;
+  }
+
+  .experiment-plan-card__support-layer,
+  .experiment-plan-card__runtime-layer {
+    left: 12px;
+    right: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .experiment-plan-card__support-layer {
+    top: 12px;
+  }
+
+  .experiment-plan-card__runtime-layer {
+    bottom: 12px;
+  }
+
+  .experiment-plan-card__static-node.is-user,
+  .experiment-plan-card__static-node.is-frontend,
+  .experiment-plan-card__flow-step.is-template,
+  .experiment-plan-card__flow-step.is-basic,
+  .experiment-plan-card__flow-step.is-graph-query,
+  .experiment-plan-card__flow-step.is-generate,
+  .experiment-plan-card__flow-step.is-review {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
+  .experiment-plan-card__static-node.is-user {
+    top: 112px;
+    height: 58px;
+  }
+
+  .experiment-plan-card__flow-step.is-template {
+    top: 196px;
+  }
+
+  .experiment-plan-card__flow-step.is-basic {
+    top: 390px;
+  }
+
+  .experiment-plan-card__flow-step.is-graph-query {
+    top: 584px;
+  }
+
+  .experiment-plan-card__flow-step.is-generate {
+    top: 778px;
+  }
+
+  .experiment-plan-card__flow-step.is-review {
+    top: 972px;
+  }
+
+  .experiment-plan-card__static-node.is-frontend {
+    top: 1072px;
+    height: 58px;
+  }
+
+  .experiment-plan-card__static-line {
+    display: none;
+  }
+
   .experiment-plan-card__flow-node {
-    min-height: 252px;
-    padding: 88px 14px 88px;
+    min-height: 156px;
+    padding: 48px 96px 48px 14px;
   }
 
   .experiment-plan-card__flow-index,
@@ -686,6 +1097,11 @@ body.theme-dark .experiment-plan-card__example {
 
   .experiment-plan-card__boundary {
     grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .experiment-plan-card__boundary.is-next {
+    width: 90px;
+    grid-template-columns: 1fr;
   }
 
 }

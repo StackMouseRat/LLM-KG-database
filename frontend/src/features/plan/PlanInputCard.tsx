@@ -72,6 +72,12 @@ export function PlanInputCard({ plan }: PlanInputCardProps) {
         </Tag>
         <Tag>{plan.nodeStageLabel}</Tag>
         {plan.savedFlag ? <Tag color="success">已保存</Tag> : null}
+        {plan.pipeline?.basicInfo.boundaryResult ? (
+          <Tag color={plan.pipeline.basicInfo.boundaryResult === 'ok' ? 'green' : 'orange'}>
+            边界判定：{plan.pipeline.basicInfo.boundaryResult}
+          </Tag>
+        ) : null}
+        {plan.pipeline?.basicInfo.boundaryMessage ? <Tag color="orange">{plan.pipeline.basicInfo.boundaryMessage}</Tag> : null}
         {plan.summaryTags.map((tag) => (
           <Tag color="purple" key={tag}>
             {tag}

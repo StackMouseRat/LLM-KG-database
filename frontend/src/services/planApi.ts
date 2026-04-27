@@ -12,7 +12,9 @@ function parseBasicInfo(raw: any) {
   return {
     userQuestion: String(fields['用户问题'] || raw?.question || ''),
     faultScene: String(fields['故障与场景提取结果'] || ''),
-    graphMaterial: String(fields['图谱检索方案素材'] || '')
+    graphMaterial: String(fields['图谱检索方案素材'] || ''),
+    boundaryResult: String(fields['边界判定结果'] || ''),
+    boundaryMessage: String(fields['边界判定信息'] || '')
   };
 }
 

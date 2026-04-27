@@ -224,11 +224,16 @@ BOUNDARY_FAILURE_MESSAGES = {
 
 
 def extract_boundary_failure(plugin_output: dict[str, Any]) -> dict[str, str] | None:
-    result = str(plugin_output.get("reason") or plugin_output.get("result") or "").strip()
+    result = str(
+        plugin_output.get("边界判定结果")
+        or plugin_output.get("reason")
+        or plugin_output.get("result")
+        or ""
+    ).strip()
     if not result or result == "ok":
         return None
 
-    message = str(plugin_output.get("message") or "").strip()
+    message = str(plugin_output.get("边界判定信息") or plugin_output.get("message") or "").strip()
     if not message:
         message = BOUNDARY_FAILURE_MESSAGES.get(result, "当前输入无法进入预案生成链路，请补充电力设备故障相关信息后重试。")
 
@@ -236,6 +241,8 @@ def extract_boundary_failure(plugin_output: dict[str, Any]) -> dict[str, str] | 
         "reason": result,
         "message": message,
         "userQuestion": str(plugin_output.get("用户问题") or ""),
+        "boundaryResult": result,
+        "boundaryMessage": message,
     }
 
 
@@ -281,6 +288,8 @@ def extract_basic_fields(plugin_output: dict[str, Any], question: str) -> dict[s
         "图谱检索方案素材": str(plugin_output.get("图谱检索") or ""),
         "模板文本": str(plugin_output.get("模板文本") or ""),
         "知识库名": kb_name,
+        "边界判定结果": str(plugin_output.get("边界判定结果") or plugin_output.get("reason") or plugin_output.get("result") or "ok"),
+        "边界判定信息": str(plugin_output.get("边界判定信息") or plugin_output.get("message") or ""),
     }
 
 
@@ -647,6 +656,8 @@ def main() -> None:
                     "faultScene": basic_fields["故障与场景提取结果"],
                     "graphMaterial": basic_fields["图谱检索方案素材"],
                     "kbName": basic_fields["知识库名"],
+                    "boundaryResult": basic_fields["边界判定结果"],
+                    "boundaryMessage": basic_fields["边界判定信息"],
                 },
             },
         )
@@ -770,6 +781,8 @@ def main() -> None:
                 "userQuestion": basic_fields["用户问题"],
                 "faultScene": basic_fields["故障与场景提取结果"],
                 "graphMaterial": basic_fields["图谱检索方案素材"],
+                "boundaryResult": basic_fields["边界判定结果"],
+                "boundaryMessage": basic_fields["边界判定信息"],
             },
             "templateSplit": {
                 "templateId": str(split_result.get("template_id") or ""),

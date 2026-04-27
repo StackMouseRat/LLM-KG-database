@@ -18,6 +18,8 @@ export interface PipelineBasicInfo {
   userQuestion: string;
   faultScene: string;
   graphMaterial: string;
+  boundaryResult?: string;
+  boundaryMessage?: string;
 }
 
 export interface PipelineTemplateSplit {

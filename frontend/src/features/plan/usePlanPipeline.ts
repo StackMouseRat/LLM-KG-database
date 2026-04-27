@@ -79,7 +79,9 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
       basicInfo: {
         userQuestion: question,
         faultScene: '',
-        graphMaterial: ''
+        graphMaterial: '',
+        boundaryResult: '',
+        boundaryMessage: ''
       },
       templateSplit: {
         templateId: '',
@@ -100,7 +102,7 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
             if (nextStage === 'basic_info') {
               setStage('basic_info');
               setNodeStageLabel('正在获取基本信息');
-              if (detail?.faultScene || detail?.graphMaterial || detail?.userQuestion) {
+              if (detail?.faultScene || detail?.graphMaterial || detail?.userQuestion || detail?.boundaryResult || detail?.boundaryMessage) {
                 setPipeline((prev) => {
                   if (!prev) return prev;
                   return {
@@ -108,7 +110,9 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
                     basicInfo: {
                       userQuestion: detail?.userQuestion || prev.basicInfo.userQuestion || '',
                       faultScene: detail?.faultScene || prev.basicInfo.faultScene || '',
-                      graphMaterial: detail?.graphMaterial || prev.basicInfo.graphMaterial || ''
+                      graphMaterial: detail?.graphMaterial || prev.basicInfo.graphMaterial || '',
+                      boundaryResult: detail?.boundaryResult || prev.basicInfo.boundaryResult || '',
+                      boundaryMessage: detail?.boundaryMessage || prev.basicInfo.boundaryMessage || ''
                     }
                   };
                 });
@@ -132,7 +136,9 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
               basicInfo: prev?.basicInfo || {
                 userQuestion: question,
                 faultScene: '',
-                graphMaterial: ''
+                graphMaterial: '',
+                boundaryResult: '',
+                boundaryMessage: ''
               },
               templateSplit: payload?.templateSplit || {
                 templateId: '',
