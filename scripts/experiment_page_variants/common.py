@@ -130,6 +130,45 @@ def generate_chapters(args: argparse.Namespace, basic_fields: dict[str, str], ch
     return generations
 
 
+def build_main_fault_graph_material(args: argparse.Namespace, basic_fields: dict[str, str], basic_output: dict[str, Any], question: str) -> tuple[str, str]:
+    try:
+        parsed_fault_scene = json.loads(basic_fields["故障与场景提取结果"] or "{}")
+    except Exception:
+        parsed_fault_scene = {}
+    if not isinstance(parsed_fault_scene, dict):
+        parsed_fault_scene = {}
+
+    fault_nodes_raw = parsed_fault_scene.get("故障二级节点")
+    if isinstance(fault_nodes_raw, list):
+        fault_nodes = [str(item).strip() for item in fault_nodes_raw if str(item).strip()]
+    elif isinstance(fault_nodes_raw, str) and fault_nodes_raw.strip():
+        fault_nodes = [fault_nodes_raw.strip()]
+    else:
+        fault_nodes = []
+
+    main_fault = str(parsed_fault_scene.get("主故障二级节点") or (fault_nodes[0] if fault_nodes else question)).strip()
+    device_space = str(basic_output.get("设备表") or basic_fields.get("知识库名") or "").strip()
+    graph_text = ""
+    if device_space and main_fault:
+        graph_key = pipeline.read_key(args.multi_fault_graph_query_key_file)
+        graph_response, _ = pipeline.call_plugin(
+            args.endpoint,
+            graph_key,
+            {"设备表": device_space, "当前查询的二级故障": main_fault},
+            args.timeout,
+        )
+        graph_text = str(pipeline.extract_plugin_output(graph_response).get("图谱检索") or "")
+
+    material = {
+        "设备表": device_space,
+        "故障二级节点": fault_nodes,
+        "主故障二级节点": main_fault,
+        "主故障图谱检索": {main_fault: graph_text} if main_fault else {},
+        "未检索说明": "本实验组保留多故障识别结果，但只检索主故障图谱；伴随故障和次生故障不提供图谱素材。",
+    }
+    return json.dumps(material, ensure_ascii=False), device_space
+
+
 def blank_chapter_templates(chapters: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{**chapter, "template_text": ""} for chapter in chapters]
 
@@ -168,15 +207,10 @@ def main(variant_id: str) -> None:
     elif variant_id == "multi_fault_single_fault":
         basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, use_multi_fault=False)
     elif variant_id == "multi_fault_no_per_fault_graph":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, use_multi_fault=True)
-        try:
-            parsed_fault_scene = json.loads(basic_fields["故障与场景提取结果"] or "{}")
-        except Exception:
-            parsed_fault_scene = {}
-        main_fault = str(parsed_fault_scene.get("主故障二级节点") or question) if isinstance(parsed_fault_scene, dict) else question
-        _, _, main_fault_fields, _ = call_basic(args, main_fault, use_multi_fault=False, ignore_boundary=True)
-        basic_fields["图谱检索方案素材"] = main_fault_fields["图谱检索方案素材"]
-        basic_fields["知识库名"] = main_fault_fields["知识库名"] or basic_fields["知识库名"]
+        basic_response, basic_elapsed, basic_fields, basic_output = call_basic(args, question, use_multi_fault=True)
+        main_fault_material, device_space = build_main_fault_graph_material(args, basic_fields, basic_output, question)
+        basic_fields["图谱检索方案素材"] = main_fault_material
+        basic_fields["知识库名"] = device_space or basic_fields["知识库名"]
     else:
         raise ValueError(f"Unknown variant: {variant_id}")
 

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import subprocess
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any
@@ -17,6 +20,7 @@ REPO_ROOT = Path(os.getenv("LLM_KG_REPO_ROOT", "/app"))
 if not REPO_ROOT.exists():
     REPO_ROOT = Path("/home/ubuntu/LLM-KG-database")
 EXPERIMENT_SCRIPT_DIR = Path(os.getenv("EXPERIMENT_SCRIPT_DIR", str(REPO_ROOT / "scripts" / "experiment_page_variants")))
+EXPERIMENT_RUN_DIR = Path(os.getenv("EXPERIMENT_RUN_DIR", "/app/data/frontend_experiment_runs"))
 
 PLAN_GROUP_SCRIPTS = {
     "boundary": [
@@ -63,6 +67,138 @@ def combine_output_text(result: dict[str, Any]) -> str:
         heading = " ".join(item for item in (chapter_no, title) if item)
         parts.append(f"## {heading}\n{text}" if heading else text)
     return "\n\n".join(parts).strip()
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
+
+def make_run_id(plan_id: str) -> str:
+    return f"{plan_id}_{int(time.time() * 1000)}_{random.randrange(0, 0xFFFFFF):06x}"
+
+
+def run_dir(plan_id: str, run_id: str) -> Path:
+    return EXPERIMENT_RUN_DIR / plan_id / run_id
+
+
+def manifest_path(plan_id: str, run_id: str) -> Path:
+    return run_dir(plan_id, run_id) / "experiment_run.json"
+
+
+def save_manifest(manifest: dict[str, Any]) -> None:
+    plan_id = str(manifest.get("planId") or "")
+    run_id = str(manifest.get("runId") or "")
+    path = manifest_path(plan_id, run_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    manifest["updatedAt"] = now_iso()
+    tmp_path = path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path.replace(path)
+
+
+def load_manifest(plan_id: str, run_id: str) -> dict[str, Any]:
+    path = manifest_path(plan_id, run_id)
+    if not path.exists():
+        raise RuntimeError(f"experiment run not found: {run_id}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def summarize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
+    rounds = manifest.get("rounds") if isinstance(manifest.get("rounds"), dict) else {}
+    total_groups = 0
+    completed_groups = 0
+    for round_data in rounds.values():
+        groups = round_data.get("groups") if isinstance(round_data, dict) and isinstance(round_data.get("groups"), dict) else {}
+        total_groups += len(groups)
+        completed_groups += sum(1 for item in groups.values() if isinstance(item, dict) and item.get("status") in {"done", "terminated"})
+    return {
+        "runId": manifest.get("runId", ""),
+        "planId": manifest.get("planId", ""),
+        "status": manifest.get("status", ""),
+        "createdAt": manifest.get("createdAt", ""),
+        "updatedAt": manifest.get("updatedAt", ""),
+        "runCount": int(manifest.get("runCount") or 0),
+        "concurrency": int(manifest.get("concurrency") or 0),
+        "completedGroups": completed_groups,
+        "totalGroups": total_groups,
+        "questions": manifest.get("questions") if isinstance(manifest.get("questions"), list) else [],
+    }
+
+
+def output_state_from_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
+    round_questions: dict[str, str] = {}
+    output_rounds: dict[str, dict[str, Any]] = {}
+    rounds = manifest.get("rounds") if isinstance(manifest.get("rounds"), dict) else {}
+    for round_key, round_data in rounds.items():
+        if not isinstance(round_data, dict):
+            continue
+        question = str(round_data.get("question") or "")
+        round_questions[str(round_key)] = question
+        output_rounds[str(round_key)] = {}
+        groups = round_data.get("groups") if isinstance(round_data.get("groups"), dict) else {}
+        for group_id, group_output in groups.items():
+            if not isinstance(group_output, dict):
+                continue
+            output_rounds[str(round_key)][str(group_id)] = {
+                "groupId": str(group_id),
+                "groupLabel": str(group_output.get("groupLabel") or ""),
+                "question": str(group_output.get("question") or question),
+                "outputText": str(group_output.get("outputText") or group_output.get("message") or ""),
+                "streamingText": "",
+                "status": str(group_output.get("status") or "error"),
+            }
+    return {"roundQuestions": round_questions, "rounds": output_rounds}
+
+
+def list_experiment_runs(plan_id: str) -> list[dict[str, Any]]:
+    base_dir = EXPERIMENT_RUN_DIR / plan_id
+    if not base_dir.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for path in base_dir.glob("*/experiment_run.json"):
+        try:
+            items.append(summarize_manifest(json.loads(path.read_text(encoding="utf-8"))))
+        except Exception:
+            continue
+    return sorted(items, key=lambda item: str(item.get("updatedAt") or ""), reverse=True)
+
+
+def get_experiment_run(plan_id: str, run_id: str) -> dict[str, Any]:
+    manifest = load_manifest(plan_id, run_id)
+    return {"run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest), "manifest": manifest}
+
+
+def create_manifest(plan_id: str, run_id: str, run_count: int, concurrency: int, questions: list[str], groups: list[dict[str, Any]]) -> dict[str, Any]:
+    created_at = now_iso()
+    rounds: dict[str, Any] = {}
+    for round_index in range(1, run_count + 1):
+        question = questions[(round_index - 1) % len(questions)]
+        rounds[str(round_index)] = {
+            "question": question,
+            "groups": {
+                str(group["groupId"]): {
+                    "groupId": str(group["groupId"]),
+                    "groupLabel": str(group.get("label") or ""),
+                    "question": question,
+                    "status": "pending",
+                    "outputText": "",
+                    "resultFile": "",
+                }
+                for group in groups
+            },
+        }
+    return {
+        "runId": run_id,
+        "planId": plan_id,
+        "status": "running",
+        "createdAt": created_at,
+        "updatedAt": created_at,
+        "runCount": run_count,
+        "concurrency": concurrency,
+        "questions": questions,
+        "groups": [{"groupId": str(group["groupId"]), "label": str(group.get("label") or "")} for group in groups],
+        "rounds": rounds,
+    }
 
 
 def run_one_group(

@@ -6,6 +6,7 @@ import random
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 from services.auth_service import (
     AUTH_SESSION_TTL,
@@ -19,6 +20,7 @@ from services.auth_service import (
     validate_credentials,
 )
 from services.case_search_service import infer_dataset, infer_dataset_with_context, run_case_search
+from services.evaluation_question_service import get_evaluation_question_suite
 from services.experiment_service import stream_experiment_run
 from services.pipeline_service import run_pipeline_sync, stream_pipeline
 from services.quality_service import run_format_review_sync, stream_format_review
@@ -175,6 +177,18 @@ class Handler(BaseHTTPRequestHandler):
                 ],
             }
             self._write_json(200, payload)
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_evaluation_question_suite(self) -> None:
+        try:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            suite_id = str((params.get("suiteId") or [""])[0]).strip()
+            if not suite_id:
+                self._write_bad_request("suiteId is required")
+                return
+            self._write_json(200, {"suite": get_evaluation_question_suite(suite_id)})
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
@@ -381,19 +395,24 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:
-        if self.path == "/api/auth/me":
+        path = urlparse(self.path).path
+        if path == "/api/auth/me":
             self._handle_auth_me()
             return
 
-        if self.path.startswith("/api/") and self._require_auth() is None:
+        if path.startswith("/api/") and self._require_auth() is None:
             return
 
-        if self.path == "/api/template/prompts":
+        if path == "/api/template/prompts":
             self._handle_template_prompts()
             return
 
-        if self.path == "/api/template/sections":
+        if path == "/api/template/sections":
             self._handle_template_sections()
+            return
+
+        if path == "/api/evaluation/question-suite":
+            self._handle_evaluation_question_suite()
             return
 
         self._write_json(404, {"message": "not found"})

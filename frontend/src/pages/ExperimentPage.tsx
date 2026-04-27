@@ -1,7 +1,9 @@
-import { Button, Card, InputNumber, Progress, Segmented, Space, Tag, Typography } from 'antd';
+import { Button, Card, InputNumber, Popover, Progress, Segmented, Space, Tag, Typography } from 'antd';
 import { ExperimentOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ALL_MULTI_FAULT_QUESTIONS, ALL_SINGLE_FAULT_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../data/presetQuestions';
+import { ExperimentQuestionPopover } from '../features/experiment/ExperimentQuestionPopover';
+import { fetchExperimentQuestionSuite, type ExperimentQuestionSuite } from '../features/experiment/experimentApi';
 import { fetchTemplatePrompts } from '../features/quality/qualityApi';
 import { loadPromptCache, savePromptCache } from '../features/quality/qualityStorage';
 
@@ -99,6 +101,7 @@ type ExperimentPlan = {
   objective: string;
   processGroups: ExperimentProcessGroup[];
   inputs: string[];
+  questionSuiteId?: string;
   expectedInput: string;
   expectedOutput: string[];
   metrics: string[];
@@ -133,6 +136,9 @@ const defaultEvaluationState: ExperimentEvaluationState = {
   progress: 0,
   scores: {}
 };
+
+const BOUNDARY_QUESTION_SUITE_ID = 'boundary_input_boundary_v1';
+const DISAMBIGUATION_QUESTION_SUITE_ID = 'disambiguation_device_subject_v1';
 
 const node = (
   plugin: string,
@@ -209,6 +215,7 @@ const experimentPlans: ExperimentPlan[] = [
         ]
       },
     ],
+    questionSuiteId: BOUNDARY_QUESTION_SUITE_ID,
     inputs: ['今天吃什么？', '发电机转子接地故障，请生成应急方案。', '变压器拒动，请生成应急方案。'],
     expectedInput: '非电力问题、不支持设备问题、设备和动作明显不兼容的问题。',
     expectedOutput: ['异常输入应被终止并给出边界判定结果/边界判定信息。', '后续模板切片、图谱检索和章节生成不应启动。', '实验组用于观察误放行、伪预案和错误正文长度。'],
@@ -246,6 +253,7 @@ const experimentPlans: ExperimentPlan[] = [
         ]
       },
     ],
+    questionSuiteId: DISAMBIGUATION_QUESTION_SUITE_ID,
     inputs: ['主变旁110kV断路器保护发令后无法分闸，请生成应急处置方案。', '开关柜内电流互感器二次开路，电流表指示接近零，请生成现场方案。', '线路侧避雷器雨后出现放电痕迹并损坏，请生成应急方案。'],
     expectedInput: '包含多个设备名或位置修饰词，但只有一个真实故障主体的问题。',
     expectedOutput: ['输出应围绕真正故障主体展开。', '知识库和故障二级节点应与主体一致。', '实验组用于观察移除主体判定和关键词主体判定造成的主体漂移。'],
@@ -310,22 +318,22 @@ const experimentPlans: ExperimentPlan[] = [
         summary: '强制单故障。',
         supportTags: ['图谱', '模板', '工作流'],
         nodes: [
-          node('基本信息获取', '多故障用户问题', '单一故障场景、知识库名、图谱检索方案素材', ['移除：次生故障和伴随故障']),
+          node('基本信息获取', '多故障用户问题', '单一故障场景、知识库名、图谱检索方案素材', ['仅单故障']),
           node('模板切片', '当前模板配置', '章节列表、章节模板文本', ['无上游变量：读取 llmkg_templates 当前模板']),
-          node('并行生成', '故障与场景提取结果 + 图谱检索方案素材 + 章节模板文本', '预案正文', ['变量固定：只保留主故障'])
+          node('并行生成', '故障与场景提取结果 + 图谱检索方案素材 + 章节模板文本', '预案正文', ['仅主故障'])
         ]
       },
       {
         id: 'exp-detect-no-per-fault-graph',
         role: '实验组',
-        name: '实验组二：识别多故障但不逐项检索',
-        summary: '不逐故障检索。',
+        name: '实验组二：仅主故障图谱',
+        summary: '保留多故障识别，只检索主故障图谱。',
         supportTags: ['图谱', '模板', '工作流'],
         nodes: [
-          node('多故障基本信息获取', '多故障用户问题', '用户问题、设备表、故障列表、主故障、故障与场景提取结果', ['保留：故障列表']),
-          node('基本信息获取', '主故障文本', '主故障图谱检索方案素材', ['替换：逐故障检索 -> 主故障检索']),
+          node('多故障基本信息获取', '多故障用户问题', '用户问题、设备表、故障列表、主故障、故障与场景提取结果'),
+          node('主故障图谱检索', '设备表 + 主故障', '主故障图谱检索方案素材', ['仅主故障图谱']),
           node('模板切片', '当前模板配置', '章节列表、章节模板文本', ['无上游变量：读取 llmkg_templates 当前模板']),
-          node('并行生成', '故障列表 + 图谱检索方案素材 + 章节模板文本', '预案正文', ['移除：次生故障图谱素材'])
+          node('并行生成', '故障列表 + 主故障图谱检索方案素材 + 章节模板文本', '预案正文', ['无次生图谱'])
         ]
       },
     ],
@@ -384,6 +392,16 @@ function getProgressStatus(status: ExperimentStageState['status']) {
   return 'normal';
 }
 
+function getSuiteQuestionTexts(suite: ExperimentQuestionSuite | undefined) {
+  return suite?.groups.flatMap((group) => group.questions.filter((question) => question.enabled).map((question) => question.questionText)).filter(Boolean) || [];
+}
+
+function pickRandomQuestions(questions: string[], count: number) {
+  return [...questions]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count);
+}
+
 function buildGroupProgress(group: ExperimentProcessGroup, state: ExperimentControlState) {
   const stage = getActiveControlStage(state);
   const stepCount = Math.max(group.nodes.length, 1);
@@ -416,7 +434,7 @@ function buildGroupProgress(group: ExperimentProcessGroup, state: ExperimentCont
   };
 }
 
-function ExperimentFlowDiagram({ planId, group, progress }: { planId: string; group: ExperimentProcessGroup; progress?: ExperimentGroupProgress }) {
+function ExperimentFlowDiagram({ planId, group, progress, showStatus = true }: { planId: string; group: ExperimentProcessGroup; progress?: ExperimentGroupProgress; showStatus?: boolean }) {
   const supportLayerTags = getSupportLayerTags(group);
 
   return (
@@ -459,9 +477,11 @@ function ExperimentFlowDiagram({ planId, group, progress }: { planId: string; gr
                   </div>
                   <Space size={6} wrap>
                     {flowNode.mode && flowNode.mode !== '主链路' ? <Tag color="gold">{flowNode.mode}</Tag> : null}
-                    <Tag color={stepStatus === 'done' ? 'green' : stepStatus === 'failed' ? 'red' : stepStatus === 'running' ? 'blue' : 'default'}>
-                      {experimentStepStatusText[stepStatus]}
-                    </Tag>
+                    {showStatus ? (
+                      <Tag color={stepStatus === 'done' ? 'green' : stepStatus === 'failed' ? 'red' : stepStatus === 'running' ? 'blue' : 'default'}>
+                        {experimentStepStatusText[stepStatus]}
+                      </Tag>
+                    ) : null}
                   </Space>
                 </div>
                 <div className="experiment-plan-card__step-body">
@@ -659,10 +679,12 @@ function getAverageScore(evaluationState: ExperimentEvaluationState) {
 function ExperimentEvaluationPanel({
   plan,
   evaluationPrompt,
+  promptSource,
   evaluationState
 }: {
   plan: ExperimentPlan;
   evaluationPrompt: string;
+  promptSource: string;
   evaluationState: ExperimentEvaluationState;
 }) {
   const rounds = Object.entries(evaluationState.scores).sort(([a], [b]) => Number(a) - Number(b));
@@ -673,10 +695,10 @@ function ExperimentEvaluationPanel({
       <div className="experiment-evaluation-panel__prompt">
         <div className="experiment-evaluation-panel__header">
           <Text strong>本实验评估提示词</Text>
-          <Tag color="cyan">按本提示词打分</Tag>
+          <Tag color="cyan">{promptSource}</Tag>
         </div>
         <Paragraph className="experiment-evaluation-panel__prompt-text">
-          {evaluationPrompt || '暂无评估提示词。每个实验的评估会按照本实验评估提示词进行打分。'}
+          {evaluationPrompt || '正在加载本实验评估提示词...'}
         </Paragraph>
       </div>
 
@@ -688,7 +710,7 @@ function ExperimentEvaluationPanel({
           ) : (
             <Tag>{evaluationState.status === 'done' ? '评估完成' : '待启动评估'}</Tag>
           )}
-          {typeof averageScore === 'number' ? <Tag color="green">平均分 {averageScore}</Tag> : null}
+          {typeof averageScore === 'number' ? <Tag color="green">平均分 {averageScore}/10</Tag> : null}
         </div>
         <Progress percent={evaluationState.progress} size="small" status={getProgressStatus(evaluationState.status === 'error' ? 'error' : evaluationState.status === 'done' ? 'done' : evaluationState.status === 'running' ? 'running' : 'idle')} />
         {evaluationState.message ? <Text type="danger">{evaluationState.message}</Text> : null}
@@ -710,7 +732,7 @@ function ExperimentEvaluationPanel({
                       <Tag color={group.role === '对照组' ? 'green' : 'blue'}>{title.label}</Tag>
                       <Text strong>{title.title}</Text>
                       <Tag color={score?.status === 'done' ? 'green' : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
-                        {score?.status === 'done' ? `${score.score ?? '-'} 分` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
+                        {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
                     <div className="experiment-evaluation-panel__comment">{score?.comment || '暂无评估说明。'}</div>
@@ -726,15 +748,19 @@ function ExperimentEvaluationPanel({
 }
 
 function parseEvaluationScore(text: string) {
-  const scoreMatch = text.match(/(?:总分|得分|评分|score)\D{0,12}(\d+(?:\.\d+)?)/i) || text.match(/(\d+(?:\.\d+)?)\s*\/\s*100/);
+  const scoreMatch = text.match(/(\d+(?:\.\d+)?)\s*\/\s*10/) || text.match(/(?:总分|得分|评分|score)\D{0,12}(\d+(?:\.\d+)?)/i);
   if (!scoreMatch) return undefined;
   const score = Number(scoreMatch[1]);
   if (!Number.isFinite(score)) return undefined;
-  return Math.max(0, Math.min(100, score));
+  return Math.max(0, Math.min(10, score));
 }
 
-async function runEvaluationRequest(prompt: string, content: string) {
-  const scoringPrompt = `${prompt}\n\n请对当前实验输出按百分制打分，并必须在最终答案最后一行输出“总分：N/100”。同时用一句话说明扣分原因。`;
+async function runEvaluationRequest(
+  prompt: string,
+  content: string,
+  context: { question: string; groupLabel: string; groupTitle: string; round: number }
+) {
+  const scoringPrompt = `${prompt}\n\n当前评估样本：\n- 轮次：第 ${context.round} 轮\n- 实验组：${context.groupLabel} ${context.groupTitle}\n- 用户问题：${context.question}\n\n请基于上述用户问题、实验组和当前输出进行10分制打分。必须在最终答案最后一行输出“总分：N/10”。`;
   const response = await fetch('/api/quality/review', {
     method: 'POST',
     credentials: 'include',
@@ -826,6 +852,10 @@ export function ExperimentPage() {
   const [controlStateMap, setControlStateMap] = useState<Record<string, ExperimentControlState>>({});
   const [outputStateMap, setOutputStateMap] = useState<Record<string, ExperimentOutputState>>({});
   const [evaluationStateMap, setEvaluationStateMap] = useState<Record<string, ExperimentEvaluationState>>({});
+  const [questionSuiteMap, setQuestionSuiteMap] = useState<Record<string, ExperimentQuestionSuite>>({});
+  const [questionSuiteErrorMap, setQuestionSuiteErrorMap] = useState<Record<string, string>>({});
+  const [sampledInputMap, setSampledInputMap] = useState<Record<string, string[]>>({});
+  const databaseQuestionCount = Object.values(questionSuiteMap).reduce((total, suite) => total + suite.questionCount, 0) || experimentQuestionCount;
   const controlTimerMap = useRef<Record<string, number>>({});
 
   useEffect(() => {
@@ -844,7 +874,51 @@ export function ExperimentPage() {
     Object.values(controlTimerMap.current).forEach((timerId) => window.clearInterval(timerId));
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    experimentPlans
+      .filter((plan) => plan.questionSuiteId)
+      .forEach((plan) => {
+        const suiteId = plan.questionSuiteId as string;
+        fetchExperimentQuestionSuite(suiteId)
+          .then((suite) => {
+            if (cancelled) return;
+            setQuestionSuiteMap((prev) => ({ ...prev, [plan.id]: suite }));
+            setSampledInputMap((prev) => ({
+              ...prev,
+              [plan.id]: pickRandomQuestions(getSuiteQuestionTexts(suite), 3)
+            }));
+          })
+          .catch((error) => {
+            if (cancelled) return;
+            setQuestionSuiteErrorMap((prev) => ({
+              ...prev,
+              [plan.id]: error instanceof Error ? error.message : '题库加载失败'
+            }));
+          });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const getControlState = (planId: string) => controlStateMap[planId] || defaultControlState;
+
+  const getPlanInputs = (plan: ExperimentPlan) => sampledInputMap[plan.id]?.length ? sampledInputMap[plan.id] : plan.inputs;
+
+  const getPlanEvaluationPrompt = (plan: ExperimentPlan) => {
+    if (plan.questionSuiteId) return questionSuiteMap[plan.id]?.evaluationPrompt || '';
+    return evaluationPrompt;
+  };
+
+  const getPlanEvaluationPromptSource = (plan: ExperimentPlan) => {
+    if (plan.questionSuiteId) {
+      if (questionSuiteMap[plan.id]?.evaluationPrompt) return '数据库专属提示词';
+      if (questionSuiteErrorMap[plan.id]) return '专属提示词加载失败';
+      return '专属提示词加载中';
+    }
+    return '通用评估提示词';
+  };
 
   const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency'>>) => {
     setControlStateMap((prev) => ({
@@ -900,6 +974,18 @@ export function ExperimentPage() {
       return;
     }
 
+    const planEvaluationPrompt = getPlanEvaluationPrompt(plan);
+    if (!planEvaluationPrompt) {
+      setControlStateMap((prev) => ({
+        ...prev,
+        [planId]: {
+          ...(prev[planId] || defaultControlState),
+          evaluation: { status: 'error', progress: 0, message: questionSuiteErrorMap[planId] || '本实验专属评估提示词尚未加载。' }
+        }
+      }));
+      return;
+    }
+
     setControlStateMap((prev) => ({
       ...prev,
       [planId]: {
@@ -929,7 +1015,12 @@ export function ExperimentPage() {
       }));
 
       try {
-        const result = await runEvaluationRequest(evaluationPrompt || '请从完整性、准确性、结构规范性三个方面评价预案质量。', task.output.outputText);
+        const result = await runEvaluationRequest(planEvaluationPrompt, task.output.outputText, {
+          question: task.output.question || outputState.roundQuestions[String(task.round)] || '',
+          groupLabel: groupTitle.label,
+          groupTitle: groupTitle.title,
+          round: task.round
+        });
         updateEvaluationState(planId, (current) => ({
           ...current,
           scores: {
@@ -1013,7 +1104,7 @@ export function ExperimentPage() {
           stage,
           runCount: currentControl.runCount,
           concurrency: currentControl.concurrency,
-          questions: plan.inputs
+          questions: getPlanInputs(plan)
         },
         (eventName, data) => {
           if (eventName === 'experiment_stage_done') {
@@ -1205,7 +1296,7 @@ export function ExperimentPage() {
             <Space wrap>
               <Tag color="blue">单故障题 {ALL_SINGLE_FAULT_QUESTIONS.length} 条</Tag>
               <Tag color="red">多故障题 {ALL_MULTI_FAULT_QUESTIONS.length} 条</Tag>
-              <Tag color="geekblue">实验备用题 {experimentQuestionCount} 条</Tag>
+              <Tag color="geekblue">数据库实验题 {databaseQuestionCount} 条</Tag>
               <Tag color="green">复用现有 FastGPT 插件</Tag>
             </Space>
           </Space>
@@ -1227,6 +1318,9 @@ export function ExperimentPage() {
       <div className="experiment-plan-list">
         {experimentPlans.map((plan) => {
           const cardView = cardViewMap[plan.id] || 'info';
+          const planInputs = getPlanInputs(plan);
+          const questionSuite = questionSuiteMap[plan.id];
+          const questionSuiteError = questionSuiteErrorMap[plan.id];
           return (
           <Card
             className="panel-card experiment-plan-card"
@@ -1262,9 +1356,27 @@ export function ExperimentPage() {
               </div>
               <ExperimentSection title="实验输入与特征" wide>
                 <div className="experiment-plan-card__input-row">
-                  <Paragraph className="experiment-plan-card__input-desc">{plan.expectedInput}</Paragraph>
+                  <div className="experiment-plan-card__input-desc-wrap">
+                    <Paragraph className="experiment-plan-card__input-desc">{plan.expectedInput}</Paragraph>
+                    {plan.questionSuiteId ? (
+                      <div className="experiment-plan-card__suite-actions">
+                        <Tag color={questionSuite ? 'geekblue' : questionSuiteError ? 'red' : 'processing'}>
+                          {questionSuite ? `数据库题库 ${questionSuite.questionCount} 条` : questionSuiteError ? '题库加载失败' : '题库加载中'}
+                        </Tag>
+                        <Popover
+                          content={questionSuite ? <ExperimentQuestionPopover suite={questionSuite} /> : <div className="experiment-plan-card__suite-empty">{questionSuiteError || '正在加载题库...'}</div>}
+                          trigger="click"
+                          placement="bottomLeft"
+                          destroyTooltipOnHide
+                          overlayClassName="preset-popover"
+                        >
+                          <Button size="small" disabled={!questionSuite && !questionSuiteError}>查看全部问题</Button>
+                        </Popover>
+                      </div>
+                    ) : null}
+                  </div>
                   <div className="experiment-plan-card__examples">
-                    {plan.inputs.map((input) => (
+                    {planInputs.map((input) => (
                       <div className="experiment-plan-card__example" key={input}>{input}</div>
                     ))}
                   </div>
@@ -1279,7 +1391,7 @@ export function ExperimentPage() {
                         <Text strong>{splitGroupName(group).title}</Text>
                       </div>
                       <Paragraph className="experiment-plan-card__text">{group.summary}</Paragraph>
-                      <ExperimentFlowDiagram planId={plan.id} group={group} />
+                      <ExperimentFlowDiagram planId={plan.id} group={group} showStatus={false} />
                     </div>
                   ))}
                 </div>
@@ -1299,7 +1411,8 @@ export function ExperimentPage() {
                 ) : (
                   <ExperimentEvaluationPanel
                     plan={plan}
-                    evaluationPrompt={evaluationPrompt}
+                    evaluationPrompt={getPlanEvaluationPrompt(plan)}
+                    promptSource={getPlanEvaluationPromptSource(plan)}
                     evaluationState={evaluationStateMap[plan.id] || defaultEvaluationState}
                   />
                 )

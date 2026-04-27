@@ -904,6 +904,30 @@ body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
   gap: 8px;
 }
 
+.experiment-plan-card__input-desc-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.experiment-plan-card__suite-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.experiment-plan-card__suite-actions .ant-tag {
+  margin-inline-end: 0;
+}
+
+.experiment-plan-card__suite-empty {
+  width: 220px;
+  padding: 12px;
+  color: #64748b;
+}
+
 .experiment-plan-card__input-row {
   display: grid;
   grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr);
@@ -1164,6 +1188,16 @@ body.theme-dark .experiment-plan-card__input-desc.ant-typography {
   border-color: rgba(148, 163, 184, 0.16);
 }
 
+body.theme-dark .experiment-plan-card__suite-empty {
+  color: #cbd5e1;
+}
+
+body.theme-dark .experiment-plan-card__suite-actions .ant-btn:not(.ant-btn-primary) {
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.52);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
 body.theme-dark .experiment-control-console__desc.ant-typography {
   color: #94a3b8;
 }
@@ -1188,6 +1222,11 @@ body.theme-dark .experiment-output-preview__question,
 body.theme-dark .experiment-evaluation-panel__prompt-text.ant-typography,
 body.theme-dark .experiment-evaluation-panel__comment {
   color: #cbd5e1;
+}
+
+body.theme-dark .experiment-output-preview__round-question {
+  background: rgba(30, 41, 59, 0.34);
+  border-color: rgba(148, 163, 184, 0.16);
 }
 
 body.theme-dark .experiment-control-console__stage .ant-typography,
@@ -1247,14 +1286,32 @@ body.theme-dark .experiment-control-console .ant-input-number-handler-down-inner
 
 body.theme-dark .experiment-plan-card .ant-segmented {
   background: rgba(15, 23, 42, 0.54);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 body.theme-dark .experiment-plan-card .ant-segmented .ant-segmented-item-label {
   color: #cbd5e1;
 }
 
+body.theme-dark .experiment-plan-card .ant-segmented .ant-segmented-item {
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+body.theme-dark .experiment-plan-card .ant-segmented .ant-segmented-item:hover .ant-segmented-item-label {
+  color: #e2e8f0;
+}
+
+body.theme-dark .experiment-plan-card .ant-segmented .ant-segmented-thumb {
+  background: rgba(37, 99, 235, 0.58);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.24);
+}
+
 body.theme-dark .experiment-plan-card .ant-segmented .ant-segmented-item-selected {
   background: rgba(37, 99, 235, 0.58);
+}
+
+body.theme-dark .experiment-plan-card .ant-segmented .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #eff6ff;
 }
 
 body.theme-dark .experiment-hero-card__standard {

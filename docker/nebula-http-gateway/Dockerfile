@@ -1,6 +1,8 @@
 FROM python:3.12-alpine
 
 RUN apk add --no-cache docker-cli
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple nebula3-python==3.8.3
 
 WORKDIR /app
 
