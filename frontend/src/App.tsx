@@ -54,8 +54,10 @@ function ProviderBalanceStrip({
         { id: 'deepseek', name: 'DeepSeek', ok: false, balanceText: '--' },
         { id: 'siliconflow', name: 'SiliconFlow', ok: false, balanceText: '--' }
       ];
+  const statusText = loading ? '余额刷新中' : errorMessage ? '余额查询失败' : '余额';
   return (
-    <div className="app-provider-balances" title={errorMessage || '余额每分钟自动刷新'}>
+    <div className={`app-provider-balances ${errorMessage ? 'app-provider-balances--error' : ''}`} title={errorMessage || '余额每分钟自动刷新'}>
+      <Typography.Text className="app-provider-balances__label">{statusText}</Typography.Text>
       {visibleBalances.map((item) => (
         <Tag key={item.id} color={item.ok ? 'cyan' : 'default'}>
           {item.name} {item.balanceText || '--'}
@@ -100,11 +102,15 @@ export default function App() {
       setProviderBalances(data.providers);
       setBalanceErrorMessage('');
     } catch (error) {
-      setBalanceErrorMessage(error instanceof Error ? error.message : '余额查询失败');
+      const messageText = error instanceof Error ? error.message : '余额查询失败';
+      setBalanceErrorMessage(messageText);
+      if (messageText.includes('401')) {
+        handleUnauthorized();
+      }
     } finally {
       setBalanceLoading(false);
     }
-  }, []);
+  }, [handleUnauthorized]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
