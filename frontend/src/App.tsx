@@ -112,16 +112,13 @@ export default function App() {
       if (balanceRequestRef.current !== requestId) return;
       const messageText = error instanceof Error ? error.message : '余额查询失败';
       setBalanceErrorMessage(messageText === 'The operation was aborted.' ? '余额查询超时' : messageText);
-      if (messageText.includes('401')) {
-        handleUnauthorized();
-      }
     } finally {
       if (balanceRequestRef.current === requestId) {
         balanceLoadingRef.current = false;
         setBalanceLoading(false);
       }
     }
-  }, [handleUnauthorized]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
