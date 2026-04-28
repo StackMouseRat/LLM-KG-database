@@ -3,12 +3,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.request import Request, urlopen
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
@@ -30,6 +33,17 @@ DEVICE_KEYWORDS = [
 ]
 
 FAULT_KEYWORDS = ["故障", "告警", "异常", "拒动", "跳闸", "放电", "开路", "击穿", "起火", "处置", "预案", "应急"]
+GRAPH_QUERY_URL_CANDIDATES = [
+    os.getenv("EXPERIMENT_GRAPH_QUERY_URL", "").strip(),
+    "http://host.docker.internal:8787/graph/query",
+    "http://127.0.0.1:8787/graph/query",
+]
+BARE_LLM_URL = os.getenv("EXPERIMENT_BARE_LLM_URL", "https://api.deepseek.com/chat/completions")
+BARE_LLM_MODEL = os.getenv("EXPERIMENT_BARE_LLM_MODEL", "deepseek-chat")
+BARE_LLM_KEY_FILE = Path(os.getenv(
+    "EXPERIMENT_BARE_LLM_KEY_FILE",
+    str(pipeline.pick_key_path("/run/fastgpt_keys/deepseek_api_key", "/home/ubuntu/.fastgpt_keys/deepseek_api_key")),
+))
 
 
 def parse_args(variant_id: str) -> argparse.Namespace:
@@ -86,6 +100,176 @@ def update_fault_scene_device(fault_scene: str, device_name: str | None) -> str:
         parsed = {}
     parsed["故障对象"] = device_name or "未明确"
     return json.dumps(parsed, ensure_ascii=False)
+
+
+def update_fault_scene_subject_and_fault(fault_scene: str, device_name: str | None, fault_name: str) -> str:
+    try:
+        parsed = json.loads(fault_scene or "{}")
+    except Exception:
+        parsed = {}
+    if not isinstance(parsed, dict):
+        parsed = {}
+    parsed["故障对象"] = device_name or "未明确"
+    parsed["故障二级节点"] = fault_name or "未明确"
+    parsed["主故障二级节点"] = fault_name or "未明确"
+    return json.dumps(parsed, ensure_ascii=False)
+
+
+def post_json(url: str, payload: dict[str, Any], timeout: int, headers: dict[str, str] | None = None) -> dict[str, Any]:
+    request = Request(
+        url,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={"Content-Type": "application/json; charset=utf-8", **(headers or {})},
+    )
+    with urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8", errors="replace"))
+
+
+def query_graph_gateway(space: str, ngql: str, timeout: int) -> dict[str, Any]:
+    last_error = ""
+    for url in [item for item in GRAPH_QUERY_URL_CANDIDATES if item]:
+        try:
+            result = post_json(url, {"space": space, "ngql": ngql}, timeout)
+            if result.get("ok"):
+                return result
+            last_error = str(result.get("message") or result.get("errors") or "graph query failed")
+        except Exception as exc:
+            last_error = str(exc)
+    raise RuntimeError(last_error or "graph query failed")
+
+
+def parse_nebula_table_column(stdout: str, column_index: int) -> list[str]:
+    values: list[str] = []
+    for line in stdout.splitlines():
+        if not line.strip().startswith("|") or '"' not in line:
+            continue
+        cells = [cell.strip().strip('"') for cell in line.strip().strip("|").split("|")]
+        if len(cells) > column_index and cells[column_index] and cells[column_index] not in values:
+            values.append(cells[column_index])
+    return values
+
+
+def query_fault_l2_candidates(device_space: str, timeout: int) -> list[str]:
+    if not device_space:
+        return []
+    ngql = (
+        "MATCH (l1:entity)-[:rel]->(l2:entity) "
+        "WHERE l1.entity.lvl == 1 AND l2.entity.lvl == 2 "
+        "RETURN l1.entity.name AS l1_name, l2.entity.name AS l2_name LIMIT 200;"
+    )
+    result = query_graph_gateway(device_space, ngql, timeout)
+    return parse_nebula_table_column(str(result.get("stdout") or ""), 1)
+
+
+def score_candidate(question: str, original_fault: str, candidate: str) -> int:
+    text = f"{question} {original_fault}"
+    score = 0
+    for token in re.findall(r"[\u4e00-\u9fffA-Za-z0-9]{2,}", candidate):
+        if token in text:
+            score += len(token) * 3
+    for keyword in ("拒动", "跳闸", "放电", "接地", "短路", "断路", "过热", "发热", "控制", "保护", "机构", "触头", "绝缘", "泄漏"):
+        if keyword in text and keyword in candidate:
+            score += 12
+    return score
+
+
+def choose_fault_l2_fallback(question: str, original_fault: str, candidates: list[str]) -> str:
+    if not candidates:
+        return original_fault or question
+    return max(candidates, key=lambda item: (score_candidate(question, original_fault, item), -candidates.index(item)))
+
+
+def choose_fault_l2_with_llm(question: str, device_name: str | None, original_fault: str, candidates: list[str], timeout: int) -> str:
+    if not candidates:
+        return original_fault or question
+    if not BARE_LLM_KEY_FILE.exists():
+        return choose_fault_l2_fallback(question, original_fault, candidates)
+
+    prompt = (
+        "你是电力设备故障分类助手。现在实验组已经被强行判定为某个设备，"
+        "即使这个判定很牵强，也必须从候选二级故障中选择一个最能勉强解释用户问题的故障。"
+        "只允许输出候选二级故障的原文，不要解释。\n\n"
+        f"强行判定设备：{device_name or '未明确'}\n"
+        f"用户问题：{question}\n"
+        f"原完整流程故障节点：{original_fault or '未明确'}\n"
+        "候选二级故障：\n" + "\n".join(f"- {item}" for item in candidates)
+    )
+    payload = {
+        "model": BARE_LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": "只从候选列表中选择并输出一个二级故障名称。"},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0,
+        "max_tokens": 80,
+    }
+    try:
+        response = post_json(
+            BARE_LLM_URL,
+            payload,
+            timeout,
+            headers={"Authorization": f"Bearer {pipeline.read_key(BARE_LLM_KEY_FILE)}"},
+        )
+        content = str(response.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+        for candidate in candidates:
+            if candidate == content or candidate in content:
+                return candidate
+    except Exception:
+        pass
+    return choose_fault_l2_fallback(question, original_fault, candidates)
+
+
+def fault_scene_main_fault(fault_scene: str, question: str) -> str:
+    try:
+        parsed = json.loads(fault_scene or "{}")
+    except Exception:
+        parsed = {}
+    if not isinstance(parsed, dict):
+        parsed = {}
+    main_fault = str(parsed.get("主故障二级节点") or "").strip()
+    if main_fault and main_fault != "未明确":
+        return main_fault
+    fault_nodes_raw = parsed.get("故障二级节点")
+    if isinstance(fault_nodes_raw, list):
+        for item in fault_nodes_raw:
+            value = str(item).strip()
+            if value and value != "未明确":
+                return value
+    elif isinstance(fault_nodes_raw, str) and fault_nodes_raw.strip() and fault_nodes_raw.strip() != "未明确":
+        return fault_nodes_raw.strip()
+    return question
+
+
+def requery_graph_material(args: argparse.Namespace, device_space: str, fault_name: str) -> str:
+    device_space = str(device_space or "").strip()
+    fault_name = str(fault_name or "").strip()
+    if not device_space or not fault_name:
+        return "本实验组保留图谱检索步骤，但弱主体策略未得到可用设备表或故障节点，图谱检索无命中。"
+
+    graph_key = pipeline.read_key(args.multi_fault_graph_query_key_file)
+    graph_response, _ = pipeline.call_plugin(
+        args.endpoint,
+        graph_key,
+        {"设备表": device_space, "当前查询的二级故障": fault_name},
+        args.timeout,
+    )
+    graph_text = str(pipeline.extract_plugin_output(graph_response).get("图谱检索") or "").strip()
+    return graph_text or f"本实验组按弱主体策略查询设备表 {device_space}、故障节点 {fault_name}，但图谱检索无命中。"
+
+
+def apply_weak_subject_graph(args: argparse.Namespace, basic_fields: dict[str, str], question: str, *, device_name: str | None, kb_name: str | None) -> None:
+    if kb_name:
+        basic_fields["知识库名"] = kb_name
+    original_fault = fault_scene_main_fault(basic_fields["故障与场景提取结果"], question)
+    candidates = query_fault_l2_candidates(basic_fields.get("知识库名", ""), args.timeout)
+    fault_name = choose_fault_l2_with_llm(question, device_name, original_fault, candidates, args.timeout)
+    basic_fields["故障与场景提取结果"] = update_fault_scene_subject_and_fault(
+        basic_fields["故障与场景提取结果"],
+        device_name,
+        fault_name,
+    )
+    basic_fields["图谱检索方案素材"] = requery_graph_material(args, basic_fields.get("知识库名", ""), fault_name)
 
 
 def call_basic(args: argparse.Namespace, question: str, *, use_multi_fault: bool = False, ignore_boundary: bool = False) -> tuple[dict[str, Any], float, dict[str, str], dict[str, Any]]:
@@ -191,14 +375,20 @@ def main(variant_id: str) -> None:
         basic_fields["边界判定信息"] = ""
     elif variant_id == "disambiguation_drop_subject":
         basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
-        basic_fields["故障与场景提取结果"] = update_fault_scene_device(basic_fields["故障与场景提取结果"], None)
+        matched = keyword_subject(question)
+        apply_weak_subject_graph(
+            args,
+            basic_fields,
+            question,
+            device_name=None,
+            kb_name=matched[1] if matched else basic_fields.get("知识库名", ""),
+        )
     elif variant_id == "disambiguation_keyword_subject":
         basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
         matched = keyword_subject(question)
         if matched:
             device_name, kb_name = matched
-            basic_fields["故障与场景提取结果"] = update_fault_scene_device(basic_fields["故障与场景提取结果"], device_name)
-            basic_fields["知识库名"] = kb_name
+            apply_weak_subject_graph(args, basic_fields, question, device_name=device_name, kb_name=kb_name)
     elif variant_id == "graph_template_no_graph":
         basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
         basic_fields["图谱检索方案素材"] = ""

@@ -46,6 +46,7 @@ const { Paragraph, Text, Title } = Typography;
 
 const BOUNDARY_QUESTION_SUITE_ID = 'boundary_input_boundary_v1';
 const DISAMBIGUATION_QUESTION_SUITE_ID = 'disambiguation_device_subject_v1';
+const GRAPH_TEMPLATE_QUESTION_SUITE_ID = 'graph_template_constraint_v1';
 
 const node = (
   plugin: string,
@@ -119,9 +120,9 @@ const experimentPlans: ExperimentPlan[] = [
   },
   {
     id: 'disambiguation',
-    title: '设备主体消歧实验',
+    title: '设备主体识别与消歧实验',
     tag: '消歧',
-    objective: '验证当前工作流能从位置修饰词、保护动作来源和伴随告警中识别真正故障主体。',
+    objective: '验证当前工作流能从故障现象、位置参照、保护信号、相邻设备排除和伴随告警中识别真正故障主体。',
     processGroups: [
       completeWorkflowGroup,
       {
@@ -150,8 +151,8 @@ const experimentPlans: ExperimentPlan[] = [
       },
     ],
     questionSuiteId: DISAMBIGUATION_QUESTION_SUITE_ID,
-    inputs: ['主变旁110kV断路器保护发令后无法分闸，请生成应急处置方案。', '开关柜内电流互感器二次开路，电流表指示接近零，请生成现场方案。', '线路侧避雷器雨后出现放电痕迹并损坏，请生成应急方案。'],
-    expectedInput: '包含多个设备名或位置修饰词，但只有一个真实故障主体的问题。',
+    inputs: ['断路器间隔附近保护通道退出，网管持续报R-LOS，开关位置和保护装置本体均正常，请判断故障主体并生成处置方案。', '备自投未启动，后台显示母线电压消失，但现场母线仍带电且负荷正常，请判断故障主体并生成现场方案。', '站内光缆经过断路器间隔，断路器运行正常但保护通道退出，网管报R-LOS，请判断故障主体并生成处置方案。'],
+    expectedInput: '包含干扰设备、位置修饰词或现象链，但只有一个真实故障主体的问题。',
     expectedOutput: ['输出应围绕真正故障主体展开。', '知识库和故障二级节点应与主体一致。', '实验组用于观察移除主体判定和关键词主体判定造成的主体漂移。'],
     metrics: ['设备识别正确率', '知识库命中率', '故障二级节点准确率', '正文主体一致性']
   },
@@ -187,6 +188,7 @@ const experimentPlans: ExperimentPlan[] = [
         ]
       },
     ],
+    questionSuiteId: GRAPH_TEMPLATE_QUESTION_SUITE_ID,
     inputs: ['雨后某220kV避雷器出现放电痕迹并伴随泄漏电流异常升高，请生成应急处置方案。', '断路器保护发令后未动作，现场未见分闸，请生成包含检查确认和抢修措施的方案。', '某电缆接头击穿起火，请生成包含响应终止和恢复验证的完整预案。'],
     expectedInput: '同时依赖图谱事实补充和模板章节约束的正式预案生成问题。',
     expectedOutput: ['对照组应兼顾事实覆盖和章节结构。', '移除图谱组用于观察原因、措施、风险和资源缺口。', '移除模板组用于观察章节缺失、重复和串章。'],
@@ -1268,6 +1270,7 @@ export function ExperimentPage() {
               <ExperimentControlPanel
                 plan={plan}
                 state={getControlState(plan.id)}
+                evaluationState={evaluationStateMap[plan.id] || defaultEvaluationState}
                 runs={runRecordMap[plan.id] || []}
                 selectedRunId={selectedRunIdMap[plan.id]}
                 outputState={outputStateMap[plan.id] || defaultOutputState}

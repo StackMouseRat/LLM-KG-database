@@ -19,7 +19,6 @@ import {
   expectedBehaviorLabel,
   formatStructuredEvaluation,
   getActiveControlStage,
-  getAverageScore,
   getGroupAverageScores,
   getMaxEvaluationConcurrency,
   getMaxExperimentConcurrency,
@@ -138,6 +137,7 @@ export function ExperimentFlowDiagram({ planId, group, progress, showStatus = tr
 export function ExperimentControlPanel({
   plan,
   state,
+  evaluationState,
   runs,
   selectedRunId,
   outputState,
@@ -149,6 +149,7 @@ export function ExperimentControlPanel({
 }: {
   plan: ExperimentPlan;
   state: ExperimentControlState;
+  evaluationState: ExperimentEvaluationState;
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
   outputState: ExperimentOutputState;
@@ -159,8 +160,11 @@ export function ExperimentControlPanel({
   onRefreshRuns: () => void;
 }) {
   const totalScripts = Math.max(plan.processGroups.length - 1, 0);
+  const effectiveEvaluationStage = evaluationState.status !== 'idle' || evaluationState.progress > 0
+    ? { status: evaluationState.status, progress: evaluationState.progress, message: evaluationState.message }
+    : state.evaluation;
   const generationRunning = state.generation.status === 'running';
-  const evaluationRunning = state.evaluation.status === 'running';
+  const evaluationRunning = effectiveEvaluationStage.status === 'running';
   const maxConcurrency = getMaxExperimentConcurrency(state.runCount, plan.processGroups.length);
   const activeGroups = outputState.activeGroups || [];
 
@@ -251,16 +255,20 @@ export function ExperimentControlPanel({
               启动评估
             </Button>
           </div>
-          <Progress percent={state.evaluation.progress} size="small" status={getProgressStatus(state.evaluation.status)} />
-          <Text type="secondary">先选择并载入某次实验结果，再对该结果进行自动评估。</Text>
-          {state.evaluation.message ? <Text type="danger">{state.evaluation.message}</Text> : null}
+          <Progress percent={effectiveEvaluationStage.progress} size="small" status={getProgressStatus(effectiveEvaluationStage.status)} />
+          {evaluationState.current ? (
+            <Text type="secondary">当前评估：第 {evaluationState.current.round} 轮 · {evaluationState.current.groupLabel}</Text>
+          ) : (
+            <Text type="secondary">先选择并载入某次实验结果，再对该结果进行自动评估。</Text>
+          )}
+          {effectiveEvaluationStage.message ? <Text type="danger">{effectiveEvaluationStage.message}</Text> : null}
         </div>
       </div>
 
       <div className="experiment-control-console__log">
         <Text type="secondary">实时进度</Text>
         <div>生成：{getStageStatusText(state.generation.status)} · {state.generation.progress}%</div>
-        <div>评估：{getStageStatusText(state.evaluation.status)} · {state.evaluation.progress}%</div>
+        <div>评估：{getStageStatusText(effectiveEvaluationStage.status)} · {effectiveEvaluationStage.progress}%</div>
         <div className="experiment-control-console__active-groups">
           <Text type="secondary">当前并发：{activeGroups.length}/{state.concurrency}</Text>
           <div className="experiment-control-console__active-tags">
@@ -421,7 +429,6 @@ export function ExperimentEvaluationPanel({
   onToggleCompactMode: (value: boolean) => void;
 }) {
   const rounds = Object.entries(evaluationState.scores).sort(([a], [b]) => Number(a) - Number(b));
-  const averageScore = getAverageScore(evaluationState);
   const groupAverageScores = getGroupAverageScores(plan, evaluationState);
   const evaluationRuns = runs.filter(hasEvaluationRecord);
   const selectedEvaluationRunId = hasEvaluationRecord(runs.find((run) => run.runId === selectedRunId)) ? selectedRunId : undefined;
@@ -498,7 +505,6 @@ export function ExperimentEvaluationPanel({
           ) : (
             <Tag>{evaluationState.status === 'done' ? '评估完成' : '待启动评估'}</Tag>
           )}
-          {typeof averageScore === 'number' ? <Tag color="green">平均分 {averageScore}/10</Tag> : null}
           {groupAverageScores.map(({ group, average }) => {
             const title = splitGroupName(group);
             return typeof average === 'number' ? (

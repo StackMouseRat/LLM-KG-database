@@ -191,8 +191,8 @@ export function getVerdictText(verdict?: string) {
 
 export function getScoreTagColor(score?: number) {
   if (typeof score !== 'number' || !Number.isFinite(score)) return 'default';
-  if (score >= 8) return 'green';
-  if (score >= 5) return 'gold';
+  if (score > 8.9) return 'green';
+  if (score > 7.5) return 'gold';
   return 'red';
 }
 
@@ -213,15 +213,43 @@ export function isValidStructuredEvaluation(value?: Record<string, any>, sourceT
   return true;
 }
 
+const beijingTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false
+});
+
+function dateFromRunId(runId?: string) {
+  const match = String(runId || '').match(/_(\d{12,})_/);
+  if (!match) return undefined;
+  const timestamp = Number(match[1]);
+  if (!Number.isFinite(timestamp)) return undefined;
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+export function formatBeijingTime(value?: string, fallbackRunId?: string) {
+  const date = value ? new Date(value) : dateFromRunId(fallbackRunId);
+  const safeDate = date && !Number.isNaN(date.getTime()) ? date : dateFromRunId(fallbackRunId);
+  if (!safeDate || Number.isNaN(safeDate.getTime())) return value || fallbackRunId || '';
+  const parts = Object.fromEntries(beijingTimeFormatter.formatToParts(safeDate).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} 北京时间`;
+}
+
 export function runRecordLabel(run: ExperimentRunSummary) {
   const generation = `${run.completedGroups}/${run.totalGroups}`;
   const evaluation = run.totalEvaluations ? ` · 评估 ${run.evaluatedGroups || 0}/${run.totalEvaluations}` : '';
-  return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 生成 ${generation}${evaluation} · ${run.updatedAt || run.runId}`;
+  return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 生成 ${generation}${evaluation} · ${formatBeijingTime(run.updatedAt, run.runId)}`;
 }
 
 export function evaluationRecordLabel(run: ExperimentRunSummary) {
   const evaluation = run.totalEvaluations ? `${run.evaluatedGroups || 0}/${run.totalEvaluations}` : '0/0';
-  return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 评估 ${evaluation} · ${run.evaluationUpdatedAt || run.updatedAt || run.runId}`;
+  return `${run.name || `总次数${run.runCount} · 并发${run.concurrency}`} · 评估 ${evaluation} · ${formatBeijingTime(run.evaluationUpdatedAt || run.updatedAt, run.runId)}`;
 }
 
 export function hasEvaluationRecord(run?: ExperimentRunSummary) {
