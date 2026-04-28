@@ -3,7 +3,7 @@ import { ExperimentOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ALL_MULTI_FAULT_QUESTIONS, ALL_SINGLE_FAULT_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../data/presetQuestions';
 import { ExperimentQuestionPopover } from '../features/experiment/ExperimentQuestionPopover';
-import { fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, saveExperimentEvaluation, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
+import { fetchExperimentPageSnapshot, fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, saveExperimentEvaluation, saveExperimentPageSnapshot, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
 import { fetchTemplatePrompts } from '../features/quality/qualityApi';
 import { loadPromptCache, savePromptCache } from '../features/quality/qualityStorage';
 
@@ -157,6 +157,16 @@ const defaultEvaluationState: ExperimentEvaluationState = {
   status: 'idle',
   progress: 0,
   scores: {}
+};
+
+type ExperimentPageSnapshot = {
+  cardViewMap?: Record<string, ExperimentCardView>;
+  controlStateMap?: Record<string, ExperimentControlState>;
+  outputStateMap?: Record<string, ExperimentOutputState>;
+  evaluationStateMap?: Record<string, ExperimentEvaluationState>;
+  sampledQuestionMap?: Record<string, ExperimentQuestionItem[]>;
+  selectedRunIdMap?: Record<string, string>;
+  evaluationCompactModeMap?: Record<string, boolean>;
 };
 
 const BOUNDARY_QUESTION_SUITE_ID = 'boundary_input_boundary_v1';
@@ -439,6 +449,17 @@ function questionItemLabel(item?: ExperimentQuestionItem) {
   return [item.groupCode, item.groupName].filter(Boolean).join(' · ');
 }
 
+function expectedBehaviorLabel(value?: string) {
+  if (value === 'terminate') return '应终止';
+  if (value === 'terminate_or_clarify') return '应终止或澄清';
+  if (value === 'terminate_or_ignore_injection') return '应终止或忽略注入';
+  if (value === 'generate') return '应放行生成';
+  if (value === 'identify_fault_subject') return '应识别故障主体';
+  if (value === 'identify_primary_subject') return '应识别主故障主体';
+  if (value === 'identify_primary_and_affected_subjects') return '应识别主故障及受影响主体';
+  return value || '未提供';
+}
+
 function eventQuestionItem(data: any): ExperimentQuestionItem | undefined {
   return data?.questionItem && typeof data.questionItem === 'object' && String(data.questionItem.questionText || '').trim()
     ? data.questionItem as ExperimentQuestionItem
@@ -455,6 +476,54 @@ function getMaxExperimentConcurrency(runCount: number, groupCount: number) {
 
 function getMaxEvaluationConcurrency() {
   return 10;
+}
+
+function sanitizeStageState(state?: ExperimentStageState): ExperimentStageState {
+  if (!state) return defaultStageState;
+  return state.status === 'running'
+    ? { ...state, status: 'idle', message: undefined }
+    : state;
+}
+
+function sanitizeControlStateMap(map: Record<string, ExperimentControlState>) {
+  return Object.fromEntries(Object.entries(map).map(([planId, state]) => [
+    planId,
+    {
+      ...state,
+      generation: sanitizeStageState(state.generation),
+      evaluation: sanitizeStageState(state.evaluation)
+    }
+  ]));
+}
+
+function sanitizeEvaluationStateMap(map: Record<string, ExperimentEvaluationState>) {
+  return Object.fromEntries(Object.entries(map).map(([planId, state]) => [
+    planId,
+    {
+      ...state,
+      status: state.status === 'running' ? 'idle' : state.status,
+      current: undefined,
+      scores: Object.fromEntries(Object.entries(state.scores || {}).map(([round, groupMap]) => [
+        round,
+        Object.fromEntries(Object.entries(groupMap || {}).map(([groupId, score]) => [
+          groupId,
+          score.status === 'running' ? { ...score, status: 'pending' as const } : score
+        ]))
+      ]))
+    }
+  ]));
+}
+
+function buildExperimentPageSnapshot(snapshot: ExperimentPageSnapshot): ExperimentPageSnapshot {
+  return {
+    cardViewMap: snapshot.cardViewMap || {},
+    controlStateMap: sanitizeControlStateMap(snapshot.controlStateMap || {}),
+    outputStateMap: snapshot.outputStateMap || {},
+    evaluationStateMap: sanitizeEvaluationStateMap(snapshot.evaluationStateMap || {}),
+    sampledQuestionMap: snapshot.sampledQuestionMap || {},
+    selectedRunIdMap: snapshot.selectedRunIdMap || {},
+    evaluationCompactModeMap: snapshot.evaluationCompactModeMap || {}
+  };
 }
 
 function activeGroupKey(round: number, groupId: string) {
@@ -798,10 +867,10 @@ function ExperimentOutputPreview({
               第 {round} 轮
               {questionItemLabel(questionItem) ? <Tag color="geekblue">{questionItemLabel(questionItem)}</Tag> : null}
             </div>
-            <div className="experiment-output-preview__round-question">本轮问题：{outputState.roundQuestions[round] || Object.values(groupMap)[0]?.question || '暂无问题。'}</div>
-            {questionItem?.expectedBehavior ? (
-              <div className="experiment-output-preview__round-meta">预期边界行为：{questionItem.expectedBehavior}</div>
-            ) : null}
+            <div className="experiment-output-preview__round-info">
+              <span>本轮问题：{outputState.roundQuestions[round] || Object.values(groupMap)[0]?.question || '暂无问题。'}</span>
+              {questionItem?.expectedBehavior ? <Tag color="purple">预期边界行为：{expectedBehaviorLabel(questionItem.expectedBehavior)}</Tag> : null}
+            </div>
             <div className="experiment-output-preview__groups">
               {plan.processGroups.map((group) => {
                 const groupOutput = groupMap[group.id];
@@ -840,6 +909,18 @@ function getAverageScore(evaluationState: ExperimentEvaluationState) {
   return Math.round((values.reduce((sum, score) => sum + score, 0) / values.length) * 10) / 10;
 }
 
+function getGroupAverageScores(plan: ExperimentPlan, evaluationState: ExperimentEvaluationState) {
+  return plan.processGroups.map((group) => {
+    const values = Object.values(evaluationState.scores)
+      .map((groupMap) => groupMap[group.id]?.score)
+      .filter((score): score is number => typeof score === 'number' && Number.isFinite(score));
+    return {
+      group,
+      average: values.length ? Math.round((values.reduce((sum, score) => sum + score, 0) / values.length) * 10) / 10 : undefined
+    };
+  });
+}
+
 function formatStructuredEvaluation(value?: Record<string, any>) {
   if (!value) return '';
   try {
@@ -861,6 +942,13 @@ function getVerdictText(verdict?: string) {
   if (verdict === 'partial') return '部分通过';
   if (verdict === 'fail') return '不通过';
   return '未知';
+}
+
+function getScoreTagColor(score?: number) {
+  if (typeof score !== 'number' || !Number.isFinite(score)) return 'default';
+  if (score >= 8) return 'green';
+  if (score >= 5) return 'gold';
+  return 'red';
 }
 
 function getStructuredSubscores(value?: Record<string, any>) {
@@ -905,11 +993,13 @@ function ExperimentEvaluationPanel({
   selectedRunId,
   evaluationRunning,
   evaluationConcurrency,
+  compactMode,
   onUpdateEvaluationConcurrency,
   onSelectRun,
   onLoadRun,
   onRefreshRuns,
-  onRunEvaluation
+  onRunEvaluation,
+  onToggleCompactMode
 }: {
   plan: ExperimentPlan;
   evaluationPrompt: string;
@@ -920,14 +1010,17 @@ function ExperimentEvaluationPanel({
   selectedRunId?: string;
   evaluationRunning: boolean;
   evaluationConcurrency: number;
+  compactMode: boolean;
   onUpdateEvaluationConcurrency: (value: number) => void;
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
   onRefreshRuns: () => void;
   onRunEvaluation: () => void;
+  onToggleCompactMode: (value: boolean) => void;
 }) {
   const rounds = Object.entries(evaluationState.scores).sort(([a], [b]) => Number(a) - Number(b));
   const averageScore = getAverageScore(evaluationState);
+  const groupAverageScores = getGroupAverageScores(plan, evaluationState);
   const evaluationRuns = runs.filter(hasEvaluationRecord);
   const selectedEvaluationRunId = hasEvaluationRecord(runs.find((run) => run.runId === selectedRunId)) ? selectedRunId : undefined;
   const [expandedRoundMap, setExpandedRoundMap] = useState<Record<string, boolean>>({});
@@ -1004,9 +1097,20 @@ function ExperimentEvaluationPanel({
             <Tag>{evaluationState.status === 'done' ? '评估完成' : '待启动评估'}</Tag>
           )}
           {typeof averageScore === 'number' ? <Tag color="green">平均分 {averageScore}/10</Tag> : null}
+          {groupAverageScores.map(({ group, average }) => {
+            const title = splitGroupName(group);
+            return typeof average === 'number' ? (
+              <Tag color={getScoreTagColor(average)} key={group.id}>{title.label} 平均 {average}/10</Tag>
+            ) : null;
+          })}
           {rounds.length ? (
             <Button size="small" onClick={() => setAllRoundsExpanded(!allRoundsExpanded)}>
               {allRoundsExpanded ? '收回全部卡片' : '展开全部卡片'}
+            </Button>
+          ) : null}
+          {rounds.length ? (
+            <Button size="small" type={compactMode ? 'primary' : 'default'} onClick={() => onToggleCompactMode(!compactMode)}>
+              {compactMode ? '退出精简模式' : '精简模式'}
             </Button>
           ) : null}
         </div>
@@ -1016,6 +1120,36 @@ function ExperimentEvaluationPanel({
 
       {rounds.length === 0 ? (
         <div className="experiment-output-preview__empty">点击“启动评估”后，这里会展示每一轮、每一组的得分。</div>
+      ) : compactMode ? (
+        <div className="experiment-evaluation-panel__compact-list">
+          {rounds.map(([round, groupMap]) => {
+            const outputGroupMap = outputState.rounds[round] || {};
+            const questionItem = outputState.roundQuestionItems?.[round] || Object.values(outputGroupMap)[0]?.questionItem;
+            const groupLabel = questionItemLabel(questionItem);
+            return (
+              <div className="experiment-evaluation-panel__compact-card" key={round}>
+                <div className="experiment-evaluation-panel__compact-title">
+                  <strong>第 {round} 轮</strong>
+                  {groupLabel ? <Tag color="geekblue">{groupLabel}</Tag> : null}
+                </div>
+                <div className="experiment-evaluation-panel__compact-groups">
+                  {plan.processGroups.map((group) => {
+                    const score = groupMap[group.id];
+                    const title = splitGroupName(group);
+                    return (
+                      <div className="experiment-evaluation-panel__compact-row" key={group.id}>
+                        <span>{title.label} · {title.title}</span>
+                        <Tag color={score?.status === 'done' ? getScoreTagColor(score.score) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
+                          {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
+                        </Tag>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         rounds.map(([round, groupMap]) => {
           const outputGroupMap = outputState.rounds[round] || {};
@@ -1032,10 +1166,10 @@ function ExperimentEvaluationPanel({
                 {roundExpanded ? '收回本轮' : '展开本轮'}
               </Button>
             </div>
-            <div className="experiment-output-preview__round-question">本轮问题：{questionText}</div>
-            {questionItem?.expectedBehavior ? (
-              <div className="experiment-output-preview__round-meta">预期边界行为：{questionItem.expectedBehavior}</div>
-            ) : null}
+            <div className="experiment-output-preview__round-info">
+              <span>本轮问题：{questionText}</span>
+              {questionItem?.expectedBehavior ? <Tag color="purple">预期边界行为：{expectedBehaviorLabel(questionItem.expectedBehavior)}</Tag> : null}
+            </div>
             <div className="experiment-evaluation-panel__score-grid">
               {plan.processGroups.map((group) => {
                 const score = groupMap[group.id];
@@ -1046,7 +1180,7 @@ function ExperimentEvaluationPanel({
                     <div className="experiment-output-preview__group-header">
                       <Tag color={group.role === '对照组' ? 'green' : 'blue'}>{title.label}</Tag>
                       <Text strong>{title.title}</Text>
-                      <Tag color={score?.status === 'done' ? 'green' : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
+                      <Tag color={score?.status === 'done' ? getScoreTagColor(score.score) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
                         {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
@@ -1059,7 +1193,7 @@ function ExperimentEvaluationPanel({
                           <div className="experiment-evaluation-panel__score-summary">
                             <div>
                               <Text type="secondary">格式化分数</Text>
-                              <div className="experiment-evaluation-panel__score-number">
+                              <div className={`experiment-evaluation-panel__score-number is-${String(score.structuredEvaluation.verdict || 'unknown')}`}>
                                 {score.structuredEvaluation.score_text || `${score.structuredEvaluation.score ?? '-'}/10`}
                               </div>
                             </div>
@@ -1094,28 +1228,30 @@ function ExperimentEvaluationPanel({
                               ]}
                             />
                           ) : null}
-                          <Collapse
-                            size="small"
-                            className="experiment-evaluation-panel__json-collapse"
-                            items={[
-                              {
-                                key: 'json',
-                                label: '原始 JSON',
-                                children: (
-                                  <pre className="experiment-evaluation-panel__json-text">
-                                    {formatStructuredEvaluation(score.structuredEvaluation)}
-                                  </pre>
-                                )
-                              }
-                            ]}
-                          />
                         </>
                       ) : score?.structuredError ? (
                         <Text type="danger">{score.structuredError}</Text>
                       ) : (
-                          <Text type="secondary">等待结构化结果。</Text>
+                        <Text type="secondary">等待结构化结果。</Text>
                       )}
                     </div>
+                    {score?.structuredEvaluation ? (
+                      <Collapse
+                        size="small"
+                        className="experiment-evaluation-panel__detail-collapse experiment-evaluation-panel__json-collapse"
+                        items={[
+                          {
+                            key: 'json',
+                            label: '原始 JSON',
+                            children: (
+                              <pre className="experiment-evaluation-panel__json-text">
+                                {formatStructuredEvaluation(score.structuredEvaluation)}
+                              </pre>
+                            )
+                          }
+                        ]}
+                      />
+                    ) : null}
                     <Collapse
                       size="small"
                       className="experiment-evaluation-panel__detail-collapse"
@@ -1374,8 +1510,11 @@ export function ExperimentPage() {
   const [sampledQuestionMap, setSampledQuestionMap] = useState<Record<string, ExperimentQuestionItem[]>>({});
   const [runRecordMap, setRunRecordMap] = useState<Record<string, ExperimentRunSummary[]>>({});
   const [selectedRunIdMap, setSelectedRunIdMap] = useState<Record<string, string>>({});
+  const [evaluationCompactModeMap, setEvaluationCompactModeMap] = useState<Record<string, boolean>>({});
   const databaseQuestionCount = Object.values(questionSuiteMap).reduce((total, suite) => total + suite.questionCount, 0) || experimentQuestionCount;
   const controlTimerMap = useRef<Record<string, number>>({});
+  const snapshotReadyRef = useRef(false);
+  const snapshotSaveTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (evaluationPrompt) return;
@@ -1389,8 +1528,49 @@ export function ExperimentPage() {
       });
   }, [evaluationPrompt]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchExperimentPageSnapshot()
+      .then((snapshot) => {
+        if (cancelled || !snapshot || typeof snapshot !== 'object') return;
+        const pageSnapshot = snapshot as ExperimentPageSnapshot;
+        setCardViewMap(pageSnapshot.cardViewMap || {});
+        setControlStateMap(sanitizeControlStateMap(pageSnapshot.controlStateMap || {}));
+        setOutputStateMap(pageSnapshot.outputStateMap || {});
+        setEvaluationStateMap(sanitizeEvaluationStateMap(pageSnapshot.evaluationStateMap || {}));
+        setSampledQuestionMap(pageSnapshot.sampledQuestionMap || {});
+        setSelectedRunIdMap(pageSnapshot.selectedRunIdMap || {});
+        setEvaluationCompactModeMap(pageSnapshot.evaluationCompactModeMap || {});
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) snapshotReadyRef.current = true;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!snapshotReadyRef.current) return;
+    if (snapshotSaveTimerRef.current) window.clearTimeout(snapshotSaveTimerRef.current);
+    snapshotSaveTimerRef.current = window.setTimeout(() => {
+      const snapshot = buildExperimentPageSnapshot({
+        cardViewMap,
+        controlStateMap,
+        outputStateMap,
+        evaluationStateMap,
+        sampledQuestionMap,
+        selectedRunIdMap,
+        evaluationCompactModeMap
+      });
+      void saveExperimentPageSnapshot(snapshot).catch(() => {});
+    }, 800);
+  }, [cardViewMap, controlStateMap, outputStateMap, evaluationStateMap, sampledQuestionMap, selectedRunIdMap, evaluationCompactModeMap]);
+
   useEffect(() => () => {
     Object.values(controlTimerMap.current).forEach((timerId) => window.clearInterval(timerId));
+    if (snapshotSaveTimerRef.current) window.clearTimeout(snapshotSaveTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -1409,7 +1589,7 @@ export function ExperimentPage() {
           .then((suite) => {
             if (cancelled) return;
             setQuestionSuiteMap((prev) => ({ ...prev, [plan.id]: suite }));
-            setSampledQuestionMap((prev) => ({
+            setSampledQuestionMap((prev) => prev[plan.id]?.length ? prev : ({
               ...prev,
               [plan.id]: pickRandomQuestionItems(getSuiteQuestionItems(suite), 3)
             }));
@@ -2028,28 +2208,21 @@ export function ExperimentPage() {
               <ExperimentOutlined /> 完整工作流实验接入点
             </Tag>
             <Title level={3} className="experiment-hero-card__title">对比实验</Title>
-            <Paragraph className="experiment-hero-card__desc">
-              基于现有示例题集和已接入插件，后续可在这里批量运行消融实验、压力测试和效率测试，集中展示当前工作流在边界拦截、主体消歧、图谱增强、模板结构和多故障处理上的优势。
-            </Paragraph>
-            <Space wrap>
-              <Tag color="blue">单故障题 {ALL_SINGLE_FAULT_QUESTIONS.length} 条</Tag>
-              <Tag color="red">多故障题 {ALL_MULTI_FAULT_QUESTIONS.length} 条</Tag>
-              <Tag color="geekblue">数据库实验题 {databaseQuestionCount} 条</Tag>
-              <Tag color="green">复用现有 FastGPT 插件</Tag>
-            </Space>
           </Space>
           <Button type="primary" icon={<PlayCircleOutlined />} disabled>
             批量运行实验
           </Button>
         </div>
-        <div className="experiment-hero-card__standard">
-          <div className="experiment-hero-card__standard-header">
-            <Text strong>当前评价标准</Text>
-            <Tag color="cyan">评估提示词</Tag>
-          </div>
-          <Paragraph className="experiment-hero-card__standard-text">
-            {evaluationPrompt || '正在加载评价标准...'}
+        <div className="experiment-hero-card__overview">
+          <Paragraph className="experiment-hero-card__desc">
+            基于现有示例题集和已接入插件，后续可在这里批量运行消融实验、压力测试和效率测试，集中展示当前工作流在边界拦截、主体消歧、图谱增强、模板结构和多故障处理上的优势。
           </Paragraph>
+          <Space wrap className="experiment-hero-card__stats">
+            <Tag color="blue">单故障题 {ALL_SINGLE_FAULT_QUESTIONS.length} 条</Tag>
+            <Tag color="red">多故障题 {ALL_MULTI_FAULT_QUESTIONS.length} 条</Tag>
+            <Tag color="geekblue">数据库实验题 {databaseQuestionCount} 条</Tag>
+            <Tag color="green">复用现有 FastGPT 插件</Tag>
+          </Space>
         </div>
       </Card>
 
@@ -2171,11 +2344,13 @@ export function ExperimentPage() {
                     selectedRunId={selectedRunIdMap[plan.id]}
                     evaluationRunning={getControlState(plan.id).evaluation.status === 'running'}
                     evaluationConcurrency={getControlState(plan.id).evaluationConcurrency}
+                    compactMode={Boolean(evaluationCompactModeMap[plan.id])}
                     onUpdateEvaluationConcurrency={(value) => updateControlConfig(plan.id, { evaluationConcurrency: value })}
                     onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
                     onLoadRun={() => void loadExperimentRun(plan)}
                     onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
                     onRunEvaluation={() => void runControlStage(plan, 'evaluation')}
+                    onToggleCompactMode={(value) => setEvaluationCompactModeMap((prev) => ({ ...prev, [plan.id]: value }))}
                   />
                 )
               )

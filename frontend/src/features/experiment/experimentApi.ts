@@ -128,3 +128,28 @@ export async function saveExperimentEvaluation(planId: string, runId: string, ev
   }
   return data;
 }
+
+export async function fetchExperimentPageSnapshot() {
+  const response = await fetch('/api/experiment/page-cache', {
+    credentials: 'include'
+  });
+  const data = await readJsonSafely(response);
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+  return data?.snapshot?.snapshot || data?.snapshot || null;
+}
+
+export async function saveExperimentPageSnapshot(snapshot: Record<string, any>) {
+  const response = await fetch('/api/experiment/page-cache', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ snapshot })
+  });
+  const data = await readJsonSafely(response);
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+  return data;
+}

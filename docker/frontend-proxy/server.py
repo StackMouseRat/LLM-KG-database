@@ -41,6 +41,8 @@ from services.trace_service import build_trace_subgraph, extract_trace_focus_fie
 PORT = int(os.getenv("FRONTEND_PROXY_PORT", "8788"))
 PIPELINE_SCRIPT = os.getenv("PIPELINE_SCRIPT", "/app/scripts/run_parallel_generation_pipeline.py")
 PIPELINE_RUN_DIR = Path(os.getenv("PIPELINE_RUN_DIR", "/app/data/frontend_pipeline_runs"))
+EXPERIMENT_PAGE_CACHE_DIR = Path(os.getenv("EXPERIMENT_PAGE_CACHE_DIR", "/app/data/frontend_experiment_page_cache"))
+EXPERIMENT_PAGE_CACHE_MAX_BYTES = int(os.getenv("EXPERIMENT_PAGE_CACHE_MAX_BYTES", str(20 * 1024 * 1024)))
 
 
 def make_run_dir() -> Path:
@@ -107,6 +109,15 @@ def build_structured_evaluation_source(result: dict) -> str:
         "【评估推理草稿，仅用于补充分项分数；如与最终评估冲突，以最终评估输出为准】\n"
         f"{reasoning_source}"
     )
+
+
+def safe_cache_username(username: str) -> str:
+    safe = re.sub(r"[^a-zA-Z0-9_.-]+", "_", username.strip())
+    return safe or "anonymous"
+
+
+def experiment_page_cache_path(username: str) -> Path:
+    return EXPERIMENT_PAGE_CACHE_DIR / f"{safe_cache_username(username)}.json"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -537,6 +548,54 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
+    def _handle_experiment_page_cache_get(self) -> None:
+        try:
+            username = self._authenticated_username()
+            if not username:
+                self._write_json(401, {"message": "请先登录", "code": "UNAUTHORIZED"})
+                return
+            path = experiment_page_cache_path(username)
+            if not path.exists():
+                self._write_json(200, {"snapshot": None})
+                return
+            try:
+                snapshot = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                snapshot = None
+            self._write_json(200, {"snapshot": snapshot})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_experiment_page_cache_save(self) -> None:
+        try:
+            username = self._authenticated_username()
+            if not username:
+                self._write_json(401, {"message": "请先登录", "code": "UNAUTHORIZED"})
+                return
+            body = self._read_json_body()
+            snapshot = body.get("snapshot") if isinstance(body.get("snapshot"), dict) else {}
+            if not snapshot:
+                self._write_bad_request("snapshot is required")
+                return
+            payload = {
+                "version": 1,
+                "username": username,
+                "updatedAt": int(time.time()),
+                "snapshot": snapshot,
+            }
+            raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            if len(raw) > EXPERIMENT_PAGE_CACHE_MAX_BYTES:
+                self._write_json(413, {"message": "experiment page snapshot is too large"})
+                return
+            EXPERIMENT_PAGE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            path = experiment_page_cache_path(username)
+            tmp_path = path.with_suffix(".tmp")
+            tmp_path.write_bytes(raw)
+            tmp_path.replace(path)
+            self._write_json(200, {"ok": True, "updatedAt": payload["updatedAt"]})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
     def do_OPTIONS(self) -> None:
         self.send_response(204)
         self._send_common_headers()
@@ -573,6 +632,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/experiment/evaluation":
             self._handle_experiment_evaluation_get()
+            return
+
+        if path == "/api/experiment/page-cache":
+            self._handle_experiment_page_cache_get()
             return
 
         self._write_json(404, {"message": "not found"})
@@ -617,6 +680,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_experiment_evaluation_save()
             return
 
+        if self.path == "/api/experiment/page-cache":
+            self._handle_experiment_page_cache_save()
+            return
+
         if self.path not in ("/api/plan/generate", "/api/pipeline/run"):
             self._write_json(404, {"message": "not found"})
             return
@@ -626,6 +693,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     PIPELINE_RUN_DIR.mkdir(parents=True, exist_ok=True)
+    EXPERIMENT_PAGE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     print(f"frontend proxy listening on {PORT}", flush=True)
     server.serve_forever()
