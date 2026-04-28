@@ -1,4 +1,5 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
+import { ReloadOutlined } from '@ant-design/icons';
 import { Button, Card, Layout, Switch, Tag, Typography } from 'antd';
 import { routeFromPath, routeItems, TraceGraphPage, QualityReviewPage, TemplateViewPage, ExperimentPage } from './app/routeConfig';
 import type { AppRoute, RouteKey } from './app/routeConfig';
@@ -6,6 +7,7 @@ import { useAuthSession } from './features/auth/useAuthSession';
 import { PlanPage } from './features/plan/PlanPage';
 import { usePlanPipeline } from './features/plan/usePlanPipeline';
 import { LoginPage } from './pages/LoginPage';
+import { fetchProviderBalances, type ProviderBalance } from './services/providerBalanceApi';
 
 const { Header, Content } = Layout;
 const MODE_TAGS_VISIBLE_KEY = 'llmkg_mode_tags_visible_v1';
@@ -33,6 +35,41 @@ function loadDarkMode() {
   return raw === '1';
 }
 
+function ProviderBalanceStrip({
+  balances,
+  loading,
+  errorMessage,
+  isAdmin,
+  onRefresh
+}: {
+  balances: ProviderBalance[];
+  loading: boolean;
+  errorMessage: string;
+  isAdmin: boolean;
+  onRefresh: () => void;
+}) {
+  const visibleBalances = balances.length
+    ? balances
+    : [
+        { id: 'deepseek', name: 'DeepSeek', ok: false, balanceText: '--' },
+        { id: 'siliconflow', name: 'SiliconFlow', ok: false, balanceText: '--' }
+      ];
+  return (
+    <div className="app-provider-balances" title={errorMessage || '余额每分钟自动刷新'}>
+      {visibleBalances.map((item) => (
+        <Tag key={item.id} color={item.ok ? 'cyan' : 'default'}>
+          {item.name} {item.balanceText || '--'}
+        </Tag>
+      ))}
+      {isAdmin ? (
+        <Button size="small" icon={<ReloadOutlined />} loading={loading} onClick={onRefresh}>
+          刷新
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(() =>
     typeof window === 'undefined' ? 'login' : routeFromPath(window.location.pathname)
@@ -40,6 +77,9 @@ export default function App() {
   const [showModeTags, setShowModeTags] = useState(loadModeTagsVisible);
   const [showCompactLayout, setShowCompactLayout] = useState(loadCompactLayout);
   const [darkMode, setDarkMode] = useState(loadDarkMode);
+  const [providerBalances, setProviderBalances] = useState<ProviderBalance[]>([]);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [balanceErrorMessage, setBalanceErrorMessage] = useState('');
 
   const auth = useAuthSession();
 
@@ -52,6 +92,19 @@ export default function App() {
   }, [auth]);
 
   const plan = usePlanPipeline({ onUnauthorized: handleUnauthorized });
+
+  const loadProviderBalances = useCallback(async (refresh = false) => {
+    setBalanceLoading(true);
+    try {
+      const data = await fetchProviderBalances(refresh);
+      setProviderBalances(data.providers);
+      setBalanceErrorMessage('');
+    } catch (error) {
+      setBalanceErrorMessage(error instanceof Error ? error.message : '余额查询失败');
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -99,6 +152,19 @@ export default function App() {
     setRoute(routeFromPath(window.location.pathname));
   }, [auth.authStatus]);
 
+  useEffect(() => {
+    if (auth.authStatus !== 'authenticated') {
+      setProviderBalances([]);
+      setBalanceErrorMessage('');
+      return;
+    }
+    void loadProviderBalances(false);
+    const timer = window.setInterval(() => {
+      void loadProviderBalances(false);
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [auth.authStatus, loadProviderBalances]);
+
   const navigateRoute = (nextRoute: RouteKey) => {
     if (auth.authStatus !== 'authenticated') return;
     const target = routeItems.find((item) => item.key === nextRoute);
@@ -138,6 +204,13 @@ export default function App() {
           {auth.authStatus === 'authenticated' ? (
             <div className="app-header__controls">
               <div className="app-user-bar">
+                <ProviderBalanceStrip
+                  balances={providerBalances}
+                  loading={balanceLoading}
+                  errorMessage={balanceErrorMessage}
+                  isAdmin={auth.currentUserGroup === 'admin'}
+                  onRefresh={() => void loadProviderBalances(true)}
+                />
                 <div className="app-user-toggle">
                   <Typography.Text className="app-user-toggle__label">夜间模式</Typography.Text>
                   <Switch size="small" checked={darkMode} onChange={setDarkMode} />

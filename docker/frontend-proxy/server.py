@@ -24,6 +24,7 @@ from services.case_search_service import infer_dataset, infer_dataset_with_conte
 from services.evaluation_question_service import get_evaluation_question_suite
 from services.experiment_service import get_experiment_run, list_experiment_runs, load_evaluation_record, save_evaluation_record, stream_experiment_run
 from services.pipeline_service import run_pipeline_sync, stream_pipeline
+from services.provider_balance_service import query_provider_balances
 from services.quality_service import run_format_review_sync, run_structured_evaluation_sync, stream_format_review
 from services.sse import send_sse
 from services.template_service import (
@@ -251,6 +252,17 @@ class Handler(BaseHTTPRequestHandler):
                 self._write_bad_request("suiteId is required")
                 return
             self._write_json(200, {"suite": get_evaluation_question_suite(suite_id)})
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_provider_balances(self) -> None:
+        try:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            force = str((params.get("refresh") or [""])[0]).strip() in {"1", "true", "yes"}
+            if force and self._require_admin() is None:
+                return
+            self._write_json(200, query_provider_balances(force=force))
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
@@ -620,6 +632,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/evaluation/question-suite":
             self._handle_evaluation_question_suite()
+            return
+
+        if path == "/api/provider/balances":
+            self._handle_provider_balances()
             return
 
         if path == "/api/experiment/runs":
