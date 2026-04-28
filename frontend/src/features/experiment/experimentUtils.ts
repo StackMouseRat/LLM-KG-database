@@ -196,6 +196,16 @@ export function getScoreTagColor(score?: number) {
   return 'red';
 }
 
+export function formatScore(score?: number | string) {
+  const value = Number(score);
+  if (!Number.isFinite(value)) return '-';
+  return value.toFixed(1);
+}
+
+export function formatScoreText(score?: number | string, maxScore: number | string = 10) {
+  return `${formatScore(score)}/${formatScore(maxScore)}`;
+}
+
 export function getStructuredSubscores(value?: Record<string, any>) {
   const subscores = value?.subscores;
   return Array.isArray(subscores) ? subscores.filter((item) => item && typeof item === 'object') : [];

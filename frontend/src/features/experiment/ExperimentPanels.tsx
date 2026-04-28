@@ -17,6 +17,8 @@ import {
   buildGroupProgress,
   evaluationRecordLabel,
   expectedBehaviorLabel,
+  formatScore,
+  formatScoreText,
   formatStructuredEvaluation,
   getActiveControlStage,
   getGroupAverageScores,
@@ -508,7 +510,7 @@ export function ExperimentEvaluationPanel({
           {groupAverageScores.map(({ group, average }) => {
             const title = splitGroupName(group);
             return typeof average === 'number' ? (
-              <Tag color={getScoreTagColor(average)} key={group.id}>{title.label} 平均 {average}/10</Tag>
+              <Tag color={getScoreTagColor(average)} key={group.id}>{title.label} 平均 {formatScore(average)}/10</Tag>
             ) : null;
           })}
           {rounds.length ? (
@@ -548,7 +550,7 @@ export function ExperimentEvaluationPanel({
                       <div className="experiment-evaluation-panel__compact-row" key={group.id}>
                         <span>{title.label} · {title.title}</span>
                         <Tag color={score?.status === 'done' ? getScoreTagColor(score.score) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
-                          {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
+                          {score?.status === 'done' ? `${formatScore(score.score)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                         </Tag>
                       </div>
                     );
@@ -589,7 +591,7 @@ export function ExperimentEvaluationPanel({
                       <Tag color={group.role === '对照组' ? 'green' : 'blue'}>{title.label}</Tag>
                       <Text strong>{title.title}</Text>
                       <Tag color={score?.status === 'done' ? getScoreTagColor(score.score) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
-                        {score?.status === 'done' ? `${score.score ?? '-'}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
+                        {score?.status === 'done' ? `${formatScore(score.score)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
                     {roundExpanded ? (
@@ -602,7 +604,7 @@ export function ExperimentEvaluationPanel({
                             <div>
                               <Text type="secondary">格式化分数</Text>
                               <div className={`experiment-evaluation-panel__score-number is-${String(score.structuredEvaluation.verdict || 'unknown')}`}>
-                                {score.structuredEvaluation.score_text || `${score.structuredEvaluation.score ?? '-'}/10`}
+                                {score.structuredEvaluation.score_text || `${formatScore(score.structuredEvaluation.score)}/10`}
                               </div>
                             </div>
                             <Tag color={getVerdictColor(String(score.structuredEvaluation.verdict || ''))}>
@@ -626,7 +628,7 @@ export function ExperimentEvaluationPanel({
                                       {subscores.map((item, index) => (
                                         <div className="experiment-evaluation-panel__subscore" key={`${String(item.name || item.label || index)}-${index}`}>
                                           <span>{String(item.name || item.label || `分项 ${index + 1}`)}</span>
-                                          <strong>{String(item.score ?? '-')}/{String(item.max_score ?? item.maxScore ?? '-')}</strong>
+                                          <strong>{formatScoreText(item.score, item.max_score ?? item.maxScore ?? 10)}</strong>
                                           {item.reason ? <em>{String(item.reason)}</em> : null}
                                         </div>
                                       ))}
