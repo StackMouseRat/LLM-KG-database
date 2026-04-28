@@ -66,6 +66,7 @@ DEFAULT_OUTPUT_DIR = Path(
     )
 )
 EVENT_LOCK = threading.Lock()
+DEFAULT_CHAPTER_HEADING_MAX_ATTEMPTS = 3
 
 
 def read_key(path: Path) -> str:
@@ -420,6 +421,54 @@ def sanitize_generated_output(text: str) -> str:
     return "\n".join(sanitized_lines)
 
 
+def extract_chapter_heading_no(text: str) -> str:
+    for line in str(text or "").splitlines():
+        match = re.match(r"^\s*##\s*第\s*([0-9A-Za-z一二三四五六七八九十]+)\s*章", line)
+        if match:
+            return match.group(1).strip()
+    return ""
+
+
+def chapter_heading_matches(expected_no: str, actual_no: str) -> bool:
+    expected = str(expected_no or "").strip()
+    actual = str(actual_no or "").strip()
+    if not expected or not actual:
+        return False
+    if expected == actual:
+        return True
+    chinese_digits = {
+        "一": 1,
+        "二": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+        "十": 10,
+    }
+    if expected.isdigit() and actual in chinese_digits:
+        return int(expected) == chinese_digits[actual]
+    if actual.isdigit() and expected in chinese_digits:
+        return int(actual) == chinese_digits[expected]
+    return False
+
+
+def validate_chapter_heading(chapter: dict[str, Any], output_text: str) -> str:
+    expected_heading = extract_chapter_heading_no(chapter.get("template_text", ""))
+    if not expected_heading:
+        return ""
+    actual_heading = extract_chapter_heading_no(output_text)
+    if chapter_heading_matches(expected_heading, actual_heading):
+        return ""
+    return (
+        f"chapter heading mismatch: expected 第{expected_heading}章 "
+        f"for chapter {chapter.get('chapter_no')} {chapter.get('title')}, "
+        f"got {('第' + actual_heading + '章') if actual_heading else 'no chapter heading'}"
+    )
+
+
 def build_generation_graph_material(graph_material_text: str) -> str:
     value = str(graph_material_text or "").strip()
     if not value:
@@ -487,34 +536,80 @@ def generate_one_chapter(
         "模板": chapter["template_text"],
     }
 
-    start = time.time()
-    response = post_chat_stream(
-        endpoint,
-        api_key,
-        {"stream": True, "detail": True, "variables": variables},
-        timeout,
-        on_chunk=(
-            lambda chunk: emit_event(
-                stream_events,
-                "chapter_chunk",
-                {
-                    "chapterNo": chapter["chapter_no"],
-                    "title": chapter["title"],
-                    "chunk": chunk,
-                },
-            )
-        ),
-    )
-    elapsed = round(time.time() - start, 3)
+    attempts: list[dict[str, Any]] = []
+    try:
+        max_attempts = int(os.getenv("PIPELINE_CHAPTER_HEADING_MAX_ATTEMPTS", str(DEFAULT_CHAPTER_HEADING_MAX_ATTEMPTS)))
+    except ValueError:
+        max_attempts = DEFAULT_CHAPTER_HEADING_MAX_ATTEMPTS
+    max_attempts = max(1, max_attempts)
+
+    for attempt in range(1, max_attempts + 1):
+        start = time.time()
+        response = post_chat_stream(
+            endpoint,
+            api_key,
+            {"stream": True, "detail": True, "variables": variables},
+            timeout,
+            on_chunk=(
+                lambda chunk: emit_event(
+                    stream_events,
+                    "chapter_chunk",
+                    {
+                        "chapterNo": chapter["chapter_no"],
+                        "title": chapter["title"],
+                        "chunk": chunk,
+                    },
+                )
+            ),
+        )
+        elapsed = round(time.time() - start, 3)
+        output_text = sanitize_generated_output(extract_parallel_text(response))
+        heading_error = validate_chapter_heading(chapter, output_text)
+        attempts.append({
+            "attempt": attempt,
+            "elapsed_sec": elapsed,
+            "heading_error": heading_error,
+            "response": response,
+            "output_text": output_text,
+        })
+        if not heading_error:
+            return {
+                "chapter_no": chapter["chapter_no"],
+                "title": chapter["title"],
+                "section_count": chapter["section_count"],
+                "template_text": chapter["template_text"],
+                "elapsed_sec": elapsed,
+                "response": response,
+                "output_text": output_text,
+                "attempt_count": attempt,
+            }
+
+        emit_event(
+            stream_events,
+            "chapter_retry",
+            {
+                "chapterNo": chapter["chapter_no"],
+                "title": chapter["title"],
+                "attempt": attempt,
+                "maxAttempts": max_attempts,
+                "message": heading_error,
+            },
+        )
+
+    last_attempt = attempts[-1]
 
     return {
         "chapter_no": chapter["chapter_no"],
         "title": chapter["title"],
         "section_count": chapter["section_count"],
         "template_text": chapter["template_text"],
-        "elapsed_sec": elapsed,
-        "response": response,
-        "output_text": sanitize_generated_output(extract_parallel_text(response)),
+        "elapsed_sec": last_attempt["elapsed_sec"],
+        "response": last_attempt["response"],
+        "output_text": "",
+        "status": "error",
+        "error": last_attempt["heading_error"],
+        "attempt_count": len(attempts),
+        "attempts": attempts,
     }
 
 
@@ -578,6 +673,13 @@ def write_outputs(
             f"## Chapter {item['chapter_no']} {item['title']}",
             f"- elapsed_sec: {item['elapsed_sec']}",
             f"- section_count: {item['section_count']}",
+            f"- status: {'done' if item.get('output_text') else 'error'}",
+        ])
+        if item.get("attempt_count"):
+            lines.append(f"- attempt_count: {item['attempt_count']}")
+        if item.get("error"):
+            lines.append(f"- error: {item['error']}")
+        lines.extend([
             "- template_text:",
             "```text",
             item["template_text"],
@@ -752,6 +854,7 @@ def main() -> None:
                         "templateText": result["template_text"],
                         "outputText": result["output_text"],
                         "status": "done" if result["output_text"] else "error",
+                        "error": result.get("error", ""),
                     },
                 )
                 log_progress(
@@ -799,6 +902,7 @@ def main() -> None:
                     "outputText": result["output_text"],
                     "elapsedSec": result["elapsed_sec"],
                     "status": "done" if result["output_text"] else "error",
+                    "error": result.get("error", ""),
                 }
                 for result in generations
             ],
