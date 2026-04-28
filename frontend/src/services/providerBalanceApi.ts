@@ -26,11 +26,14 @@ async function readJsonSafely(response: Response) {
   }
 }
 
-export async function fetchProviderBalances(refresh = false): Promise<ProviderBalanceResponse> {
+export async function fetchProviderBalances(refresh = false, timeoutMs = 15_000): Promise<ProviderBalanceResponse> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   const response = await fetch(`/api/provider/balances${refresh ? '?refresh=1' : ''}`, {
     method: 'GET',
-    credentials: 'same-origin'
-  });
+    credentials: 'same-origin',
+    signal: controller.signal
+  }).finally(() => window.clearTimeout(timer));
   const data = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(data?.message || `请求失败：${response.status}`);

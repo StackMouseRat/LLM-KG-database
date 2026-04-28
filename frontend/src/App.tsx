@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ReloadOutlined } from '@ant-design/icons';
 import { Button, Card, Layout, Switch, Tag, Typography } from 'antd';
 import { routeFromPath, routeItems, TraceGraphPage, QualityReviewPage, TemplateViewPage, ExperimentPage } from './app/routeConfig';
@@ -54,7 +54,7 @@ function ProviderBalanceStrip({
         { id: 'deepseek', name: 'DeepSeek', ok: false, balanceText: '--' },
         { id: 'siliconflow', name: 'SiliconFlow', ok: false, balanceText: '--' }
       ];
-  const statusText = loading ? '余额刷新中' : errorMessage ? '余额查询失败' : '余额';
+  const statusText = loading && !balances.length ? '余额刷新中' : errorMessage ? '余额查询失败' : '余额';
   return (
     <div className={`app-provider-balances ${errorMessage ? 'app-provider-balances--error' : ''}`} title={errorMessage || '余额每分钟自动刷新'}>
       <Typography.Text className="app-provider-balances__label">{statusText}</Typography.Text>
@@ -82,6 +82,8 @@ export default function App() {
   const [providerBalances, setProviderBalances] = useState<ProviderBalance[]>([]);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [balanceErrorMessage, setBalanceErrorMessage] = useState('');
+  const balanceRequestRef = useRef(0);
+  const balanceLoadingRef = useRef(false);
 
   const auth = useAuthSession();
 
@@ -96,19 +98,28 @@ export default function App() {
   const plan = usePlanPipeline({ onUnauthorized: handleUnauthorized });
 
   const loadProviderBalances = useCallback(async (refresh = false) => {
+    if (balanceLoadingRef.current && !refresh) return;
+    const requestId = balanceRequestRef.current + 1;
+    balanceRequestRef.current = requestId;
+    balanceLoadingRef.current = true;
     setBalanceLoading(true);
     try {
       const data = await fetchProviderBalances(refresh);
+      if (balanceRequestRef.current !== requestId) return;
       setProviderBalances(data.providers);
       setBalanceErrorMessage('');
     } catch (error) {
+      if (balanceRequestRef.current !== requestId) return;
       const messageText = error instanceof Error ? error.message : '余额查询失败';
-      setBalanceErrorMessage(messageText);
+      setBalanceErrorMessage(messageText === 'The operation was aborted.' ? '余额查询超时' : messageText);
       if (messageText.includes('401')) {
         handleUnauthorized();
       }
     } finally {
-      setBalanceLoading(false);
+      if (balanceRequestRef.current === requestId) {
+        balanceLoadingRef.current = false;
+        setBalanceLoading(false);
+      }
     }
   }, [handleUnauthorized]);
 
