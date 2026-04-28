@@ -47,6 +47,7 @@ const { Paragraph, Text, Title } = Typography;
 const BOUNDARY_QUESTION_SUITE_ID = 'boundary_input_boundary_v1';
 const DISAMBIGUATION_QUESTION_SUITE_ID = 'disambiguation_device_subject_v1';
 const GRAPH_TEMPLATE_QUESTION_SUITE_ID = 'graph_template_constraint_v1';
+const MULTI_FAULT_QUESTION_SUITE_ID = 'multi_fault_chain_v1';
 
 const node = (
   plugin: string,
@@ -235,6 +236,7 @@ const experimentPlans: ExperimentPlan[] = [
         ]
       },
     ],
+    questionSuiteId: MULTI_FAULT_QUESTION_SUITE_ID,
     inputs: ['吊车碰线后线路跳闸，通信光缆同时中断，保护通道异常，请生成处置预案。', '暴雨后电缆沟进水，电缆接头绝缘告警，同时环网柜出现凝露和局放异常，请生成应急方案。', '输电线路山火跳闸后，光缆通信中断，远方保护通道退出，请生成应急处置方案。'],
     expectedInput: '一个场景中出现多个设备、多个故障或先后诱发关系的问题。',
     expectedOutput: ['输出应识别多个故障。', '输出应区分主故障、伴随故障和受影响业务。', '实验组用于观察次生故障遗漏和素材拼接冲突。'],
