@@ -1,0 +1,874 @@
+Received 11 July 2023, accepted 29 July 2023, date of publication 7 August 2023, date of current version 15 August 2023.
+Digital Object Identifier 10.1109/ACCESS.2023.3302399
+
+
+
+
+Knowledge Graph-Based Method for Intelligent
+Generation of Emergency Plans for Water
+Conservancy Projects
+LIHU WANG1 , XUEMEI LIU 1,2,3 , YANG LIU3 , HAIRUI LI                                           1,
+
+JIAQI LIU3 , (Graduate Student Member, IEEE),
+AND LIBO YANG 2
+1 School of Management and Economics, North China University of Water Resources and Electric Power, Zhengzhou, Henan 450046, China
+2 School of Information Engineering, North China University of Water Resources and Electric Power, Zhengzhou, Henan 450046, China
+3 Collaborative Innovation Centre for Efficient Utilization of Water Resources, North China University of Water Resources and Electric Power,
+
+Zhengzhou, Henan 450046, China
+Corresponding author: Xuemei Liu (liuxuemei@ncwu.edu.cn)
+This work was supported in part by grants from the National Natural Science Foundation of China (72271091), Projects
+of Open Cooperation of Henan Academy of Sciences (220901008), and Major Science and Technology Projects of the
+Ministry of Water Resources (SKS-2022029).
+
+
+
+
+  ABSTRACT In response to the issues of poor content correlation and insufficient intelligent decision
+  support in emergency plans for water conservancy projects, a method for intelligent generation of emergency
+  plans based on knowledge graphs is proposed. Utilizing pre-trained language models (PTM) based on
+  entity masking, the accuracy of entity recognition tasks is enhanced by uncovering contextual features
+  surrounding the masked entities. By employing translations, rotations, and superpositions within the vector
+  space, a multiview convolutional neural network (MCNN) is constructed to enhance the accuracy of relation
+  extraction through complementary and integrated feature representation. Integrating PTM with MCNN
+  enables the construction of an emergency entity relationship extraction method based on PTM-MCNN.
+  Neo4j is utilized for storing entity relationship triplets to construct an emergency knowledge graph. Through
+  the utilization of the mutual information criterion, knowledge retrieval and matching are performed to
+  accomplish the intelligent generation of emergency plans. The results indicate that PTM-MCNN achieves
+  high recognition accuracy (F1 score of 92.2%), ensuring the reliability of the generated emergency plans.
+  Related studies can effectively improve the intelligence of emergency management of water conservancy
+  projects.
+
+
+  INDEX TERMS Emergency plan, knowledge graph, water conservancy projects, convolutional neural
+  network, large-scale pre-trained model.
+
+
+I. INTRODUCTION                                                                                   form of physical documents or electronic files, thereby facing
+Emergency plans constitute the essential foundation for                                           issues such as poor content coherence and inadequate intel-
+engineering rescue operations and precise decision-making.                                        ligent decision support [2], [3]. Therefore, the exploration
+Transforming the textual content of emergency plans into                                          of methods for constructing an emergency knowledge graph
+a knowledge graph and achieving intelligent generation of                                         to achieve the intelligent generation of emergency plans is
+such plans are pivotal in advancing the level of intelligent                                      a crucial problem that needs to be addressed in the field of
+emergency management [1]. Currently, emergency plans for                                          water conservancy project emergency management.
+water conservancy projects are predominantly stored in the                                           Conventional techniques for generating emergency plans
+                                                                                                  heavily rely on case matching methods, where the simi-
+   The associate editor coordinating the review of this manuscript and                            larity between emergency events and a case repository is
+approving it for publication was Wei Wang               .                                         computed to derive the final emergency plan [4], [5], [6].
+                                          This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License.
+84414                                                 For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/                 VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+The literature [7] presents a case-based reasoning method for                   knowledge. In literature [30], a knowledge graph platform
+emergency decision-making in water conservancy projects,                        for climate information retrieval is constructed by integrating
+which enhances the efficiency of handling various emergency                     relevant data and information from the climate domain. How-
+events. The literature [8] achieves efficient recommendations                   ever, deep learning-based methods for constructing knowl-
+for industrial water usage plans by leveraging regularized                      edge graphs still face challenges such as poor model general-
+matching methods. Considering the case feature attributes,                      ization ability and high data requirements [31], [32], [33].
+the literature [9] generates emergency plans for water conser-                     With the development and integration of big data and
+vancy projects by calculating case similarity. However, case                    deep learning, the pre-trained-based knowledge graph con-
+matching methods suffer from issues such as weak knowl-                         struction approach has been widely applied [15]. Prominent
+edge correlation, inadequate knowledge representation, and                      pre-training models include bidirectional encoder represen-
+limited knowledge application [10], [11], [12], [13].                           tations from transformers (BERT) [34] and generative pre-
+   Introduced by Google in 2012, knowledge graphs pos-                          trained transformers (GPT) [35], [36]. In literature [37],
+sess robust capabilities in information integration, semantic                   a water resource knowledge graph based on BERT has been
+expression, and knowledge application, offering effective                       constructed, enabling the retrieval and generation of water
+solutions for the knowledge-based organization and intelli-                     resource regulation schemes. In literature [38], the fusion of
+gent utilization of emergency data [14], [15]. The intelligent                  BERT, BILSTM, and CRF has been employed to construct
+generation method for emergency plans based on knowledge                        a knowledge graph for hydroelectric equipment failures,
+graphs primarily comprises rule-based methods and deep                          known as BERT-BILSTM-CRF, enabling fault analysis and
+learning methods [16], [17]. The rule-based approach to                         decision support in the field of hydroelectric power. In litera-
+constructing knowledge graphs involves leveraging expert-                       ture [39], the fusion of BERT and CNN has been employed to
+designed rules and logical matching of target knowledge to                      construct a knowledge graph for flood prevention, known as
+build the knowledge graph, enabling the intelligent gener-                      BERT-CNN, enabling intelligent recommendations of flood
+ation of emergency plans [10], [18], [19]. In the domain                        prevention plans and enhancing the efficiency and capability
+of hydroelectric engineering management, the literature [20]                    of emergency response. Currently, pre-trained models used
+has developed an ontology-based intelligent search system                       for knowledge graph construction still face challenges such
+for emergency plans, which enhances the efficiency and                          as fixed pre-training patterns, low computational efficiency,
+capability of engineering emergency response. Based on the                      and inaccuracies in knowledge extraction [40], [41], [42].
+Dirichlet algorithm and distance algorithm, the literature [21]                    Based on the aforementioned discussions, this study
+has constructed a knowledge graph for water management,                         proposes an intelligent method for generating emergency
+enabling intelligent recommendations of water-related infor-                    plans for water conservancy projects based on knowledge
+mation. Based on the knowledge graph technology, the litera-                    graphs, aiming to address the issues of poor content cor-
+ture [22] has achieved the generation of urban flood resilience                 relation and insufficient support for intelligent decision-
+planning by integrating policy documents with real-time data.                   making in emergency plans. The main contributions are as
+The rule-based method for constructing knowledge graphs                         follows:
+suffers from issues such as cumbersome rule definition, low                        • Utilizing pre-trained language models (PTM) based on
+entity recognition accuracy, and inefficient graph construc-                          entity masking, the accuracy of entity recognition tasks
+tion [11], [23], [24].                                                                is enhanced by uncovering contextual features surround-
+   The deep learning-based approach to constructing knowl-                            ing the masked entities;
+edge graphs leverages deep neural network models for auto-                         • By employing vector space translation, rotation, and
+matic extraction of knowledge triplets, enabling the genera-                          superposition, the multi-view convolutional neural net-
+tion and recommendation of solutions through the construc-                            work (MCNN) is constructed to achieve feature comple-
+tion of knowledge graphs. Deep learning methods offer a                               mentarity and fusion, thereby enhancing the accuracy of
+solution to the issues encountered in rule-based methods,                             relation extraction;
+such as low accuracy in entity recognition and poor efficiency                     • Combining PTM with MCNN, an entity relation extrac-
+in graph construction [25], [26]. The literature [27] proposes                        tion method based on PTM-MCNN is constructed.
+a recommendation method for emergency plans in water                               • Based on the mutual information criterion, knowledge
+diversion projects based on the fusion of bidirectional long                          retrieval and matching are performed to achieve intelli-
+short-term memory (BILSTM) and conditional random field                               gent generation of emergency plans.
+(CRF), known as BILSTM-CRF. In literature [28], a knowl-                           The remaining sections of this paper are organized as
+edge graph construction method based on convolutional neu-                      follows: Section II introduces the relevant work on PTM-
+ral network (CNN) is proposed for water quality assessment.                     MCNN. Sections III and IV provide detailed explanations of
+In literature [29], leveraging the semantic interconnection                     the construction process of PTM-MCNN and the process of
+capability of knowledge graphs, a BILSTM-based knowledge                        emergency plan generation. Section V presents the experi-
+graph for hydroelectric engineering is constructed, enabling                    mental design, results, and discussions. Section VI concludes
+intelligent querying and recommendation of hydroelectric                        the paper and suggests future research directions.
+
+VOLUME 11, 2023                                                                                                                           84415
+                                                      L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+II. RELATED WORK                                                      advancement of machine learning and pattern recognition,
+A. PTM                                                                mutual information has been employed in the field of feature
+PTM aims to acquire extensive linguistic knowledge through            selection. By calculating the mutual information between fea-
+self-supervised learning using text corpora [43]. Early PTM           ture variables and target variables, the degree of correlation
+approaches were primarily based on n-grams and rule-                  between variables is evaluated, enabling the selection of the
+based methods. The paper [44] proposed the global vec-                most relevant features [53]. On the other hand, mutual infor-
+tors model, which performs pre-training by computing word             mation is widely employed for feature extraction. By com-
+co-occurrence information and global semantic information.            puting the mutual information between different features, one
+The paper [45] introduced the word vector model, which                can assess the relevance of the features and select a subset of
+employs self-supervised learning to represent words as con-           features with the maximum mutual information [54].
+tinuous vectors for pre-training.                                        In the field of natural language processing, mutual infor-
+   With the advancement of deep learning, literature [46]             mation was initially employed in semantic relatedness com-
+introduced the transformer model, which employs self-                 putation. It quantifies semantic correlation by calculating
+attention mechanism for sequence modeling. The transformer            the mutual information of word co-occurrences [55]. Subse-
+model is capable of effectively capturing long-range depen-           quently, mutual information started to be employed in feature
+dencies in text and has achieved significant performance              selection and text classification tasks. In the context of fea-
+improvements in machine translation tasks. Subsequently, the          ture selection, mutual information is utilized to assess the
+paper [15] introduced BERT, building upon the foundation              degree of association among word categories. In the context
+of the transformer model. BERT employs a strategy of pre-             of text classification, mutual information is employed for
+training and fine-tuning, where it undergoes pre-training on          the computation of feature importance [56]. With the emer-
+a large-scale unsupervised dataset and then fine-tunes on             gence of information extraction tasks, mutual information has
+downstream tasks. The groundbreaking innovation of BERT               begun to play a role in such tasks. By computing the mutual
+has led to remarkable achievements in various natural lan-            information of entities, one can capture the correlation and
+guage processing tasks, sparking widespread scholarly inter-          dependency between entities, enabling entity querying and
+est in PTM.                                                           information retrieval [57], [58].
+
+B. CNN
+                                                                      III. PTM-MCNN ENTITY RELATIONSHIP
+CNN, a feedforward neural network, possesses formidable               EXTRACTION MODEL
+feature extraction capabilities [47], [48]. The origins of CNN        A. PTM CONSTRUCTION
+can be traced back to the 1980s. The literature [49] introduced
+                                                                      The PTM proposed in this study is a deep language model
+the lenet model for the task of recognizing handwritten digits.
+                                                                      based on self-supervised learning, trained by applying a
+This model incorporates convolution and pooling structures
+                                                                      random masking mechanism to the multi-layer transformer
+and utilizes the backpropagation algorithm for training. With
+                                                                      structure. The transformer is a self-attention neural network
+the emergence and advancement of big data, researchers have
+                                                                      framework that eliminates recurrent structures and allows
+embarked on exploring deep CNN models. The literature [50]
+                                                                      for parallel computation. It has the ability to better capture
+introduced the alexnet model, which achieved significant
+                                                                      semantic information and exhibits stronger generalization
+breakthroughs in the imagenet image classification compe-
+                                                                      capabilities. PTM employs the technique of randomly mask-
+tition by utilizing multiple convolutional layers and fully
+                                                                      ing portions of entities in sentences to extract features from
+connected layers for training.
+                                                                      textual information. It consists of an input layer, a feature
+    The initial application of CNN in NLP tasks was primarily
+                                                                      extraction layer and an output layer. The basic implementa-
+focused on text classification. The literature [51] proposed          tion is as follows.
+a CNN-based model for text classification, which employs                 Pretraining strategy: During the pretraining phase, the
+convolutional operations on sentences to extract local fea-           model is trained to understand the contextual features of
+tures. The model has achieved promising performance on                masked positions by randomly masking characters in the
+multiple text classification tasks. Subsequently, CNN has             input sequence. This allows the model to learn the original
+been employed for sequence modeling tasks, such as named              meaning of the masked positions based on the surrounding
+entity recognition and part-of-speech tagging. The litera-            context. Currently, conventional pretraining language mod-
+ture [52] presents a CNN-based sequence annotation model              els, such as BERT, typically employ a masking strategy
+that employs convolution and pooling operations on the input          that involves masking individual characters in the text using
+sequence to predict labels.                                           a single [MASK] token. However, during the process of
+                                                                      extracting emergency entities in water conservancy projects,
+C. MUTUAL INFORMATION                                                 the naming conventions for entities are complex, diverse,
+The concept of mutual information was initially introduced            and often involve longer names. If the original masking
+by Shannon in 1948 as a measure of the relationship between           strategy is still employed, it would be unable to fully mask
+two random variables in information theory [51]. With the             the entire entity, resulting in model bias when predicting
+
+84416                                                                                                                            VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+                     FIGURE 1. The basic process of random [MASK] in the pre-training phase.
+
+
+
+
+             FIGURE 2. Schematic representation of the character embedding, word embedding and location embedding forming the PTM
+             input layer.
+
+
+
+
+the masked words and consequently leading to inaccurate                            Feature extraction layer: The feature extraction layer
+predictions. Therefore, this paper aims to enhance the mask-                    of PTM consists of a 24-layer transformer network, with
+ing strategy of pre-training language models by employing                       each layer comprising 6 encoders. The transformer net-
+an entity-level masking approach to mask the text. Firstly,                     work employs a self-attention mechanism, which calculates
+the text is tokenized and entity analysis is performed using                    the contextual features of words or characters and assigns
+an entity lexicon. Then, the entire entity is masked using                      weights to each word or character accordingly. In such cases,
+multiple consecutive [MASK] tokens. Finally, the model                          word vectors or character vectors would encompass seman-
+is used to predict all the characters replaced by [MASK]                        tic information that is related to their context. Taking word
+tokens, allowing for the extraction of entity-level feature                     embeddings as an example, the self-attention mechanism in
+information, thus alleviating biases caused by incomplete                       transformer is defined as follows.
+semantics during the prediction process. Figure 1 illus-                                                                     QK T
+trates the basic processing of masking entities in the input                               fattention (Q, K , V ) = Softmax( √ )V ,       (1)
+                                                                                                                              dk
+text. The random masking strategy is as follows: (1) 80%
+of the entities in the input sequence are replaced with other                      Among them, Q, K and V are matrices of word embed-
+entities. (2) 10% of the entities in the input sequence are                     dings. The dot product matrix of Q√and K T represents the
+masked with [MASK]. (3) 10% of the input sequence remains                       degree of correlation for each word. d k serves as the scaling
+unchanged.                                                                      factor. Building upon this foundation, multiple self-attention
+   Input layer: As depicted in Figure 2, the input layer of the                 layers are concatenated through a multi-head structure to
+PTM is composed of three components: character embed-                           obtain a more interpretable multi-head attention mechanism.
+ding, word embedding, and positional embedding, which                           The formula is defined as follows.
+are combined together. Character embedding transforms the                            fmultihead (Q, K , V ) = [head 1 head 2 . . . head n ],          (2)
+input text sequence into fixed-dimensional vectors, word                                           head   i
+                                                                                                              = fattention (QWQi , KWKi , VWVi ),     (3)
+embedding encapsulates various word information, and posi-
+tional embedding enables sequential encoding of the input                         Among them, the matrix W represents the weight matrix,
+text sequence.                                                                  head denotes the number of attention heads, and WQ , WK ,
+
+VOLUME 11, 2023                                                                                                                                     84417
+                                                          L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+WV represent the weight parameter matrices for Q, K and                   formed, defined as follows.
+V , respectively. To expedite the convergence of the model,
+                                                                             Vt = (h1 + r1 )a×b′′ ; (h1 + r2 )a×b′′ ; (h2 + r1 )a×b′′ ;
+                                                                                  
+a residual network is introduced, followed by a normalization
+                                                                                  × (h2 + r2 )a×b′′ a∗b ,
+                                                                                                   
+process.                                                                                                                                (4)
+   Output layer: The output layer of the PTM consists of the
+                                                                             Among them, Vt represents the convolutional view after
+results obtained after feature extraction through 24 layers of                                                 ′′
+transformer encoders and decoders. It outputs word vectors                spatial translation, (h1 + r1 ) ϵRa×b represents the transla-
+that encompass the rich semantic information of the input                 tion of h1 along the direction and magnitude of r1 and [; ]
+text.                                                                     represents the vector concatenation. Equation (4) can be
+                                                                          extended to the case of nonlinear transformations, defined as
+                                                                          follows.
+B. MCNN CONSTRUCTION                                                                                          eVt − e−V t
+The relationships among entities in water conservancy                                           Vt = Vt +                 ,                      (5)
+                                                                                                              eVt + e−V t
+projects’ emergency scenarios exhibit intricacy and uncer-
+tainty. For extracting complex relationships, conventional                   By combining Vt and a non-linear transformation, the view
+approaches commonly employ one-dimensional convolu-                       can be obtained not only through spatial translation but also
+tions for feature extraction. The feature extraction based on             through spatial rotation. The rotational operation is accom-
+one-dimensional convolutions typically captures only local                plished by utilizing the inner product of vectors, where the
+information, leading to limited comprehension of the global               direction and magnitude of the rotating vector determine the
+context. When performing the classification of entity rela-               angle and amplitude of the rotation. For vector h1 , rotating
+tionships, employing a multi-view strategy can aid in extract-            it along the angle and magnitude of vector r1 results in
+ing a broader range of entity relationship features [59].                 vector (h1 ∗ r1 ). The four rotation vectors are represented
+The main concept of MCNN revolves around manipulating                     as (h1 ∗ r1 ), (h1 ∗ r2 ), (h2 ∗ r1 ) and (h2 ∗ r2 ), respectively.
+embedding vectors through spatial translation, rotation, and              By performing vector concatenation, the second form of view
+superposition to construct multiple views, which are then sub-            transformation is obtained and defined as follows.
+jected to feature extraction using CNN. By performing spatial                  Vr = (h1 ∗ r1 )a×b′′ ; (h1 ∗ r2 )a×b′′ ; (h2 ∗ r1 )a×b′′ ;
+                                                                                     
+translation on the embedded vectors, it is possible to alter
+                                                                                    × (h2 ∗ r2 )a×b′′ a∗b ,
+                                                                                                       
+the relative positions of entities and relationships, thereby                                                                             (6)
+capturing entity relationship features at different locations.                                                                                     ′′
+
+By applying spatial rotation to the embedded vectors, the                 whereas Vr is identical to Vt , Vr ϵRa×b and (h1 ∗ r1 ) ϵRa×b
+angles of entity relationships can be altered, enabling the               denote the spatial rotation of h1 along the angle and magni-
+capture of entity relationship features from different per-               tude of r1 . Thus, the nonlinear transformation approach for
+spectives. After performing spatial translation and rotation,             Vr is defined as follows.
+the embedded vectors are combined and fused, enhancing                                                        eVr − e−V r
+their sensitivity to changes in the position and angle of the                                   Vr = Vr +                 ,                      (7)
+                                                                                                              eVr + e−V r
+input data, thereby increasing the robustness and generaliza-                                                                            ′
+tion capability of the model. This study aims to construct                   By combining the vectors (eh + er )ϵRa×b and
+                                                                                         ′
+three distinct convolutional views, namely spatial translation            (eh ∗ er )ϵRa×b through vector concatenation, a new fused
+of entity-relation vectors, spatial rotation of entity-relation           view Vf can be formed, defined as follows.
+vectors, and spatial fusion and superposition of entity-
+                                                                                       Vf = [(eh + er )a×b′ ; (eh ∗ er )a×b′ ]a∗b ,              (8)
+relation vectors. The basic implementation of MCNN is
+as follows.                                                                 Lastly, the fusion view comprising Vt , Vr and Vf is defined
+                               ′                      ′
+   Defining entity eh ϵRa×b and relation er ϵRa×b , where a, b            as VI = {Vt , V r , V f , I ϵ {t, r, f }. Taking vector VI as the
+and b′ = b/2 represent the spatial dimensions of the vectors.             input of the CNN, a novel multi-view feature augmentation
+Splitting entity eh and relation er into two parts, defined as            network can be constructed.
+eh = {h1 , h2 and er = {r1 , r2 , respectively, with dimensions
+                       ′′     ′′
+h1 , h2 , r1 , r2 ϵRa×b and b = b/4. Utilizing vector addition            C. PTM-MCNN BASED EMERGENCY ENTITY
+to achieve the translation operation, each component of the               RELATIONSHIP EXTRACTION
+vector undergoes a corresponding addition operation, where                PTM-MCNN comprises three main modules: the label
+the size and direction of the translation vector determine the            annotation module, the feature extraction module, and the
+magnitude and direction of the translation. For the vector                entity-relation extraction module. The label annotation mod-
+h1 , it is translated along the direction and magnitude of the            ule serves as a data standard for training and evaluating
+translation vector r1 , resulting in the representation (h1 + r1 ).       the model. The feature extraction module is divided into
+This study constructs four translation vectors, denoted as                two parts, namely the pre-training module and the multi-
+(h1 + r1 ), (h1 + r2 ), (h2 + r1 ) and (h2 + r2 ). Then, through          view convolution module. The pre-training module aims to
+the vector concatenation, the first convolutional view is                 enhance the accuracy of entity extraction by mining the
+
+84418                                                                                                                                VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+             FIGURE 3. Entity relationship extraction process based on PTM-MCNN model.
+
+
+TABLE 1. Method of marking the text sequence of the emergency plan.
+
+
+
+
+semantic features of the text, while the multi-view convolu-                    starting position of the entity ‘‘water level,’’ and category ‘‘1’’
+tion module enhances the relationship extraction capability                     represents the relationship ‘‘rise’’.
+by extracting the interaction features of entity relationships.                     Feature extraction: For the label annotation sequence Ls =
+The entity relationship extraction module involves feeding                      {ls1 , ls2 , . . . , lsn , the process of vectorizing Ls is performed
+the labeled sequence, which has undergone feature extraction,                   using character vectors, word vectors, and positional vectors.
+into a classification model for entity relationship extraction.                 Character vectors are employed to capture the precise format,
+Figure 3 illustrates the fundamental process of entity relation-                case, and other characteristics of individual characters. Word
+ship extraction using the PTM-MCNN model, as follows:                           vectors are utilized to capture the semantic relationships
+   Label annotation: For a given length of n the emergency                      among words. Positional vectors are employed to capture the
+plan text S = {s1 , s2 , . . . , sn , where si denotes the ird char-            sequential order and contextual relationships of words within
+acter in the text. The label annotation can be represented as                   a sentence. Subsequently, the fusion of character vectors,
+a nonlinear mapping, denoted by k(·). The label sequence                        word vectors, and positional vectors is accomplished through
+corresponding to the given text is as follows.                                  vector addition, denoted as X = {x1 , x2 , . . . , xn . The PTM-
+                                                                                MCNN pre-training module is utilized to extract features
+                               Ls = k(S)                              (9)
+                                                                                from embedded vectors with a length of n, defined as follows.
+  Among them, Ls = {ls1 , ls2 , . . . , lsn is of the same length
+as S, and lsi represents the label of the ith character in the                                      E = fptm (x1 , x2 , . . . , xn ),           (10)
+text. Table 1 provides the emergency plan text sequence, label
+                                                                                   Among them, E = {e1 , e2 , . . . , en represents the extracted
+sequence, and corresponding entity relationship information.
+                                                                                textual features. Next, the extracted textual features are
+   In the sentence, each individual character is assigned a
+                                                                                divided into two parts to construct views Vt , Vr and Vf based
+label. The labels can be classified into two categories: entity
+                                                                                on spatial translation, rotation, and superposition. Taking
+labels and relation labels. For entity labels, the ‘‘BIO’’ anno-
+                                                                                view Vt as an example, a 3 × 3 2D convolution kernel is used
+tation scheme is used to indicate the position of each character
+                                                                                for 2D feature extraction, defined as follows:
+within an entity. ‘‘B’’ indicates that the character is at the
+beginning of an entity, ‘‘I’’ indicates that the character is in                                         Fcov = Vt ∗ ω2D
+                                                                                                                      2
+                                                                                                                         ,                      (11)
+the middle or at the end of an entity, and ‘‘O’’ indicates that
+the character does not belong to any entity. The relationship                      Among them, ω2D  2  ∈ R3×3 represents the 2D convolu-
+labels are determined by pre-defined categories of relation-                    tion kernel, ∗ represents the convolution operator, and Fcov
+ships. For example, in Table 1, ‘‘WA-B’’ corresponds to the                     represents the feature map obtained after 2D convolution
+
+VOLUME 11, 2023                                                                                                                                84419
+                                                        L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+computation. Then, the feature maps are fused using matrix              through matching and retrieval. Figure 4 illustrates the basic
+addition and passed through inner product computation to                process of the method, which is summarized as follows.
+obtain the output.                                                         Data preprocessing: For the emergency plan text data, the
+    Entity relation extraction: After performing feature extrac-        first step is to remove frequently occurring but semantically
+tion using the PTM-MCNN model, the feature vectors of the               insignificant vocabulary to reduce the dimensionality of the
+text sequences are obtained and defined as F. Using softmax             feature space and minimize interference from noise on the
+to predict the entity relationship label ŷ for F, calculate the        model. Furthermore, the text data is transformed into numeri-
+conditional probability p̂ for F belonging to each label class,         cal vector representations to provide input for model learning.
+and assign the maximum p̂ value as the predicted class label               Ontology construction: From the perspective of emergency
+ŷ for F. The calculation formula is defined as follows.                management analysis, the process of emergency response
+                                                                        mainly comprises four stages: forecasting and warning,
+              p̂(y|F) = softmax(W (X ) F + b(X ) ),         (12)        graded response, emergency handling and post-event support.
+                    ŷ = argmax(p̂(y|F)),                   (13)        Forecasting and warning phase encompasses factors such as
+                                                                        precipitation, runoff, water level, and reservoir dams. The
+  Among them, W (X ) represents the weight parameter and
+                                                                        emergency handling phase involves institutions, responsi-
+b(X ) represents the bias parameter. By utilizing the cross-
+                                                                        bilities, and other related aspects. The post-event support
+entropy loss function, calculate the loss between the true label
+                                                                        phase entails provisions for supplies, equipment, personnel,
+and predicted label of the entity relationship. The calculation
+                                                                        and more. The ontology of an emergency knowledge graph
+formula is as follows.
+                                                                        represents the concepts of emergency and their related rela-
+             1 X                                                        tionships, comprising concept nodes and concept relationship
+                      ŷi log (yi ) + 1 − ŷi (1 − log (yi )) ,
+                                                           
+  L(θ) = −
+             N                                                          edges. The ontology of the emergency knowledge graph con-
+                 i
+                                                            (14)        structed in this study primarily encompasses concepts and
+                                                                        relationships from five aspects. ⃝  1 The emergency response
+  Among them, N represents the number of entity triplets.               process involves four stages: forecasting and early warning,
+                                                                        graded response, emergency handling and post-event support.
+IV. KNOWLEDGE GRAPH BASED EMERGENCY                                     ⃝2 Natural objects such as meteorology, hydrology, rivers,
+PLAN GENERATION                                                         etc. ⃝3 Social objects such as institutions and departments.
+The research focuses on the comprehensive emergency plans               ⃝4  Reservoirs,    dams and other water engineering objects.
+at the provincial and municipal levels, as well as 17 spe-              ⃝5  Various  technical  terms in the field of water conservancy.
+cific emergency plans, released by the South-to-North Water                Entity relationship extraction: The emergency plans for
+Diversion Project in China from 2014 to 2021. The South-                the South-to-North Water Diversion Project in China pri-
+to-North Water Diversion Project in China is a large-scale              marily comprise two types of data: semi-structured tabular
+interbasin water resources project implemented to alleviate             data and unstructured textual data. In addition, there are
+water scarcity issues in northern China. Since its compre-              also structured real-time monitoring data. For structured real-
+hensive implementation, the project has conveyed a volume               time data, it is stored directly using a relational database.
+of 58.6 billion cubic meters of water, effectively alleviating          For semi-structured tabular data, matching and extraction are
+water scarcity issues in northern China. Leveraging knowl-              performed using regular expressions. For unstructured textual
+edge graph technology, automatic extraction of emergency                data, extraction is carried out using the PTM-MCNN model.
+decision-making knowledge from a large amount of unstruc-               Firstly, the PTM-MCNN model is trained using annotated
+tured emergency plan texts and intelligent generation of emer-          training dataset. Then, the trained PTM-MCNN model is used
+gency plans based on actual situations can greatly enhance the          to extract entity relationships from unlabeled emergency plan
+efficiency of emergency management for the South-to-North               texts. Finally, the extracted entity relationships are integrated
+Water Diversion Project. The intelligent generation method of           to obtain a comprehensive and accurate entity relationship
+emergency plans based on knowledge graph mainly consists                network.
+of five stages, namely data preprocessing, ontology con-                   Knowledge storage: This study employs the Neo4j graph
+struction, entity-relation extraction, knowledge triple storage,        database to store the entity relationship triplets. When storing
+and emergency plan generation. The primary objective of                 entity nodes, each node is identified by a unique identifier
+data preprocessing is to perform operations such as cleaning,           such as an ID or URI. Nodes are labeled to indicate the
+transformation, and normalization on the raw text to enhance            category of each entity, facilitating the classification and
+the performance and effectiveness of the model. Ontology                retrieval of nodes. For the storage of relationship edges, the
+construction aims to provide a unified semantic framework               semantic relationships between entities are represented by the
+for describing entities, attributes, and their relationships. The       types and directions of relationships between nodes. Among
+results of entity-relation extraction are used to form the              them, the starting node of an edge is the head entity, the
+nodes and edges of the knowledge graph. Through knowledge               ending node of an edge is the tail entity, and the type of
+storage, entity-relation triples are presented in the form of           the edge represents the entity relationship. By storing entity
+a graph. Finally, emergency decision plans are generated                relationship triplets, the semantic relationships and attribute
+
+84420                                                                                                                              VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+             FIGURE 4. Knowledge graph based emergency plan generation process.
+
+
+
+
+information in the knowledge graph are represented in a struc-                  for calculating the similarity using mutual information is
+tured manner. In order to enhance query performance and                         defined as follows.
+ensure data consistency, indexes and constraints are created                                        X X                        p(ein , efe )
+in Neo4j. Indexes facilitate the swift identification of nodes                     I (Ein , Efe ) =          p(ein , efe )log                (15)
+                                                                                                                              p(ein )p(efe )
+possessing specific attribute values. Constraints ensure the                                     ein ∈Ein efe ∈Efe
+consistency and integrity of data. Furthermore, when dealing                    Among them, Ein represents the input entity, Efe represents
+with a large volume of imported entity relationship triples, the                the entity to be retrieved and p(·) is the joint probability
+data can be efficiently loaded into the graph database from                     distribution for calculating two random variables. The out-
+external data sources using the bulk import tool provided by                    put of mutual information is the similarity between the two
+Neo4j.                                                                          entities. In the template matching phase, the emergency plan
+   Emergency plan generation: The process of generat-                           templates designed in this study are divided into four sections:
+ing emergency plans involves two main stages, namely                            forecasting and warning, graded response, emergency han-
+knowledge retrieval and template matching. The retrieval of                     dling, and post-event support. The forecast warning includes
+emergency knowledge in water conservancy projects can be                        real-time water level information, meteorological informa-
+categorized into two scenarios. The content to be retrieved                     tion, and other relevant data within the current area. The
+can be directly obtained from the knowledge graph, and in                       graded response includes information on the current response
+this case, it is accomplished using the Cypher query language                   level. Emergency handling encompasses information about
+provided by the Neo4j graph database. The Cypher query                          organizations, responsibilities, and other relevant details. The
+language offers functionalities such as path traversal and                      post-event support includes information about resources such
+aggregation, demonstrating high efficiency in querying and                      as supplies, equipment and personnel. Based on the retrieved
+retrieval. Another scenario arises when the desired content                     emergency knowledge, perform entity relationship matching
+cannot be directly obtained and requires a predefined simi-                     using the emergency plan template and generate and deliver
+larity threshold to be established in advance. Subsequently,                    the emergency plan.
+employing the mutual information criterion for entity simi-
+larity matching, when the input content meets the similarity                    V. EXPERIMENT
+threshold, the recommendation set will be returned, contain-                    Knowledge extraction serves as the foundation for construct-
+ing the top 5 solutions with the highest similarity. The formula                ing a knowledge graph. In this section, the effectiveness of
+
+VOLUME 11, 2023                                                                                                                            84421
+                                                      L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+PTM-MCNN is validated through knowledge extraction tasks              TABLE 2. Values of the model parameters.
+on emergency plan data. First, provide an explanation of the
+datasets, evaluation indexes and baseline models used in the
+experiment. Then, divide the experiment into four groups to
+achieve different experimental objectives.
+   ⃝1 Conducting knowledge extraction experiments on emer-
+gency plan data using the PTM-MCNN model and perform-
+ing comparative analysis of the experimental results with
+previous state-of-the-art models to evaluate the effectiveness        entity relations. The F1 score is the average of accuracy and
+of the PTM-MCNN model.                                                recall, used to evaluate the overall performance of the model.
+   ⃝2 Perform sensitivity analysis experiments on hyperpa-            The higher the values of accuracy, recall, and F1 score, the
+rameters to verify the model’s performance sensitivity to             better the performance of the model. Precision (P), recall (R),
+hyperparameter settings.                                              and F1 score are defined as follows:
+   ⃝3 Analyze the impact of entity masking-based pre-                                                TP
+training tasks and multi-view convolution on the performance                                P=             100%,                 (16)
+                                                                                                  TP + FP
+of the PTM-MCNN model through ablation experiments.                                                  TP
+   ⃝4 Conducting a case study experiment on intelligent                                     R=              100%,                (17)
+                                                                                                  TP + FN
+emergency plan generation to meticulously demonstrate how                                         2P · R
+this approach ensures the reliability of emergency plan                                   F1 =           100%,                   (18)
+                                                                                                  P+R
+generation.
+                                                                         Among them, TP represents the number of correctly pre-
+A. MODEL PARAMETERS AND DATA                                          dicted entities, FP represents the number of predicted entities
+This study utilized the comprehensive emergency plans at              that are not actual entities and FN represents the number of
+the provincial and municipal levels, as well as 17 spe-               entities that were not predicted.
+cialized emergency plans, released by the South-to-North
+Water Diversion Project in China from 2014 to 2021 as the             C. KNOWLEDGE EXTRACTION RESULTS AND ANALYSIS
+experimental data. The comprehensive emergency plans at               Figure 5 and Table 3 present the experimental results of
+the provincial and municipal levels, as well as the special-          different models. In terms of entity extraction, FastText
+ized emergency plans, are sourced from the 47 management              exhibits the lowest performance with accuracy, recall and
+offices under the South-to-North Water Diversion Project              F1 values of 0.780, 0.386 and 0.425, respectively. Fast-
+in China. The provincial and municipal emergency plans                Text employs character-level n-gram features to represent
+delineate the unified emergency response procedures for sig-          text, which exhibits limited capability in understanding com-
+nificant risk events within the respective province or city.          plex semantics. BERT-BILSTM-CRF demonstrates superior
+The process comprises four stages: forecasting and warn-              performance with accuracy, recall and F1 scores of 0.935,
+ing, graded response, emergency handling and post-event               0.949 and 0.941, respectively. BERT-BILSTM-CRF, based
+support. The 17 specialized emergency plans encompass                 on pre-training and bidirectional language modeling, pos-
+response procedures for 17 major risk events, including flood         sesses the capability to deeply comprehend the intricate rela-
+disasters, fires, traffic accidents, earthquakes, water pollu-        tionships among vocabulary, syntax and semantics, thereby
+tion, and more. After data preprocessing, a total of 733,041          providing a more comprehensive contextual representation.
+records were obtained, including provincial and municipal             The proposed PTM-MCNN model achieves precision, recall
+emergency plans as well as specialized emergency plans.               and F1 scores of 0.947, 0.973 and 0.960, respectively.
+The emergency plan dataset was divided into training and              Compared to BERT-BILSTM-CRF, PTM-MCNN achieves
+testing sets with a ratio of 7:3, resulting in 513,128 records        an improvement of 1.28% in precision, 2.53% in recall
+in the training set and 219,912 records in the testing set. The       and 2.02% in F1 score. In the domain of water con-
+baseline models selected for this study encompass widely              servancy projects emergency entity extraction, emergency
+adopted named entity recognition models and relation extrac-          plans exhibit numerous specialized terms and semantic com-
+tion models. The baseline models comprise FastText [26],              plexities. Conventional pre-trained language models fail to
+TextCNN [28], BILSTM [30], BERT-BILSTM-CRF [38] and                   fully comprehend the entire entity, leading to biases in
+BERT-CNN [39]. Table 2 presents the parameter configura-              entity extraction by the model. In terms of relation extrac-
+tions for each model.                                                 tion, BERT-BILSTM-CRF achieved accuracy, recall and F1
+                                                                      scores of 0.830, 0.817 and 0.817, respectively, while PTM-
+B. EVALUATION OF INDEXES                                              MCNN achieved accuracy, recall and F1 scores of 0.898,
+For model evaluation, this study utilises accuracy, recall and        0.893 and 0.884, respectively. Compared to BERT-BILSTM-
+F1 as the evaluation indexes. Accuracy measures the pro-              CRF, PTM-MCNN achieved improvements of 8.19% in accu-
+portion of correctly identified entity relations by the model.        racy, 9.30% in recall and 8.20% in F1 score. Emergency plans
+Recall measures the ability of the model to correctly identify        exhibit characteristics of complex relationship structures.
+
+84422                                                                                                                            VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+           FIGURE 5. Comparison chart of performance levels of each model.
+
+
+TABLE 3. Comparison of the values of the experimental results for each model.
+
+
+
+
+Our approach in this paper enhances the model’s robustness                      0.6 between the quantiles. The mean and median values of
+and generalization capacity through vector spatial translation,                 PTM-MCNN remain around 95%, while the 10th and 90th
+rotation, and superposition, thereby significantly improving                    quantiles remain between 95% and 96%, with a difference of
+its capability to extract complex relationships. Overall, the                   0.1 between the quantiles. The mean and median of PTM-
+proposed PTM-MCNN model in this study consistently out-                         MCNN surpass those of the BERT-BILSTM-CRF model,
+performs state-of-the-art models in terms of entity relation                    while the difference between the 10th and 90th quantiles
+extraction, indicating its effectiveness in accomplishing the                   is smaller for PTM-MCNN compared to BERT-BILSTM-
+task of extracting emergency entity relations in water conser-                  CRF. Indicate that PTM-MCNN exhibits superior average
+vancy projects.                                                                 performance to BERT-BILSTM-CRF and is relatively stable.
+   To thoroughly validate the effectiveness of the proposed                     Figure 6 (d)∼(f) present the precision, recall and F1 scores
+model, the PTM-MCNN was subjected to 200 statistical                            for different models and statistical variables in the context of
+experiments, comparing it with the baseline models. The                         relation extraction. The mean and median of BERT-BILSTM-
+model’s performance was evaluated and examined using four                       CRF remain around 80%, while the 10th and 90th quantiles
+statistical variables: mean, median, 10th quantile, and 90th                    are maintained at 77% and 82%, respectively, with a differ-
+quantile. The mean is used to describe the overall average                      ence of 0.5 between the quantiles. The mean and median of
+performance of the model. The median describes the central                      PTM-MCNN remain around 89%, while the 10th and 90th
+tendency of the model’s performance. Unlike the mean, the                       quantiles are maintained at 88% and 91%, respectively, with
+median is less sensitive to outliers and better reflects the                    a difference of 0.3 between the quantiles. Indicating that
+central trend of the data. The 10th quantile and 90th quantile                  PTM-MCNN outperforms BERT-BILSTM-CRF in relation
+represent the values at the 10th and 90th percentiles of the                    extraction, exhibiting superior average performance and rel-
+data, respectively, and can be used to describe the lower                       ative stability.
+and upper bounds of the data distribution. Figure 6(a)∼(c)
+present the accuracy, recall and F1 scores of different models                  D. HYPERPARAMETRIC SENSITIVITY ANALYSIS
+and statistical variables in the domain of entity extraction.                   To investigate the impact of hyperparameters on the per-
+It can be observed that the mean and median values of BERT-                     formance of the PTM-MCNN model, this study con-
+BILSTM-CRF remain around 93%, while the 10th and 90th                           ducts a detailed analysis and comparison of several key
+quantiles remain between 89% and 95%, with a difference of                      hyperparameters, including the dimensionality of embedding
+
+VOLUME 11, 2023                                                                                                                           84423
+                                                             L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+         FIGURE 6. Model performance levels for different models with different statistical variables.
+
+
+
+
+vectors, the number of layers in the model, and the number of                network layers is chosen from the set L∈{1, 5, 10, 15, 20, 25,
+training iterations. The dimensionality of embedding vectors                 30, 35, 40, 45, 50, 55, 60, 65, 70}. The number of training iter-
+is selected from the set D∈{50, 90, 130, 170, 210, 250, 290,                 ations is selected from the set L∈{10, 20, 30, 40, 50, 60, 70,
+330, 370, 410, 450, 490, 530, 570, 610}. The number of                       80, 90, 100, 110, 120, 130, 140, 150}. To ensure experimental
+
+84424                                                                                                                                   VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+            FIGURE 7. Performance level of PTM-MCNN model with different hyperparameters.
+
+
+fairness, the settings of the remaining hyperparameters were                      Figure 7,(a)∼(c) gives the relationship between the embed-
+kept the same as in Section V-A, except for the ones under                      ding dimension, the number of iteration rounds and the
+current investigation. The experimental results are depicted                    evaluation index. It can be observed that the overall perfor-
+in Figure 7.                                                                    mance of the model is poorer when the number of training
+
+
+VOLUME 11, 2023                                                                                                                        84425
+                                                          L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+TABLE 4. Comparison results of PTM-MCNN model with variants.
+
+
+
+
+TABLE 5. Search results and similarity.
+
+
+
+
+iterations is less than 60 and the embedding dimension is                 PTM-MCNN-CUT and PTM-MCNN-UNI. PTM-MCNN-
+less than 300. The overall performance of the model is supe-              CUT represents the removal of the entity masking pre-
+rior and tends to be stable when the number of iterations                 training task from PTM-MCNN, while PTM-MCNN-UNI
+is greater than 60 and the embedding dimension is greater                 represents the removal of the multi-view convolution func-
+than 300. Insufficient number of iterations and lower embed-              tionality from PTM-MCNN. The knowledge extraction
+ding dimension result in inadequate feature representation                results of the PTM-MCNN model and its variant models are
+capacity of the model, which hinders the comprehensive                    presented in Table 4.
+recognition of contextual information and accurate entity                    From Table 4, it can be observed that in terms of entity
+extraction. As the model’s embedding dimension and number                 extraction, PTM-MCNN achieves precision, recall and F1
+of iterations increase, its feature representation capacity, gen-         scores of 0.947, 0.973 and 0.960, respectively, while PTM-
+eralization ability, and knowledge extraction capability also             MCNN-CUT achieves precision, recall and F1 scores of
+improve. Figure 7,(d)∼(f) gives the relationship between the              0.927, 0.826 and 0.870, respectively. Compared to the
+number of network layers, the number of iteration rounds and              PTM-MCNN-CUT model, the PTM-MCNN model exhibits
+the evaluation index. When the number of network layers                   improvements of 2.16% in precision, 17.80% in recall and
+is less than 10, the model’s performance is poor. However,                10.34% in F1 score. The removal of the entity masking
+when the number of network layers exceeds 10, the model                   strategy in the PTM-MCNN-CUT model, based on the PTM-
+exhibits strong generalization ability and tends to stabilize.            MCNN, has led to a decrease in the ability to extract
+The experimental results indicate that the number of network              contextual features of entities, thereby impacting the perfor-
+layers is also a sensitive hyperparameter. Setting it too high            mance of entity extraction. In terms of relation extraction,
+or too low can lead to overfitting or underfitting issues.                PTM-MCNN achieved precision, recall and F1 scores of
+                                                                          0.898, 0.893 and 0.884 respectively, while PTM-MCNN-
+E. ABLATION EXPERIMENT                                                    UNI achieved precision, recall and F1 scores of 0.775,
+To analyze the impact of entity masking strategy and                      0.827 and 0.784 respectively. Compared to PTM-MCNN-
+multi-view strategy on model performance, this study                      UNI, PTM-MCNN achieved an improvement of 15.87% in
+introduces two variant models based on PTM-MCNN:                          precision, 7.98% in recall and 12.75% in F1 score. The use of
+
+84426                                                                                                                                VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+a single-view strategy in PTM-MCNN-UNI resulted in a                               However, the current approach in this paper fails to take
+weakened ability to extract relations, thus impacting the accu-                 into account the multimodal information present in emer-
+racy of relation extraction.                                                    gency plan data, which results in a gap between the emer-
+                                                                                gency plans generated using knowledge graphs and their
+F. ANALYSIS OF EMERGENCY PLAN GENERATION                                        practical application in engineering projects. Future research
+RESULTS                                                                         will focus on addressing the challenges posed by the multi-
+Using the ‘‘Classification and response standards for flood                     modal aspects of emergency plans.
+disasters in the South-to-North Water Diversion Project of
+China’’ as a retrieval case, knowledge retrieval and matching                   REFERENCES
+were conducted based on the mutual information criterion.                        [1] H. Kreibich, A. F. Van Loon, and K. Schröter, ‘‘The challenge of unprece-
+                                                                                     dented floods and droughts in risk management,’’ Nature, 2022, vol. 608,
+The top 5 most relevant entities with the highest similarity                         no. 7921, pp. 80–86.
+in the emergency knowledge graph were returned, and the                          [2] H. Li, F. Li, J. Zuo, J. Sun, C. Yuan, L. Ji, Y. Ma, and D. Yao, ‘‘Emergency
+results are shown in Table 5. The classification and response                        decision-making system for the large-scale infrastructure: A case study of
+                                                                                     the south-to-north water diversion project,’’ J. Infrastruct. Syst., vol. 28,
+standards for flood disasters in the South-to-North Water                            no. 1, Mar. 2022, Art. no. 04021051.
+Diversion Project of China consist of four levels, ranging                       [3] E. Z. Berglund, S. Buchberger, M. Cunha, K. M. Faust, M. Giacomoni,
+from Level I∼Level IV in descending order. Based on the                              E. Goharian, Y. Kleiner, J. Lee, A. Ostfeld, F. Pasha, J. E. Pesantez,
+                                                                                     J. Saldarriaga, E. Shafiee, L. Spearing, J. E. van Zyl, and Y. C. E. Yang,
+information presented in Table 5, the hierarchical response                          ‘‘Effects of the COVID-19 pandemic on water utility operations and vul-
+standards are essentially included in the returned list of                           nerability,’’ J. Water Resour. Planning Manage., vol. 148, no. 6, Jun. 2022,
+results. The current recommendation results, in conjunction                          Art. no. 04022027.
+                                                                                 [4] M. Asif and J. Ahmed, ‘‘A novel case base reasoning and frequent pattern
+with the actual situation of the South-to-North Water Diver-                         based decision support system for mitigating software risk factors,’’ IEEE
+sion Project, essentially meet the requirement for accurate                          Access, vol. 8, pp. 102278–102291, 2020.
+generation of emergency plans. The main reasons for the                          [5] J. Dong, X. Li, C. Xu, X. Yang, G. Yang, X. Wang, and M. Wang, ‘‘Dual
+                                                                                     encoding for video retrieval by text,’’ IEEE Trans. Pattern Anal. Mach.
+failure of recommendations, in which a few correct contents                          Intell., vol. 44, no. 8, pp. 4065–4080, Aug. 2022.
+are not included in the recommendation list, are as follows.                     [6] I. Wennman, C. Jacobson, E. Carlström, A. Hyltander, and
+① The inaccurate identification of certain entities by the                           A. Khorram-Manesh, ‘‘Organizational changes needed in disasters
+                                                                                     and public health emergencies: A qualitative study among managers at
+entity recognition algorithm may be attributed to possible                           a major hospital,’’ Int. J. Disaster Risk Sci., vol. 13, no. 4, pp. 481–494,
+annotation errors during manual data labeling. ② Insufficient                        Aug. 2022.
+training data for the entity recognition model resulted in the                   [7] F. Li, P. Zhang, X. Huang, J. Sun, and Q. Li, ‘‘Emergency decision-making
+                                                                                     for middle route of south-to-north water diversion project using case-based
+inability to accurately identify the relevant entities.                              reasoning and prospect theory,’’ Sustainability, vol. 14, no. 21, Oct. 2022,
+                                                                                     Art. no. 13707.
+VI. SUMMARIES                                                                    [8] B. Yang, W. Zheng, and X. Ke, ‘‘Forecasting of industrial water demand
+                                                                                     using case-based reasoning—A case study in Zhangye City, China,’’ Water,
+Aiming to address the issues of poor content relevance and                           vol. 9, no. 8, p. 626, Aug. 2017.
+insufficient intelligent decision support in emergency plans                     [9] S. Basu, S. Roy, and S. DasBit, ‘‘A post-disaster demand forecasting system
+for water conservancy projects, a knowledge graph based                              using principal component regression analysis and case-based reasoning
+                                                                                     over smartphone-based DTN,’’ IEEE Trans. Eng. Manag., vol. 66, no. 2,
+intelligent generation model for emergency plans is proposed.                        pp. 224–239, May 2019.
+The main findings and contributions are summarized as                           [10] J. Wang, X. Wang, C. Ma, and L. Kou, ‘‘A survey on the development status
+follows.                                                                             and application prospects of knowledge graph in smart grids,’’ IET Gener.,
+                                                                                     Transmiss. Distrib., vol. 15, no. 3, pp. 383–407, Feb. 2021.
+   1) PTM is proposed, which improves the accuracy of                           [11] X. Chen, S. Jia, and Y. Xiang, ‘‘A review: Knowledge reasoning
+entity recognition task by randomly masking partial entities                         over knowledge graph,’’ Expert Syst. Appl., vol. 141, Mar. 2020,
+                                                                                     Art. no. 112948.
+in sentences. Compared to BERT-BILSTM-CRF, our method                           [12] E. Persson and M. Granberg, ‘‘Implementation through collaborative cri-
+achieves an increase of 1.28% in accuracy, 2.53% in recall                           sis management and contingency planning: The case of dam failure in
+and 2.02% in F1 score for entity recognition task, enabling                          Sweden,’’ J. Risk Res., vol. 24, no. 10, pp. 1335–1348, Oct. 2021.
+                                                                                [13] X. Zheng, B. Wang, Y. Zhao, S. Mao, and Y. Tang, ‘‘A knowledge graph
+the extraction of emergency entities in water conservancy                            method for hazardous chemical management: Ontology design and entity
+projects.                                                                            identification,’’ Neurocomputing, vol. 430, pp. 104–111, Mar. 2021.
+   2) By employing vector space translation, rotation, and                      [14] Z. Li, Zhao et al., ‘‘Transo: A knowledge-driven representation learning
+                                                                                     method with ontology information constraints,’’ World Wide Web, vol. 26,
+superposition, MCNN is constructed, which enhances the                               no. 1, pp. 297–319, 2023.
+accuracy of relation extraction. Our approach achieves pre-                     [15] X. Zhu, Z. Li, X. Wang, X. Jiang, P. Sun, X. Wang, Y. Xiao, and
+cision, recall and F1 score of 0.898, 0.893 and 0.884, respec-                       N. J. Yuan, ‘‘Multi-modal knowledge graph construction and application:
+                                                                                     A survey,’’ IEEE Trans. Knowl. Data Eng., early access, Nov. 23, 2022,
+tively, making it the top-performing method for relation                             doi: 10.1109/TKDE.2022.3224228.
+extraction in terms of overall performance.                                     [16] L. T. H. Lan, T. M. Tuan, T. T. Ngan, L. H. Son, N. L. Giang, V. T. N. Ngoc,
+   3) The extracted emergency entity relation triplets are                           and P. V. Hai, ‘‘A new complex fuzzy inference system with fuzzy knowl-
+                                                                                     edge graph and extensions in decision making,’’ IEEE Access, vol. 8,
+stored in the Neo4j graph database, forming an emergency                             pp. 164899–164921, 2020.
+knowledge graph in the field of water conservancy projects.                     [17] X. Chai, ‘‘Diagnosis method of thyroid disease combining knowledge
+The retrieval of emergency knowledge and the generation of                           graph and deep learning,’’ IEEE Access, vol. 8, pp. 149787–149795, 2020.
+                                                                                [18] Q. Lin, R. Mao, J. Liu, F. Xu, and E. Cambria, ‘‘Fusing topology contexts
+emergency plans are accomplished using the mutual informa-                           and logical rules in language models for knowledge graph completion,’’
+tion criterion.                                                                      Inf. Fusion, vol. 90, pp. 253–264, Feb. 2023.
+
+VOLUME 11, 2023                                                                                                                                            84427
+                                                                       L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+[19] B. Xue and L. Zou, ‘‘Knowledge graph quality management: A com-                   [43] Z. Zhang, ‘‘CPM: A large-scale generative Chinese pre-trained language
+     prehensive survey,’’ IEEE Trans. Knowl. Data Eng., vol. 35, no. 5,                     model,’’ AI Open, vol. 2, pp. 93–99, Jan. 2021.
+     pp. 4969–4988, May 2023.                                                          [44] J. Pennington, R. Socher, and C. Manning, ‘‘Glove: Global vectors for
+[20] R. Zhu, X. Wu, Y. Hu, Y. Chen, and B. Liu, ‘‘OEIS: Knowledge graph                     word representation,’’ in Proc. Conf. Empirical Methods Natural Lang.
+     based intelligent search system in ocean engineering,’’ in Proc. 10th Int.             Process. (EMNLP), 2014, pp. 1532–1543.
+     Conf. Adv. Cloud Big Data (CBD), Nov. 2022, pp. 151–156.                          [45] Z. Ma, W. Zheng, X. Chen, and L. Yin, ‘‘Joint embedding VQA model
+[21] I. Tiddi and S. Schlobach, ‘‘Knowledge graphs as tools for explain-                    based on dynamic word vector,’’ PeerJ Comput. Sci., vol. 7, p. e353,
+     able machine learning: A survey,’’ Artif. Intell., vol. 302, Jan. 2022,                Mar. 2021.
+     Art. no. 103627.                                                                  [46] K. Han, A. Xiao, E. Wu, J. Guo, C. Xu, and Y. Wang, ‘‘Transformer
+[22] X. Ye, S. Wang, Z. Lu, Y. Song, and S. Yu, ‘‘Towards an AI-driven                      in transformer,’’ in Proc. Adv. Neural Inf. Process. Syst., vol. 34, 2021,
+     framework for multi-scale urban flood resilience planning and design,’’                pp. 15908–15919.
+     Comput. Urban Sci., vol. 1, no. 1, pp. 1–12, Dec. 2021.                           [47] X. Xiong, T. Zhu, Y. Zhu, M. Cao, J. Xiao, L. Li, F. Wang, C. Fan, and
+[23] J. Zhang, J. Huang, J. Gao, R. Han, and C. Zhou, ‘‘Knowledge graph                     H. Pei, ‘‘Molecular convolutional neural networks with DNA regulatory
+     embedding by logical-default attention graph convolution neural network                circuits,’’ Nature Mach. Intell., vol. 4, no. 7, pp. 625–635, Jul. 2022.
+     for link prediction,’’ Inf. Sci., vol. 593, pp. 201–215, May 2022.                [48] Z. Han, M. Jian, and G.-G. Wang, ‘‘ConvUNeXt: An efficient convolution
+[24] H. Li, Y. Wang, S. Zhang, Y. Song, and H. Qu, ‘‘KG4 vis: A knowledge                   neural network for medical image segmentation,’’ Knowl.-Based Syst.,
+     graph-based approach for visualization recommendation,’’ IEEE Trans.                   vol. 253, Oct. 2022, Art. no. 109512.
+     Vis. Comput. Graphics, vol. 28, no. 1, pp. 195–205, Jan. 2022.                    [49] R. Ameri, A. Alameer, S. Ferdowsi, K. Nazarpour, and V. Abolghasemi,
+[25] G. Lampropoulos, E. Keramopoulos, and K. Diamantaras, ‘‘Enhancing                      ‘‘Labeled projective dictionary pair learning: Application to handwritten
+     the functionality of augmented reality using deep learning, semantic web               numbers recognition,’’ Inf. Sci., vol. 609, pp. 489–506, Sep. 2022.
+     and knowledge graphs: A review,’’ Vis. Informat., vol. 4, no. 1, pp. 32–42,       [50] S. Shi, L. Xu, W. Gong, B. Chen, B. Chen, F. Qu, X. Tang, J. Sun, and
+     Mar. 2020.                                                                             J. Yang, ‘‘A convolution neural network for forest leaf chlorophyll and
+[26] S. Muñoz and C. A. Iglesias, ‘‘A text classification approach to detect                carotenoid estimation using hyperspectral reflectance,’’ Int. J. Appl. Earth
+     psychological stress combining a lexicon-based feature framework with                  Observ. Geoinf., vol. 108, Apr. 2022, Art. no. 102719.
+     distributional representations,’’ Inf. Process. Manage., vol. 59, no. 5,          [51] Y. Zhou, J. Li, J. Chi, W. Tang, and Y. Zheng, ‘‘Set-CNN: A text con-
+     Sep. 2022, Art. no. 103011.                                                            volutional neural network based on semantic extension for short text
+[27] X. Liu, H. Lu, and H. Li, ‘‘Intelligent generation method of emergency                 classification,’’ Knowl.-Based Syst., vol. 257, Dec. 2022, Art. no. 109948.
+     plan for hydraulic engineering based on knowledge graph—Take the south-           [52] M. Erzina, A. Trelin, O. Guselnikova, A. Skvortsova, K. Strnadova,
+     to-north water diversion project as an example,’’ LHB, vol. 108, no. 1,                V. Svorcik, and O. Lyutakov, ‘‘Quantitative detection of α1-acid glycopro-
+     Dec. 2022, Art. no. 2153629.                                                           tein (AGP) level in blood plasma using SERS and CNN transfer learning
+[28] J. Yan, Q. Gao, Y. Yu, L. Chen, Z. Xu, and J. Chen, ‘‘Combining knowledge              approach,’’ Sens. Actuators B, Chem., vol. 367, Sep. 2022, Art. no. 132057.
+     graph with deep adversarial network for water quality prediction,’’ Environ.      [53] J. Wang, W. Xu, X. Fu, G. Xu, and Y. Wu, ‘‘ASTRAL: Adversarial trained
+     Sci. Pollut. Res., vol. 30, no. 4, pp. 10360–10376, Sep. 2022.                         LSTM-CNN for named entity recognition,’’ Knowl.-Based Syst., vol. 197,
+[29] Y. Cao et al., ‘‘Optimizing the power station project management using                 Jun. 2020, Art. no. 105842.
+     knowledge graphs,’’ Distrib. Gener. Alternative Energy J., vol. 36, no. 2,        [54] Z. Wang, P. Ma, Z. Chi, D. Li, H. Yang, and W. Du, ‘‘Multi-attention
+     pp. 113–124, 2021, doi: 10.13052/dgaej2156-3306.3622.                                  mutual information distributed framework for few-shot learning,’’ Expert
+[30] J. Wu, F. Orlandi, D. O’Sullivan, and S. Dev, ‘‘LinkClimate: An interopera-            Syst. Appl., vol. 202, Sep. 2022, Art. no. 117062.
+     ble knowledge graph platform for climate data,’’ Comput. Geosci., vol. 169,       [55] Y. Wang, W. Pang, and Z. Jiao, ‘‘An adaptive mutual K-nearest neighbors
+     Dec. 2022, Art. no. 105215.                                                            clustering algorithm based on maximizing mutual information,’’ Pattern
+[31] J. M. Rožanec, B. Fortuna, and D. Mladenić, ‘‘Knowledge graph-based rich               Recognit., vol. 137, May 2023, Art. no. 109273.
+     and confidentiality preserving explainable artificial intelligence (XAI),’’       [56] P. Teisseyre and J. Lee, ‘‘Multilabel all-relevant feature selection using
+     Inf. Fusion, vol. 81, pp. 91–102, May 2022.                                            lower bounds of conditional mutual information,’’ Expert Syst. Appl.,
+[32] A. Mohammed and R. Kora, ‘‘A comprehensive review on ensemble deep                     vol. 216, 2023, Art. no. 119436.
+     learning: Opportunities and challenges,’’ J. King Saud Univ. Comput. Inf.         [57] S. Yang, B. Cai, T. Cai, X. Song, J. Jiang, B. Li, and J. Li, ‘‘Robust cross-
+     Sci., vol. 35, no. 2, pp. 757–774, Feb. 2023.                                          network node classification via constrained graph mutual information,’’
+[33] G. Menghani, ‘‘Efficient deep learning: A survey on making deep learning               Knowl.-Based Syst., vol. 257, Dec. 2022, Art. no. 109852.
+     models smaller, faster, and better,’’ ACM Comput. Surveys, vol. 55, no. 12,       [58] O. A. M. Salem, F. Liu, Y.-P.-P. Chen, A. Hamed, and X. Chen, ‘‘Fuzzy
+     pp. 1–37, Dec. 2023.                                                                   joint mutual information feature selection based on ideal vector,’’ Expert
+[34] W. Hu, L. He, H. Ma, K. Wang, and J. Xiao, ‘‘KGNER: Improving Chinese                  Syst. Appl., vol. 193, May 2022, Art. no. 116453.
+     named entity recognition by BERT infused with the knowledge graph,’’              [59] X. Huang, Y. Ye, X. Yang, and L. Xiong, ‘‘Multi-view dynamic graph
+     Appl. Sci., vol. 12, no. 15, p. 7702, Jul. 2022.                                       convolution neural network for traffic flow prediction,’’ Expert Syst. Appl.,
+[35] Y. Yang, Y. Li, and X. Quan, ‘‘UBAR: Towards fully end-to-end task-                    vol. 222, Jul. 2023, Art. no. 119779.
+     oriented dialog system with GPT-2,’’ in Proc. AAAI Conf. Artif. Intell.,          [60] G. Lee, S. Lee, and C. Lee, ‘‘Inventor–licensee matchmaking for univer-
+     vol. 35, no. 16, 2021, pp. 1–9.                                                        sity technology licensing: A fastText approach,’’ Technovation, vol. 125,
+[36] P. Liu, ‘‘Pre-train, prompt, and predict: A systematic survey of prompting             Jul. 2023, Art. no. 102765.
+     methods in natural language processing,’’ ACM Comput. Surv., vol. 55,
+     no. 9, pp. 1–35, 2023.
+[37] J. Liang, J. Xie, X. Wang, S. Wang, and M. Yu, ‘‘Visualization of multi
+     scenario water resources regulation based on a dualistic water cycle frame-
+     work,’’ Water, vol. 14, no. 7, p. 1128, Apr. 2022.
+[38] F. Meng, S. Yang, J. Wang, L. Xia, and H. Liu, ‘‘Creating knowledge graph
+     of electric power equipment faults based on BERT–BiLSTM–CRF model,’’
+     J. Electr. Eng. Technol., vol. 17, no. 4, pp. 2507–2516, Jul. 2022.
+[39] T. Papadimos, S. Andreadis, I. Gialampoukidis, S. Vrochidis, and                                             LIHU WANG received the M.S. degree from the
+     I. Kompatsiaris, ‘‘Flood-related multimedia benchmark evaluation: Chal-                                      North China University of Water Resources and
+     lenges, results and a novel GNN approach,’’ Sensors, vol. 23, no. 7, p. 3767,
+                                                                                                                  Electric Power, in 2022, where he is currently
+     Apr. 2023.
+                                                                                                                  pursuing the Ph.D. degree in management science
+[40] A. Zhao and Y. Yu, ‘‘Knowledge-enabled BERT for aspect-based sentiment
+     analysis,’’ Knowl.-Based Syst., vol. 227, Sep. 2021, Art. no. 107220.                                        and engineering.
+[41] J. Yang, X. Yang, R. Li, M. Luo, S. Jiang, Y. Zhang, and D. Wang, ‘‘BERT                                        His research interests include knowledge graph,
+     and hierarchical cross attention-based question answering over bridge                                        intelligent cloud computing, machine learning,
+     inspection knowledge graph,’’ Expert Syst. Appl., vol. 233, Dec. 2023,                                       and deep learning. From 2019 to 2022, three first-
+     Art. no. 120896.                                                                                             class scholarships, one national scholarship, and
+[42] S. Yoo and O. Jeong, ‘‘Automating the expansion of a knowledge graph,’’                                      third prize at provincial level in the internet plus
+     Expert Syst. Appl., vol. 141, Mar. 2020, Art. no. 112965.                                                    national entrepreneurship competition.
+
+84428                                                                                                                                                   VOLUME 11, 2023
+L. Wang et al.: Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans
+
+
+
+
+                        XUEMEI LIU received the M.S. degree from                             HAIRUI LI received the M.D. degree from the
+                        the Beijing University of Aeronautics and Astro-                     North China University of Water Resources and
+                        nautics, Beijing, China, in 1992, and the Ph.D.                      Electric Power, in 2015, where he is currently pur-
+                        degree from Northwestern Polytechnical Univer-                       suing the Ph.D. degree in management science and
+                        sity, Xi’an, China, in 2008. Then, she spent several                 engineering. His research interests include opera-
+                        years as a Postdoctoral Researcher with the Beijing                  tional management of hydraulic engineering, data
+                        University of Aeronautics and Astronautics. She is                   mining, and machine learning techniques.
+                        currently a Professor and a Ph.D. Supervisor with
+                        the North China University of Water Resources
+                        and Electric Power. Her current research interests
+include data mining, machine learning, virtual reality, and intelligent water
+conservancy.
+
+                                                                                             JIAQI LIU (Graduate Student Member, IEEE)
+                                                                                             received the M.S. degree from the North China
+                                                                                             University of Water Resources and Electric Power,
+                                                                                             in 2021, where he is currently pursuing the Ph.D.
+                                                                                             degree in hydraulic engineering. His research
+                         YANG LIU was born in Kaifeng, Henan, China,                         interests include knowledge graph and smart water
+                         in 1979. She received the B.S. degree in com-                       conservancy.
+                         puter application technology from the University
+                         of Shanxi, Taiyuan, in 2002, the M.S. degree in
+                         computer application technology from the Uni-
+                         versity of Electronic Science and Technology of
+                         China, Chengdu, in 2005, and the Ph.D. degree
+                         in information and signal processing from the
+                         Institute of Optoelectronics Technology, Chinese                    LIBO YANG received the B.S. and M.S. degrees
+                         Academy of Sciences, Chengdu, in 2012.                              in computer science from the North China Uni-
+   From 2002 to 2005, she was with the Tenth Research Institute of China                     versity of Water Resources and Electric Power,
+Electronics Technology Group and became a Software Engineer. Since 2012,                     Zhengzhou, China, in 2004 and 2011, respectively,
+she has been with the North China University of Water Resources and                          where he is currently pursuing the Ph.D. degree.
+Electric Power. In 2015, she was an Associate Professor and a Postgrad-                      His current research interests include machine
+uate Tutor. She has published more than 30 papers, including more than                       learning, pattern recognition, data mining, and
+20 papers included by SCI and EI, and presided more than 20 scientific                       information management.
+research projects. Her research interests include intelligent water conser-
+vancy, machine learning, and mathematical sequence analysis.
+
+
+
+
+VOLUME 11, 2023                                                                                                                          84429
+

@@ -1,0 +1,252 @@
+﻿[
+    {
+        "index":  1,
+        "type":  "conferencePaper",
+        "title":  "Intelligent generation method of emergency plan based on knowledge graph",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\93IWDV2P\\Liu 等 - 2024 - Intelligent generation method of emergency plan based on knowledge graph.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\01_conferencePaper_Intelligent generation method of emergency plan based on knowledge graph.txt",
+        "status":  "ok",
+        "chars":  61173,
+        "message":  ""
+    },
+    {
+        "index":  2,
+        "type":  "conferencePaper",
+        "title":  "The Research on Current Status of Digital Technology System of Electric Power Emergency Plan",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\KT9IT9R6\\Guan 等 - 2024 - The Research on Current Status of Digital Technology System of Electric Power Emergency Plan.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\02_conferencePaper_The Research on Current Status of Digital Technology System of Electric Power Emergency Plan.txt",
+        "status":  "ok",
+        "chars":  37915,
+        "message":  ""
+    },
+    {
+        "index":  3,
+        "type":  "conferencePaper",
+        "title":  "智能体平台的评估框架及系统测评",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\PUIPLJ5B\\智能体平台的评估框架及系统测评.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\03_conferencePaper_智能体平台的评估框架及系统测评.txt",
+        "status":  "ok",
+        "chars":  10181,
+        "message":  ""
+    },
+    {
+        "index":  4,
+        "type":  "conferencePaper",
+        "title":  "生成式文本质量的自动评估方法综述",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\8FINWG4X\\生成式文本质量的自动评估方法综述.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\04_conferencePaper_生成式文本质量的自动评估方法综述.txt",
+        "status":  "ok",
+        "chars":  105449,
+        "message":  ""
+    },
+    {
+        "index":  5,
+        "type":  "journalArticle",
+        "title":  "110 kV及以上变压器事故统计分析",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\4XC99C37\\110_kV及以上变压器事故统计分析_王梦云.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\05_journalArticle_110 kV及以上变压器事故统计分析.txt",
+        "status":  "ok",
+        "chars":  26125,
+        "message":  ""
+    },
+    {
+        "index":  6,
+        "type":  "journalArticle",
+        "title":  "Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans for Water Conservancy Projects",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\42AQ2QZP\\Wang 等 - 2023 - Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans for Water Conservancy Pro.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\06_journalArticle_Knowledge Graph-Based Method for Intelligent Generation of Emergency Plans for Water Conservancy Projects.txt",
+        "status":  "ok",
+        "chars":  93091,
+        "message":  ""
+    },
+    {
+        "index":  7,
+        "type":  "journalArticle",
+        "title":  "地震灾害应急预案的生成式编制方法",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\LENG266Q\\[2]地震灾害应急预案的生成式编制方法_姚立伟.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\07_journalArticle_地震灾害应急预案的生成式编制方法.txt",
+        "status":  "ok",
+        "chars":  52252,
+        "message":  ""
+    },
+    {
+        "index":  8,
+        "type":  "journalArticle",
+        "title":  "基于改进集合预测网络的输变电设备故障知识图谱构建方法",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\Z9Q4GCBD\\基于改进集合预测网络的输变电设备故障知识图谱构建方法_阎光伟.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\08_journalArticle_基于改进集合预测网络的输变电设备故障知识图谱构建方法.txt",
+        "status":  "ok",
+        "chars":  47147,
+        "message":  ""
+    },
+    {
+        "index":  9,
+        "type":  "journalArticle",
+        "title":  "煤矿事故智能应急预案生成方法研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\UXKKADPW\\[3]煤矿事故智能应急预案生成方法研究_张晓蕾.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\09_journalArticle_煤矿事故智能应急预案生成方法研究.txt",
+        "status":  "ok",
+        "chars":  48873,
+        "message":  ""
+    },
+    {
+        "index":  10,
+        "type":  "journalArticle",
+        "title":  "融合大语言模型的台风场景下电网应急知识图谱构建方法",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\YTKFAM8S\\融合大语言模型的台风场景下电网应急知识图谱构建方法_林雨辰.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\10_journalArticle_融合大语言模型的台风场景下电网应急知识图谱构建方法.txt",
+        "status":  "ok",
+        "chars":  136708,
+        "message":  ""
+    },
+    {
+        "index":  11,
+        "type":  "preprint",
+        "title":  "Enhancing Emergency Decision-making with Knowledge Graphs and Large Language Models",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\LSJX3J5J\\Chen 等 - 2023 - Enhancing Emergency Decision-making with Knowledge Graphs and Large Language Models.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\11_preprint_Enhancing Emergency Decision-making with Knowledge Graphs and Large Language Models.txt",
+        "status":  "ok",
+        "chars":  116414,
+        "message":  ""
+    },
+    {
+        "index":  12,
+        "type":  "thesis",
+        "title":  "GraphRAG与智能代理结合的社交平台自动化辩论框架研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\D4LDFPGP\\GraphRAG与智能代理结合的社交平台自动化辩论框架研究_肖正亮.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\12_thesis_GraphRAG与智能代理结合的社交平台自动化辩论框架研究.txt",
+        "status":  "ok",
+        "chars":  74851,
+        "message":  ""
+    },
+    {
+        "index":  13,
+        "type":  "thesis",
+        "title":  "基于大语言模型的农业知识问答系统的研究与设计",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\R2XKAUGD\\基于大语言模型的农业知识问答系统的研究与设计_贾鹏.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\13_thesis_基于大语言模型的农业知识问答系统的研究与设计.txt",
+        "status":  "ok",
+        "chars":  64373,
+        "message":  ""
+    },
+    {
+        "index":  14,
+        "type":  "thesis",
+        "title":  "基于大语言模型的智能工作流在中医医学文本汉英翻译中的应用研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\2LYILRGK\\基于大语言模型的智能工作流在中医医学文本汉英翻译中的应用研究_慕铭.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\14_thesis_基于大语言模型的智能工作流在中医医学文本汉英翻译中的应用研究.txt",
+        "status":  "ok",
+        "chars":  111206,
+        "message":  "pdftotext.exe : Syntax Warning: Mismatch between font type and embedded font file\r\n所在位置 行:27 字符: 678\r\n+ ...  + \u0027.err\u0027); \u0026 pdftotext -enc UTF-8 -layout $row.pdfPath $txt 2\u003e$errFi ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (Syntax Warning:...edded font file:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+    },
+    {
+        "index":  15,
+        "type":  "thesis",
+        "title":  "基于大语言模型的网络安全测评报告内容检查方法研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\QLC4U2RI\\基于大语言模型的网络安全测评报告内容检查方法研究_郑文军.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\15_thesis_基于大语言模型的网络安全测评报告内容检查方法研究.txt",
+        "status":  "ok",
+        "chars":  1970053,
+        "message":  ""
+    },
+    {
+        "index":  16,
+        "type":  "thesis",
+        "title":  "基于大语言模型融合知识图谱的电力领域问答系统研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\U6QHHHQZ\\基于大语言模型融合知识图谱的电力领域问答系统研究_陈灯.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\16_thesis_基于大语言模型融合知识图谱的电力领域问答系统研究.txt",
+        "status":  "ok",
+        "chars":  2049490,
+        "message":  ""
+    },
+    {
+        "index":  17,
+        "type":  "thesis",
+        "title":  "基于检索增强生成及知识图谱的问答系统研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\GQEHC8YW\\基于检索增强生成及知识图谱的问答系统研究_宋婧.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\17_thesis_基于检索增强生成及知识图谱的问答系统研究.txt",
+        "status":  "ok",
+        "chars":  116941,
+        "message":  ""
+    },
+    {
+        "index":  18,
+        "type":  "thesis",
+        "title":  "基于生成式人工智能技术的公安机关大型活动应急预案编制研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\23AVKKWA\\[1]基于生成式人工智能技术的公安机关大型活动应急预案编制研究_牛晨璐.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\18_thesis_基于生成式人工智能技术的公安机关大型活动应急预案编制研究.txt",
+        "status":  "ok",
+        "chars":  130105,
+        "message":  ""
+    },
+    {
+        "index":  19,
+        "type":  "thesis",
+        "title":  "基于知识图谱和信息抽取的城轨交通应急处置方案生成研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\9GQQZBK6\\[4]基于知识图谱和信息抽取的城轨交通应急处置方案生成研究_杨荣正.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\19_thesis_基于知识图谱和信息抽取的城轨交通应急处置方案生成研究.txt",
+        "status":  "ok",
+        "chars":  151424,
+        "message":  ""
+    },
+    {
+        "index":  20,
+        "type":  "thesis",
+        "title":  "基于知识图谱和大语言模型的智慧教材应用平台的设计与实现",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\Q6NPYCSQ\\基于知识图谱和大语言模型的智慧教材应用平台的设计与实现_蒋明君.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\20_thesis_基于知识图谱和大语言模型的智慧教材应用平台的设计与实现.txt",
+        "status":  "ok",
+        "chars":  2849056,
+        "message":  ""
+    },
+    {
+        "index":  21,
+        "type":  "thesis",
+        "title":  "基于知识图谱增强大语言模型的航空事故问答系统研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\S4ZUUB84\\基于知识图谱增强大语言模型的航空事故问答系统研究_王振宇.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\21_thesis_基于知识图谱增强大语言模型的航空事故问答系统研究.txt",
+        "status":  "ok",
+        "chars":  121099,
+        "message":  ""
+    },
+    {
+        "index":  22,
+        "type":  "thesis",
+        "title":  "基于知识图谱的糖尿病问答系统的研究和实现",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\LG3V8FXQ\\基于知识图谱的糖尿病问答系统的研究和实现_张伟杰.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\22_thesis_基于知识图谱的糖尿病问答系统的研究和实现.txt",
+        "status":  "ok",
+        "chars":  108580,
+        "message":  ""
+    },
+    {
+        "index":  23,
+        "type":  "thesis",
+        "title":  "大型活动突发事件交通应急预案快速生成与动态优化方法",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\MI3UDNKP\\[5]大型活动突发事件交通应急预案快速生成与动态优化方法_王成晨.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\23_thesis_大型活动突发事件交通应急预案快速生成与动态优化方法.txt",
+        "status":  "ok",
+        "chars":  136226,
+        "message":  ""
+    },
+    {
+        "index":  24,
+        "type":  "thesis",
+        "title":  "知识图谱构建管理系统研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\B9AMNSEM\\知识图谱构建管理系统研究_马玮璐.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\24_thesis_知识图谱构建管理系统研究.txt",
+        "status":  "ok",
+        "chars":  107431,
+        "message":  ""
+    },
+    {
+        "index":  25,
+        "type":  "thesis",
+        "title":  "突发事件数字化应急预案智能生成方法研究",
+        "pdf":  "C:\\Users\\aaeeh\\Zotero\\storage\\MYC5KUG3\\突发事件数字化应急预案智能生成方法研究_潘志伟.pdf",
+        "txt":  "D:\\Graduate_test\\dataset\\zotero_paper_texts\\25_thesis_突发事件数字化应急预案智能生成方法研究.txt",
+        "status":  "ok",
+        "chars":  81382,
+        "message":  ""
+    }
+]
