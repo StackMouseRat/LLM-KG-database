@@ -5,7 +5,13 @@ import { fetchTemplateSections, resetTemplateSection, saveTemplateSection } from
 import { loadTemplateCache, saveTemplateCache } from '../features/template/templateStorage';
 import type { TemplateSection } from '../features/template/types';
 
-export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admin' | 'user' }) {
+export function TemplateViewPage({
+  currentUserGroup,
+  compactLayout
+}: {
+  currentUserGroup: 'admin' | 'user';
+  compactLayout: boolean;
+}) {
   const [sections, setSections] = useState<TemplateSection[]>(() => loadTemplateCache() || []);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState('');
@@ -128,7 +134,7 @@ export function TemplateViewPage({ currentUserGroup }: { currentUserGroup: 'admi
       </Card>
 
       {sortedSections.length ? (
-        <div className="template-card-grid">
+        <div className={`template-card-grid ${compactLayout ? 'template-card-grid--compact' : ''}`}>
           {sortedSections.map((section) => {
             const editing = editingId === section.section_id;
             const draft = drafts[section.section_id] || section;

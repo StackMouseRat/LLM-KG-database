@@ -354,7 +354,12 @@ def build_main_fault_graph_material(args: argparse.Namespace, basic_fields: dict
 
 
 def blank_chapter_templates(chapters: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [{**chapter, "template_text": ""} for chapter in chapters]
+    instruction = (
+        "本实验组移除正式应急预案章节模板。请不要依赖固定六章结构、章节编号、章节标题或小节约束，"
+        "仅根据用户问题、故障与场景提取结果、图谱检索素材自由组织内容，直接生成完整处置建议。"
+        "输出应体现缺少模板约束时的自然组织方式，不要因为缺少模板而拒绝生成。"
+    )
+    return [{**chapter, "template_text": instruction} for chapter in chapters]
 
 
 def main(variant_id: str) -> None:

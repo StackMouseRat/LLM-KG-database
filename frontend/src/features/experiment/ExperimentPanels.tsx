@@ -21,6 +21,7 @@ import {
   formatScoreText,
   formatStructuredEvaluation,
   getActiveControlStage,
+  getEvaluationDisplayScore,
   getGroupAverageScores,
   getMaxEvaluationConcurrency,
   getMaxExperimentConcurrency,
@@ -545,12 +546,13 @@ export function ExperimentEvaluationPanel({
                 <div className="experiment-evaluation-panel__compact-groups">
                   {plan.processGroups.map((group) => {
                     const score = groupMap[group.id];
+                    const displayScore = getEvaluationDisplayScore(score);
                     const title = splitGroupName(group);
                     return (
                       <div className="experiment-evaluation-panel__compact-row" key={group.id}>
                         <span>{title.label} · {title.title}</span>
-                        <Tag color={score?.status === 'done' ? getScoreTagColor(score.score) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
-                          {score?.status === 'done' ? `${formatScore(score.score)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
+                        <Tag color={score?.status === 'done' ? getScoreTagColor(displayScore) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
+                          {score?.status === 'done' ? `${formatScore(displayScore)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                         </Tag>
                       </div>
                     );
@@ -583,6 +585,7 @@ export function ExperimentEvaluationPanel({
             <div className="experiment-evaluation-panel__score-grid">
               {plan.processGroups.map((group) => {
                 const score = groupMap[group.id];
+                const displayScore = getEvaluationDisplayScore(score);
                 const title = splitGroupName(group);
                 const subscores = getStructuredSubscores(score?.structuredEvaluation);
                 return (
@@ -590,8 +593,8 @@ export function ExperimentEvaluationPanel({
                     <div className="experiment-output-preview__group-header">
                       <Tag color={group.role === '对照组' ? 'green' : 'blue'}>{title.label}</Tag>
                       <Text strong>{title.title}</Text>
-                      <Tag color={score?.status === 'done' ? getScoreTagColor(score.score) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
-                        {score?.status === 'done' ? `${formatScore(score.score)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
+                      <Tag color={score?.status === 'done' ? getScoreTagColor(displayScore) : score?.status === 'error' ? 'red' : score?.status === 'running' ? 'blue' : 'default'}>
+                        {score?.status === 'done' ? `${formatScore(displayScore)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
                     {roundExpanded ? (

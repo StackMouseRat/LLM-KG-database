@@ -1,0 +1,978 @@
+{
+  "question": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+  "basic_info": {
+    "elapsed_sec": 8.232,
+    "fields": {
+      "用户问题": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+      "故障与场景提取结果": "{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}",
+      "图谱检索方案素材": "当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。",
+      "模板文本": "",
+      "知识库名": "llmkg_breaker",
+      "边界判定结果": "ok",
+      "边界判定信息": ""
+    },
+    "response": {
+      "responseData": [
+        {
+          "moduleName": "插件输入",
+          "moduleType": "pluginInput",
+          "moduleLogo": "core/workflow/template/workflowStart",
+          "id": "fP85BY8CFYbhVXpX",
+          "nodeId": "malhmJONIU8W9ymt",
+          "runningTime": 0
+        },
+        {
+          "moduleName": "设备表初始化",
+          "moduleType": "ifElseNode",
+          "moduleLogo": "core/workflow/template/ifelse",
+          "totalPoints": 0,
+          "ifElseResult": "IF",
+          "id": "rz7Xnxs2p9RU5jbo",
+          "nodeId": "yb1JWcs00uT9BnMy",
+          "runningTime": 0
+        },
+        {
+          "moduleName": "获取全体设备表",
+          "moduleType": "httpRequest468",
+          "moduleLogo": "core/workflow/template/httpRequest",
+          "totalPoints": 0,
+          "body": {
+            "space": "llmkg_breaker",
+            "ngql": "SHOW SPACES;"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "httpResult": {
+            "ok": true,
+            "duration_ms": 6,
+            "queue_wait_ms": 0,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\n+---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_evaluation\"        |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_templates\"         |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 12 rows\n",
+            "stderr": "",
+            "meta": {
+              "driver_mode": "client",
+              "nebula_host": "graphd",
+              "nebula_port": 9669,
+              "max_concurrency": 8
+            }
+          },
+          "id": "aBO3attd1SezpRRR",
+          "nodeId": "jAL1KIZmvZFXbL36",
+          "runningTime": 0.02
+        },
+        {
+          "moduleName": "清洗设备表数据",
+          "moduleType": "code",
+          "moduleLogo": "core/workflow/template/codeRun",
+          "customInputs": {
+            "httpRawResponse": "\n+---------------------------+\n| Name                      |\n+---------------------------+\n| \"llmkg_breaker\"           |\n| \"llmkg_cable\"             |\n| \"llmkg_evaluation\"        |\n| \"llmkg_mutual\"            |\n| \"llmkg_optical_cable\"     |\n| \"llmkg_ring_main_unit\"    |\n| \"llmkg_surge_arrester\"    |\n| \"llmkg_templates\"         |\n| \"llmkg_test\"              |\n| \"llmkg_tower\"             |\n| \"llmkg_transformer\"       |\n| \"llmkg_transmission_line\" |\n+---------------------------+\nGot 12 rows\n"
+          },
+          "customOutputs": {
+            "devicespace": "llmkg_breaker,llmkg_cable,llmkg_evaluation,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_templates,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line"
+          },
+          "codeLog": "",
+          "id": "lky74wekEyXA7H4n",
+          "nodeId": "dqaMJ59ZDTGGxv68",
+          "runningTime": 0
+        },
+        {
+          "moduleName": "输入边界校验",
+          "moduleType": "contentExtract",
+          "moduleLogo": "core/workflow/template/extractJson",
+          "totalPoints": 0,
+          "model": "DSV3.2",
+          "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+          "inputTokens": 1398,
+          "outputTokens": 11,
+          "extractDescription": "你是电力设备应急预案系统的输入边界校验器。你的任务不是生成预案，而是判断用户输入是否可以进入后续“设备识别、故障匹配、图谱检索、预案生成”链路。\n当前系统可用设备表：\nllmkg_breaker,llmkg_cable,llmkg_evaluation,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_templates,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line\n设备表中文映射：\n- llmkg_breaker = 高压断路器/断路器/开关\n- llmkg_cable = 电力电缆/电缆/电缆沟/电缆接头/电缆终端\n- llmkg_transformer = 变压器/主变\n- llmkg_surge_arrester = 避雷器\n- llmkg_mutual = 互感器/CT/PT/TV/电流互感器/电压互感器\n- llmkg_optical_cable = 光缆/通信光缆/保护通道\n- llmkg_ring_main_unit = 环网柜\n设备-故障兼容参考：\n- 拒动、拒合、分闸失败、合闸失败、保护发令后未动作：通常属于断路器/开关类设备\n- 瓦斯报警、油温过高、油位异常、冷却器异常、套管发热：属于变压器\n- 电缆沟进水、接头发热、终端放电、绝缘击穿、局放、接头起火：属于电力电缆\n- 泄漏电流异常、阀片击穿、沿面闪络、侧闪、放电痕迹：属于避雷器\n- CT二次开路、CT二次短路、PT/TV熔丝熔断、二次电压异常、末屏接地：属于互感器\n- 光缆中断、业务中断、保护通道异常、接头盒受潮、衰耗异常：属于光缆\n- 柜内受潮、凝露、局放、开闭器动作异常、遥信异常、绝缘告警：属于环网柜\n判断规则：\n1. 如果用户输入与电力设备、故障、告警、运行异常、检修、应急处置完全无关，result 输出 irrelevant。\n2. 如果输入属于电力设备场景，但系统当前设备表不支持该设备，result 输出 unsupported_device。\n3. 如果输入中设备与故障动作明显不兼容，result 输出 incompatible_device_fault。\n4. 如果输入属于支持设备的故障、告警、检修、应急处置场景，result 必须输出 ok。\n5. 信息不完整但仍属于电力设备故障场景，不要拦截，result 输出 ok。\n6. 多设备出现时，要识别真正故障主体，不要被位置修饰词、保护动作来源或告警来源带偏。\nmessage 生成规则：\n1. result 为 ok 时，message 输出空字符串。\n2. result 为 irrelevant 时，message 输出：请输入电力设备故障、告警、检修或应急处置相关问题。\n3. result 为 unsupported_device 时，message 输出：当前系统暂不支持该设备类型，请改为断路器、电缆、变压器、避雷器、互感器、光缆或环网柜相关问题。\n4. result 为 incompatible_device_fault 时，message 输出：输入中的设备与故障描述可能不匹配，请确认故障主体或故障现象后重新输入。\n5. message 必须是简短中文提示，不要解释推理过程，不要输出多段文字。\n示例：\n- “今天吃什么” => result=irrelevant，message=请输入电力设备故障、告警、检修或应急处置相关问题。\n- “发电机转子接地故障” => result=unsupported_device，message=当前系统暂不支持该设备类型，请改为断路器、电缆、变压器、避雷器、互感器、光缆或环网柜相关问题。\n- “变压器拒动” => result=incompatible_device_fault，message=输入中的设备与故障描述可能不匹配，请确认故障主体或故障现象后重新输入。\n- “主变旁断路器拒动” => result=ok，message=\n- “主变保护动作后断路器未跳开” => result=ok，message=\n- “线路侧避雷器损坏” => result=ok，message=\n- “开关柜内电流互感器二次开路” => result=ok，message=\n只输出字段，不要解释。",
+          "extractResult": {
+            "result": "ok",
+            "message": ""
+          },
+          "contextTotalLen": 2,
+          "id": "jjEFPBueZLslXnkj",
+          "nodeId": "eiZmwn7jFcPRyhKY",
+          "runningTime": 2.56
+        },
+        {
+          "moduleName": "有效性检查",
+          "moduleType": "ifElseNode",
+          "moduleLogo": "core/workflow/template/ifelse",
+          "totalPoints": 0,
+          "ifElseResult": "IF",
+          "id": "nYwkNaGhTdOTJD6S",
+          "nodeId": "qNycUnGTg0ZKCtkc",
+          "runningTime": 0
+        },
+        {
+          "moduleName": "设备识别",
+          "moduleType": "contentExtract",
+          "moduleLogo": "core/workflow/template/extractJson",
+          "totalPoints": 0,
+          "model": "DSV3.2",
+          "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+          "inputTokens": 631,
+          "outputTokens": 13,
+          "extractDescription": "请从设备表llmkg_breaker,llmkg_cable,llmkg_evaluation,llmkg_mutual,llmkg_optical_cable,llmkg_ring_main_unit,llmkg_surge_arrester,llmkg_templates,llmkg_test,llmkg_tower,llmkg_transformer,llmkg_transmission_line中找出用户真正发生故障的设备对应的表并输出，只输出英文的表的名称，不要输出别的任何东西。\n\n设备消歧规则：\n- \"XX旁边的YY出现故障\"或\"XX附近的YY\"→故障对象是YY，XX仅为位置参照，不要选XX对应的表\n- 如果用户明确描述某个设备的异常动作（如\"断路器卡住了\"\"开关跳闸\"\"电缆击穿\"），该设备即为故障对象\n- 如果无法判断，优先选择用户句子中直接描述其故障症状的那个设备",
+          "extractResult": {
+            "设备表": "llmkg_optical_cable"
+          },
+          "contextTotalLen": 2,
+          "id": "dFo3QQ8w4d5Doo11",
+          "nodeId": "hJmYZWKFOW26n5E1",
+          "runningTime": 1.81
+        },
+        {
+          "moduleName": "基础数据获取",
+          "moduleType": "httpRequest468",
+          "moduleLogo": "core/workflow/template/httpRequest",
+          "totalPoints": 0,
+          "body": {
+            "space": "llmkg_optical_cable",
+            "ngql": "MATCH (l1:fault_l1)-[:contains]->(l2:fault_l2) OPTIONAL MATCH (l2)-[:caused_by]->(c:fault_cause) OPTIONAL MATCH (c)-[:has_symptom]->(s:fault_symptom) WITH l1, l2, collect(DISTINCT c.fault_cause.name) AS cause_names, collect(DISTINCT c.fault_cause.node_desc) AS cause_descs, collect(DISTINCT s.fault_symptom.name) AS symptom_names, collect(DISTINCT s.fault_symptom.node_desc) AS symptom_descs RETURN l1.fault_l1.source_id AS l1_source_id, l1.fault_l1.name AS l1_name, l2.fault_l2.source_id AS l2_source_id, l2.fault_l2.name AS l2_name, cause_names AS cause_names, cause_descs AS cause_descs, symptom_names AS symptom_names, symptom_descs AS symptom_descs ORDER BY l1_source_id, l2_source_id;"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "httpResult": {
+            "ok": true,
+            "duration_ms": 11,
+            "queue_wait_ms": 0,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\n+--------------+-------------+--------------+--------------+---------------------+------------------------------------------------------------+---------------------+--------------------------------------------------------------------+\n| l1_source_id | l1_name     | l2_source_id | l2_name      | cause_names         | cause_descs                                                | symptom_names       | symptom_descs                                                      |\n+--------------+-------------+--------------+--------------+---------------------+------------------------------------------------------------+---------------------+--------------------------------------------------------------------+\n| 1            | \"光缆线路本体故障\"  | 4            | \"光缆中断故障\"     | ['光缆中断故障-故障原因']     | ['外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。']        | ['光缆中断故障-故障现象']     | ['相邻站点同时出现 `R-LOS` 或收无光告警，业务全阻或部分业务中断，OTDR 可定位到明确断点，现场可见断纤或割断痕迹。'] |\n| 1            | \"光缆线路本体故障\"  | 11           | \"光缆衰耗劣化故障\"   | ['光缆衰耗劣化故障-故障原因']   | ['光纤老化、微弯、受压、长期潮湿、接续质量下降或局部通道环境恶化会造成衰耗增加。']                | ['光缆衰耗劣化故障-故障现象']   | ['收光功率逐渐降低、误码上升、高阶误码带动低阶误码、业务时通时断或保护倒换异常。']                        |\n| 2            | \"光纤接续与连接故障\" | 18           | \"光纤接错故障\"     | ['光纤接错故障-故障原因']     | ['东向/西向纤芯接反、割接后误接、站点进出纤标识不清、机房跳接错误、自环误接、台账不一致等都会造成光纤接错。']  | ['光纤接错故障-故障现象']     | ['业务可能短期不受影响，但保护倒换异常、部分站点无 `PS` 告警、指针调整或误码异常，严重时业务中断或网元无法正常登录。']   |\n| 2            | \"光纤接续与连接故障\" | 25           | \"光纤熔接不良故障\"   | ['光纤熔接不良故障-故障原因']   | ['熔接参数设置不当、端面处理不良、清洁不到位、熔接损耗过大、抢修复接错误、接头盒密封不良等都会导致接续质量差。'] | ['光纤熔接不良故障-故障现象']   | ['抢修后业务短时恢复又再次异常，可能出现误码增大、业务不稳、ECC 不通、网元无法登录或 OTDR 显示接续点异常。']      |\n| 3            | \"光路附件与成端故障\" | 32           | \"尾纤连接异常故障\"   | ['尾纤连接异常故障-故障原因']   | ['尾纤松动、弯曲半径过小、尾纤损伤、连接器污染或成端质量差会导致光路异常。']                   | ['尾纤连接异常故障-故障现象']   | ['收光功率异常、误码、局部链路中断、个别站点 `R-LOS` 或业务异常，但主干光缆可能完好。']                 |\n| 3            | \"光路附件与成端故障\" | 39           | \"ODF法兰盘异常故障\" | ['ODF法兰盘异常故障-故障原因'] | ['法兰盘瓷芯质量差、连接不正、污染磨损或长期老化会导致光口衰耗异常或两端收光不一致。']              | ['ODF法兰盘异常故障-故障现象'] | ['两端实收光功率不一致、清洁尾纤无效、换尾纤无效，但更换法兰盘后功率恢复。']                           |\n+--------------+-------------+--------------+--------------+---------------------+------------------------------------------------------------+---------------------+--------------------------------------------------------------------+\nGot 6 rows\n",
+            "stderr": "",
+            "meta": {
+              "driver_mode": "client",
+              "nebula_host": "graphd",
+              "nebula_port": 9669,
+              "max_concurrency": 8
+            }
+          },
+          "id": "xs5Wbsqnfv1NZuec",
+          "nodeId": "fFpXpftMQrWMSyQb",
+          "runningTime": 0.02
+        },
+        {
+          "moduleName": "基础数据清洗",
+          "moduleType": "code",
+          "moduleLogo": "core/workflow/template/codeRun",
+          "customInputs": {
+            "httpRawResponse": {
+              "ok": true,
+              "duration_ms": 11,
+              "queue_wait_ms": 0,
+              "return_code": 0,
+              "errors": [],
+              "stdout": "\n+--------------+-------------+--------------+--------------+---------------------+------------------------------------------------------------+---------------------+--------------------------------------------------------------------+\n| l1_source_id | l1_name     | l2_source_id | l2_name      | cause_names         | cause_descs                                                | symptom_names       | symptom_descs                                                      |\n+--------------+-------------+--------------+--------------+---------------------+------------------------------------------------------------+---------------------+--------------------------------------------------------------------+\n| 1            | \"光缆线路本体故障\"  | 4            | \"光缆中断故障\"     | ['光缆中断故障-故障原因']     | ['外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。']        | ['光缆中断故障-故障现象']     | ['相邻站点同时出现 `R-LOS` 或收无光告警，业务全阻或部分业务中断，OTDR 可定位到明确断点，现场可见断纤或割断痕迹。'] |\n| 1            | \"光缆线路本体故障\"  | 11           | \"光缆衰耗劣化故障\"   | ['光缆衰耗劣化故障-故障原因']   | ['光纤老化、微弯、受压、长期潮湿、接续质量下降或局部通道环境恶化会造成衰耗增加。']                | ['光缆衰耗劣化故障-故障现象']   | ['收光功率逐渐降低、误码上升、高阶误码带动低阶误码、业务时通时断或保护倒换异常。']                        |\n| 2            | \"光纤接续与连接故障\" | 18           | \"光纤接错故障\"     | ['光纤接错故障-故障原因']     | ['东向/西向纤芯接反、割接后误接、站点进出纤标识不清、机房跳接错误、自环误接、台账不一致等都会造成光纤接错。']  | ['光纤接错故障-故障现象']     | ['业务可能短期不受影响，但保护倒换异常、部分站点无 `PS` 告警、指针调整或误码异常，严重时业务中断或网元无法正常登录。']   |\n| 2            | \"光纤接续与连接故障\" | 25           | \"光纤熔接不良故障\"   | ['光纤熔接不良故障-故障原因']   | ['熔接参数设置不当、端面处理不良、清洁不到位、熔接损耗过大、抢修复接错误、接头盒密封不良等都会导致接续质量差。'] | ['光纤熔接不良故障-故障现象']   | ['抢修后业务短时恢复又再次异常，可能出现误码增大、业务不稳、ECC 不通、网元无法登录或 OTDR 显示接续点异常。']      |\n| 3            | \"光路附件与成端故障\" | 32           | \"尾纤连接异常故障\"   | ['尾纤连接异常故障-故障原因']   | ['尾纤松动、弯曲半径过小、尾纤损伤、连接器污染或成端质量差会导致光路异常。']                   | ['尾纤连接异常故障-故障现象']   | ['收光功率异常、误码、局部链路中断、个别站点 `R-LOS` 或业务异常，但主干光缆可能完好。']                 |\n| 3            | \"光路附件与成端故障\" | 39           | \"ODF法兰盘异常故障\" | ['ODF法兰盘异常故障-故障原因'] | ['法兰盘瓷芯质量差、连接不正、污染磨损或长期老化会导致光口衰耗异常或两端收光不一致。']              | ['ODF法兰盘异常故障-故障现象'] | ['两端实收光功率不一致、清洁尾纤无效、换尾纤无效，但更换法兰盘后功率恢复。']                           |\n+--------------+-------------+--------------+--------------+---------------------+------------------------------------------------------------+---------------------+--------------------------------------------------------------------+\nGot 6 rows\n",
+              "stderr": "",
+              "meta": {
+                "driver_mode": "client",
+                "nebula_host": "graphd",
+                "nebula_port": 9669,
+                "max_concurrency": 8
+              }
+            }
+          },
+          "customOutputs": {
+            "summary_text": "一级故障有：光缆线路本体故障、光纤接续与连接故障、光路附件与成端故障。\n其中：光缆线路本体故障有2个二级故障：光缆中断故障（原因：'光缆中断故障-故障原因'；现象：'外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。'）、光缆衰耗劣化故障（原因：'光缆衰耗劣化故障-故障原因'；现象：'光纤老化、微弯、受压、长期潮湿、接续质量下降或局部通道环境恶化会造成衰耗增加。'）；光纤接续与连接故障有2个二级故障：光纤接错故障（原因：'光纤接错故障-故障原因'；现象：'东向/西向纤芯接反、割接后误接、站点进出纤标识不清、机房跳接错误、自环误接、台账不一致等都会造成光纤接错。'）、光纤熔接不良故障（原因：'光纤熔接不良故障-故障原因'；现象：'熔接参数设置不当、端面处理不良、清洁不到位、熔接损耗过大、抢修复接错误、接头盒密封不良等都会导致接续质量差。'）；光路附件与成端故障有2个二级故障：尾纤连接异常故障（原因：'尾纤连接异常故障-故障原因'；现象：'尾纤松动、弯曲半径过小、尾纤损伤、连接器污染或成端质量差会导致光路异常。'）、ODF法兰盘异常故障（原因：'ODF法兰盘异常故障-故障原因'；现象：'法兰盘瓷芯质量差、连接不正、污染磨损或长期老化会导致光口衰耗异常或两端收光不一致。'）。\n合计二级故障映射6条。"
+          },
+          "codeLog": "",
+          "id": "hT9K9xls6Z6kxFiw",
+          "nodeId": "gMBZtrBTbpDPI3Ob",
+          "runningTime": 0.01
+        },
+        {
+          "moduleName": "故障类型分析",
+          "moduleType": "contentExtract",
+          "moduleLogo": "core/workflow/template/extractJson",
+          "totalPoints": 0,
+          "model": "DSV3.2",
+          "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+          "inputTokens": 1247,
+          "outputTokens": 73,
+          "extractDescription": "你的任务：根据用户输入，在已知的一级/二级故障目录中匹配最恰当的一个二级故障名称，并同步提取 C 类方案生成所需场景字段。\n\n已知目录：\n一级故障有：光缆线路本体故障、光纤接续与连接故障、光路附件与成端故障。\n其中：光缆线路本体故障有2个二级故障：光缆中断故障（原因：'光缆中断故障-故障原因'；现象：'外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。'）、光缆衰耗劣化故障（原因：'光缆衰耗劣化故障-故障原因'；现象：'光纤老化、微弯、受压、长期潮湿、接续质量下降或局部通道环境恶化会造成衰耗增加。'）；光纤接续与连接故障有2个二级故障：光纤接错故障（原因：'光纤接错故障-故障原因'；现象：'东向/西向纤芯接反、割接后误接、站点进出纤标识不清、机房跳接错误、自环误接、台账不一致等都会造成光纤接错。'）、光纤熔接不良故障（原因：'光纤熔接不良故障-故障原因'；现象：'熔接参数设置不当、端面处理不良、清洁不到位、熔接损耗过大、抢修复接错误、接头盒密封不良等都会导致接续质量差。'）；光路附件与成端故障有2个二级故障：尾纤连接异常故障（原因：'尾纤连接异常故障-故障原因'；现象：'尾纤松动、弯曲半径过小、尾纤损伤、连接器污染或成端质量差会导致光路异常。'）、ODF法兰盘异常故障（原因：'ODF法兰盘异常故障-故障原因'；现象：'法兰盘瓷芯质量差、连接不正、污染磨损或长期老化会导致光口衰耗异常或两端收光不一致。'）。\n合计二级故障映射6条。\n\n输出要求：\n只输出一个 JSON 对象，不要输出解释，不要 Markdown。\n字段固定为：\n{\n \"故障二级节点\": \"已知目录中的一个二级故障\",\n \"响应等级\": \"I级/II级/III级/IV级/未明确\",\n \"故障对象\": \"涉及的设备、站点、线路、主变、开关柜等对象，没有则填未明确\",\n \"事件场景\": \"对事件背景进行一句话归纳\",\n \"关键处置要求\": \"用户明确要求的处置动作，多个用；分隔，没有则填未明确\",\n \"特殊约束\": \"夜间、不能停电、不能更换设备、台风、暴雨、双阶段处置等限制条件，多个用；分隔，没有则填未明确\"\n}\n\n规则：\n1. 故障二级节点必须来自已知目录。如用户使用非专业术语描述故障（如\"卡住\"\"不转\"\"发热\"等），请根据用户描述的症状和原因，在已知目录中匹配最相关的二级故障（每个故障后面的括号中附有原因和现象描述可供参考）。\n2. 若用户没有明确响应等级，填“未明确”。\n3. 若用户没有明确故障对象，填“未明确”。\n4. 若用户没有明确关键处置要求或特殊约束，填“未明确”。\n5. 事件场景必须结合用户输入做一句话归纳。\n",
+          "extractResult": {
+            "故障二级节点": "光缆中断故障",
+            "响应等级": "未明确",
+            "故障对象": "站内光缆、断路器间隔",
+            "事件场景": "站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行",
+            "关键处置要求": "生成应急方案",
+            "特殊约束": "未明确"
+          },
+          "contextTotalLen": 2,
+          "id": "qEqWsnXazNXc8OO0",
+          "nodeId": "bEGyTijQYXiijgkL",
+          "runningTime": 3.67
+        },
+        {
+          "moduleName": "下游节点获取",
+          "moduleType": "httpRequest468",
+          "moduleLogo": "core/workflow/template/httpRequest",
+          "totalPoints": 0,
+          "body": {
+            "space": "llmkg_optical_cable",
+            "ngql": "MATCH (f:entity) WHERE f.entity.lvl == 2 AND f.entity.name == '光缆中断故障' OPTIONAL MATCH (f)-[:caused_by]->(c:fault_cause) RETURN 3 AS lvl, c.fault_cause.name AS name, c.fault_cause.node_desc AS node_desc UNION ALL MATCH (f:entity) WHERE f.entity.lvl == 2 AND f.entity.name == '光缆中断故障' OPTIONAL MATCH (f)-[:caused_by]->(:fault_cause)-[:has_symptom]->(s:fault_symptom) RETURN 4 AS lvl, s.fault_symptom.name AS name, s.fault_symptom.node_desc AS node_desc UNION ALL MATCH (f:entity) WHERE f.entity.lvl == 2 AND f.entity.name == '光缆中断故障' OPTIONAL MATCH (f)-[:handled_by]->(m:response_measure) RETURN 3 AS lvl, m.response_measure.name AS name, m.response_measure.node_desc AS node_desc UNION ALL MATCH (f:entity) WHERE f.entity.lvl == 2 AND f.entity.name == '光缆中断故障' OPTIONAL MATCH (f)-[:caused_by]->(:fault_cause)-[:results_in]->(co:fault_consequence) RETURN 4 AS lvl, co.fault_consequence.name AS name, co.fault_consequence.node_desc AS node_desc UNION ALL MATCH (f:entity) WHERE f.entity.lvl == 2 AND f.entity.name == '光缆中断故障' OPTIONAL MATCH (f)-[:handled_by]->(:response_measure)-[:has_risk]->(r:safety_risk) RETURN 4 AS lvl, r.safety_risk.name AS name, r.safety_risk.node_desc AS node_desc UNION ALL MATCH (f:entity) WHERE f.entity.lvl == 2 AND f.entity.name == '光缆中断故障' OPTIONAL MATCH (f)-[:handled_by]->(:response_measure)-[:needs_resource]->(er:emergency_resource) RETURN 4 AS lvl, er.emergency_resource.name AS name, er.emergency_resource.node_desc AS node_desc;"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "httpResult": {
+            "ok": true,
+            "duration_ms": 18,
+            "queue_wait_ms": 0,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\n+-----+---------------+------------------------------------------------------------------+\n| lvl | name          | node_desc                                                        |\n+-----+---------------+------------------------------------------------------------------+\n| 3   | \"光缆中断故障-故障原因\" | \"外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。\"                |\n| 4   | \"光缆中断故障-故障现象\" | \"相邻站点同时出现 `R-LOS` 或收无光告警，业务全阻或部分业务中断，OTDR 可定位到明确断点，现场可见断纤或割断痕迹。\" |\n| 3   | \"光缆中断故障-应对措施\" | \"先排除光板和尾纤异常，再使用 OTDR 定位断点，组织现场抢修、重新熔接或更换故障段光缆。\"                  |\n| 4   | \"光缆中断故障-故障后果\" | \"会造成链路中断、业务全阻、保护倒换失效或部分站点失去通信能力。\"                                |\n| 4   | \"光缆中断故障-安全风险\" | \"误用 OTDR 直打在光板上会损伤光器件；抢修过程中存在高处、道路、井下和误接光纤风险。\"                   |\n| 4   | \"光缆中断故障-应急资源\" | \"需要 OTDR、光功率计、熔纤机、切割刀、备用光缆、接续盒、跳纤、巡线与抢修人员。\"                      |\n+-----+---------------+------------------------------------------------------------------+\nGot 6 rows\n",
+            "stderr": "",
+            "meta": {
+              "driver_mode": "client",
+              "nebula_host": "graphd",
+              "nebula_port": 9669,
+              "max_concurrency": 8
+            }
+          },
+          "id": "gKZ6QnjkxAkoA6E4",
+          "nodeId": "rpJznDcYzR74Wijw",
+          "runningTime": 0.02
+        },
+        {
+          "moduleName": "下游节点数据清洗",
+          "moduleType": "code",
+          "moduleLogo": "core/workflow/template/codeRun",
+          "customInputs": {
+            "httpRawResponse": {
+              "ok": true,
+              "duration_ms": 18,
+              "queue_wait_ms": 0,
+              "return_code": 0,
+              "errors": [],
+              "stdout": "\n+-----+---------------+------------------------------------------------------------------+\n| lvl | name          | node_desc                                                        |\n+-----+---------------+------------------------------------------------------------------+\n| 3   | \"光缆中断故障-故障原因\" | \"外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。\"                |\n| 4   | \"光缆中断故障-故障现象\" | \"相邻站点同时出现 `R-LOS` 或收无光告警，业务全阻或部分业务中断，OTDR 可定位到明确断点，现场可见断纤或割断痕迹。\" |\n| 3   | \"光缆中断故障-应对措施\" | \"先排除光板和尾纤异常，再使用 OTDR 定位断点，组织现场抢修、重新熔接或更换故障段光缆。\"                  |\n| 4   | \"光缆中断故障-故障后果\" | \"会造成链路中断、业务全阻、保护倒换失效或部分站点失去通信能力。\"                                |\n| 4   | \"光缆中断故障-安全风险\" | \"误用 OTDR 直打在光板上会损伤光器件；抢修过程中存在高处、道路、井下和误接光纤风险。\"                   |\n| 4   | \"光缆中断故障-应急资源\" | \"需要 OTDR、光功率计、熔纤机、切割刀、备用光缆、接续盒、跳纤、巡线与抢修人员。\"                      |\n+-----+---------------+------------------------------------------------------------------+\nGot 6 rows\n",
+              "stderr": "",
+              "meta": {
+                "driver_mode": "client",
+                "nebula_host": "graphd",
+                "nebula_port": 9669,
+                "max_concurrency": 8
+              }
+            }
+          },
+          "customOutputs": {
+            "result": "当前二级故障：光缆中断故障。\n故障原因：光缆中断故障-故障原因：外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。。\n故障现象：光缆中断故障-故障现象：相邻站点同时出现 `R-LOS` 或收无光告警，业务全阻或部分业务中断，OTDR 可定位到明确断点，现场可见断纤或割断痕迹。。\n应对措施：光缆中断故障-应对措施：先排除光板和尾纤异常，再使用 OTDR 定位断点，组织现场抢修、重新熔接或更换故障段光缆。。\n故障后果：光缆中断故障-故障后果：会造成链路中断、业务全阻、保护倒换失效或部分站点失去通信能力。。\n安全风险：光缆中断故障-安全风险：误用 OTDR 直打在光板上会损伤光器件；抢修过程中存在高处、道路、井下和误接光纤风险。。\n应急资源：光缆中断故障-应急资源：需要 OTDR、光功率计、熔纤机、切割刀、备用光缆、接续盒、跳纤、巡线与抢修人员。。\n其他相关节点：无。"
+          },
+          "codeLog": "",
+          "id": "cdcI2zPJVij3lwnh",
+          "nodeId": "fmRLeRT0lvkngtJQ",
+          "runningTime": 0
+        },
+        {
+          "moduleName": "插件输出",
+          "moduleType": "pluginOutput",
+          "moduleLogo": "core/workflow/template/pluginOutput",
+          "pluginOutput": {
+            "用户问题": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "故障类型分析": "{\"故障二级节点\":\"光缆中断故障\",\"响应等级\":\"未明确\",\"故障对象\":\"站内光缆、断路器间隔\",\"事件场景\":\"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\",\"关键处置要求\":\"生成应急方案\",\"特殊约束\":\"未明确\"}",
+            "图谱检索": "当前二级故障：光缆中断故障。\n故障原因：光缆中断故障-故障原因：外部施工破坏、自然老化断裂、接头盒进水冰冻断裂、通道异常、人为盗割等因素都会导致光缆物理中断。。\n故障现象：光缆中断故障-故障现象：相邻站点同时出现 `R-LOS` 或收无光告警，业务全阻或部分业务中断，OTDR 可定位到明确断点，现场可见断纤或割断痕迹。。\n应对措施：光缆中断故障-应对措施：先排除光板和尾纤异常，再使用 OTDR 定位断点，组织现场抢修、重新熔接或更换故障段光缆。。\n故障后果：光缆中断故障-故障后果：会造成链路中断、业务全阻、保护倒换失效或部分站点失去通信能力。。\n安全风险：光缆中断故障-安全风险：误用 OTDR 直打在光板上会损伤光器件；抢修过程中存在高处、道路、井下和误接光纤风险。。\n应急资源：光缆中断故障-应急资源：需要 OTDR、光功率计、熔纤机、切割刀、备用光缆、接续盒、跳纤、巡线与抢修人员。。\n其他相关节点：无。",
+            "知识库名": "llmkg_optical_cable",
+            "边界判定结果": "ok",
+            "边界判定信息": ""
+          },
+          "id": "fNORJdEBK0hPkQF4",
+          "nodeId": "q3oAU1R0wz0IoP85",
+          "runningTime": 0
+        }
+      ],
+      "newVariables": {
+        "q8ewuEvI": "",
+        "sLJCi6eK": ""
+      },
+      "id": "",
+      "model": "",
+      "usage": {
+        "prompt_tokens": 1,
+        "completion_tokens": 1,
+        "total_tokens": 1
+      },
+      "choices": [
+        {
+          "message": {
+            "role": "assistant",
+            "content": ""
+          },
+          "finish_reason": "stop",
+          "index": 0
+        }
+      ]
+    }
+  },
+  "template_splitter": {
+    "elapsed_sec": 0.081,
+    "split_result": {
+      "template_id": "tpl_default_emergency",
+      "template_name": "默认应急预案模板",
+      "current_version": "v1",
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_no": "1",
+          "title": "事件特征",
+          "section_count": 6,
+          "text": "## 第1章 事件特征\n内容来源：kg+gen\n生成要求：结合图谱事实与场景约束生成事件特征概述\n\n### 1.1 事件类型\n内容来源：kg\n图谱字段：fault_name\n\n### 1.2 故障原因\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：基于图谱故障原因并结合现场场景说明可能诱因\n\n### 1.3 事件范围\n内容来源：gen\n图谱字段：fault_consequence\n生成要求：结合用户场景补充影响范围\n\n### 1.4 事件危害程度\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场约束判断危害程度\n\n### 1.5 响应等级\n内容来源：gen\n生成要求：响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由"
+        },
+        {
+          "chapter_no": "2",
+          "title": "应急组织与职责",
+          "section_count": 4,
+          "text": "## 第2章 应急组织与职责\n内容来源：fixed+gen\n预定义文本：采用标准组织职责模板\n生成要求：结合场景补充角色职责\n\n### 2.1 应急指挥机构\n内容来源：fixed+gen\n预定义文本：成立现场应急指挥组，统一组织协调应急处置。\n生成要求：结合设备类型和事件场景补充指挥职责\n\n### 2.2 专业处置组\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：结合图谱资源配置专业抢修、试验、运行配合等岗位\n\n### 2.3 现场安全监护组\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：围绕安全风险补充监护、警戒和作业许可职责"
+        },
+        {
+          "chapter_no": "3",
+          "title": "处置程序",
+          "section_count": 18,
+          "text": "## 第3章 处置程序\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n内容来源：gen\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n内容来源：gen\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n内容来源：gen\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n内容来源：gen\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n内容来源：kg+gen\n图谱字段：fault_cause,fault_symptom\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n内容来源：kg+gen\n图谱字段：fault_consequence\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n内容来源：gen\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求"
+        },
+        {
+          "chapter_no": "4",
+          "title": "处置措施",
+          "section_count": 14,
+          "text": "## 第4章 处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合风险与场景扩写具体措施\n\n### 4.1 隔离与安全控制\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：针对安全风险生成隔离、警戒、接地、验电等控制措施\n\n#### 4.1.1 隔离措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成停电隔离、机械隔离和区域隔离措施\n\n#### 4.1.2 安全措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成验电、接地、防误操作和个人防护要求\n\n#### 4.1.3 现场警戒\n内容来源：gen\n生成要求：生成警戒范围、人员管控和外部告知要求\n\n### 4.2 故障检查与确认\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：结合现象和原因生成检查确认要点\n\n#### 4.2.1 故障现象检查\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：列出应重点检查的现场现象和异常信号\n\n#### 4.2.2 故障原因排查\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：列出需要排查的可能故障原因\n\n#### 4.2.3 故障点确认\n内容来源：kg+gen\n图谱字段：fault_symptom,fault_cause\n生成要求：结合检查结果确认故障点和故障类型\n\n### 4.3 现场抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：将图谱措施组织成可执行抢修动作\n\n#### 4.3.1 临时处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先生成保障安全和临时恢复能力的措施\n\n#### 4.3.2 正式抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：生成正式消缺、修复、更换或治理措施\n\n#### 4.3.3 恢复验证措施\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：生成恢复后试验、验收和观察要求\n\n### 4.4 风险防控措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：补充防触电、防火、防误操作和二次伤害控制要求"
+        },
+        {
+          "chapter_no": "5",
+          "title": "应急保障",
+          "section_count": 7,
+          "text": "## 第5章 应急保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将资源组织成物资、人员、通信保障\n\n### 5.1 人员保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据资源需求补充人员专业分工\n\n### 5.2 物资装备保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将图谱资源整理为装备、仪器、工器具和备品备件\n\n#### 5.2.1 仪器仪表\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳测量、试验和检测仪器\n\n#### 5.2.2 工器具\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳作业工器具和安全工器具\n\n#### 5.2.3 备品备件\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳备品备件和替换材料\n\n### 5.3 通信与交通保障\n内容来源：gen\n生成要求：根据场景补充通信联络、交通到场和现场保障要求"
+        },
+        {
+          "chapter_no": "6",
+          "title": "附件",
+          "section_count": 7,
+          "text": "## 第6章 附件\n内容来源：fixed+gen\n预定义文本：提供标准附件清单骨架\n生成要求：根据场景补齐附件建议\n\n### 6.1 应急物资清单\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据图谱资源生成物资清单\n\n### 6.2 联系方式清单\n内容来源：fixed+gen\n预定义文本：列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n生成要求：结合场景补充需要联系的岗位类型\n\n### 6.3 现场记录表\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n生成要求：结合具体场景补充记录字段\n\n#### 6.3.1 基础事件信息\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、天气、值班和报告信息。\n生成要求：补充适用的基础字段\n\n#### 6.3.2 处置过程记录\n内容来源：fixed\n预定义文本：记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n内容来源：fixed\n预定义文本：记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+        }
+      ]
+    },
+    "response": {
+      "responseData": [
+        {
+          "moduleName": "workflow:template.plugin_start",
+          "moduleType": "pluginInput",
+          "moduleLogo": "core/workflow/template/workflowStart",
+          "id": "lT7ahE5ulFKyMKUA",
+          "nodeId": "pluginInput",
+          "runningTime": 0
+        },
+        {
+          "moduleName": "HTTP 请求",
+          "moduleType": "httpRequest468",
+          "moduleLogo": "core/workflow/template/httpRequest",
+          "totalPoints": 0,
+          "body": {
+            "space": "llmkg_templates",
+            "ngql": "MATCH (t:template)-[:has_version]->(v:template_version)-[:has_section]->(s:template_section) WHERE id(t) == \"tpl_default_emergency\" AND v.template_version.version_name == t.template.current_version RETURN id(t) AS template_id, t.template.name AS template_name, t.template.current_version AS current_version, id(s) AS section_id, s.template_section.section_no AS section_no, s.template_section.title AS title, s.template_section.level AS level, s.template_section.order_no AS order_no, s.template_section.enabled AS enabled, s.template_section.source_type AS source_type, s.template_section.kg_field AS kg_field, s.template_section.fixed_text AS fixed_text, s.template_section.gen_instruction AS gen_instruction ORDER BY order_no;"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "httpResult": {
+            "ok": true,
+            "duration_ms": 12,
+            "queue_wait_ms": 0,
+            "return_code": 0,
+            "errors": [],
+            "stdout": "\n+-------------------------+---------------+-----------------+----------------------------------+------------+-----------+-------+----------+---------+-------------+-----------------------------+------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| template_id             | template_name | current_version | section_id                       | section_no | title     | level | order_no | enabled | source_type | kg_field                    | fixed_text                         | gen_instruction                                                                                                                                                                      |\n+-------------------------+---------------+-----------------+----------------------------------+------------+-----------+-------+----------+---------+-------------+-----------------------------+------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1\"     | \"1\"        | \"事件特征\"    | 1     | 100      | True    | \"kg+gen\"    | \"\"                          | \"\"                                 | \"结合图谱事实与场景约束生成事件特征概述\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_1\"   | \"1.1\"      | \"事件类型\"    | 2     | 110      | True    | \"kg\"        | \"fault_name\"                | \"\"                                 | \"\"                                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_2\"   | \"1.2\"      | \"故障原因\"    | 2     | 120      | True    | \"kg+gen\"    | \"fault_cause\"               | \"\"                                 | \"基于图谱故障原因并结合现场场景说明可能诱因\"                                                                                                                                                              |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_3\"   | \"1.3\"      | \"事件范围\"    | 2     | 130      | True    | \"gen\"       | \"fault_consequence\"         | \"\"                                 | \"结合用户场景补充影响范围\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_4\"   | \"1.4\"      | \"事件危害程度\"  | 2     | 140      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"结合风险和现场约束判断危害程度\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_5\"   | \"1.5\"      | \"响应等级\"    | 2     | 150      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由\" |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2\"     | \"2\"        | \"应急组织与职责\" | 1     | 200      | True    | \"fixed+gen\" | \"\"                          | \"采用标准组织职责模板\"                       | \"结合场景补充角色职责\"                                                                                                                                                                         |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2_1\"   | \"2.1\"      | \"应急指挥机构\"  | 2     | 210      | True    | \"fixed+gen\" | \"\"                          | \"成立现场应急指挥组，统一组织协调应急处置。\"            | \"结合设备类型和事件场景补充指挥职责\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2_2\"   | \"2.2\"      | \"专业处置组\"   | 2     | 220      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"结合图谱资源配置专业抢修、试验、运行配合等岗位\"                                                                                                                                                            |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2_3\"   | \"2.3\"      | \"现场安全监护组\" | 2     | 230      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"围绕安全风险补充监护、警戒和作业许可职责\"                                                                                                                                                               |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3\"     | \"3\"        | \"处置程序\"    | 1     | 300      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"按先后顺序组织程序，必要时拆分阶段\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1\"   | \"3.1\"      | \"信息报告\"    | 2     | 310      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"根据事件场景生成报告对象、报告内容和报告时限\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1_1\" | \"3.1.1\"    | \"报告对象\"    | 3     | 311      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"列出应报告的调度、运维、安监、管理和外协对象\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1_2\" | \"3.1.2\"    | \"报告内容\"    | 3     | 312      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"说明需要报告的事件信息、影响范围、风险和现场需求\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1_3\" | \"3.1.3\"    | \"报告时限\"    | 3     | 313      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"明确首报、续报和终报时限\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2\"   | \"3.2\"      | \"先期处置\"    | 2     | 320      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"优先组织隔离、停运、警戒、排险等先期动作\"                                                                                                                                                               |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2_1\" | \"3.2.1\"    | \"现场隔离\"    | 3     | 321      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"明确隔离区域、隔离方式和防止扩大事故的要求\"                                                                                                                                                              |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2_2\" | \"3.2.2\"    | \"停运或限制运行\" | 3     | 322      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"根据设备状态生成停运、转供、限负荷或限制运行要求\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2_3\" | \"3.2.3\"    | \"警戒与排险\"   | 3     | 323      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"根据现场风险生成警戒、疏散和排险动作\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3\"   | \"3.3\"      | \"现场研判\"    | 2     | 330      | True    | \"kg+gen\"    | \"fault_cause,fault_symptom\" | \"\"                                 | \"结合故障原因、故障现象和现场条件生成研判要点\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3_1\" | \"3.3.1\"    | \"原因研判\"    | 3     | 331      | True    | \"kg+gen\"    | \"fault_cause\"               | \"\"                                 | \"围绕图谱故障原因和现场条件推断主要诱因\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3_2\" | \"3.3.2\"    | \"现象核验\"    | 3     | 332      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"核验当前现象与典型故障现象是否一致\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3_3\" | \"3.3.3\"    | \"风险判定\"    | 3     | 333      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"结合风险和现场状态判定作业风险与设备风险\"                                                                                                                                                               |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4\"   | \"3.4\"      | \"抢修恢复\"    | 2     | 340      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"结合应对措施生成抢修和恢复步骤\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4_1\" | \"3.4.1\"    | \"抢修准备\"    | 3     | 341      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"整理抢修前需要的人员、物资、工器具和作业条件\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4_2\" | \"3.4.2\"    | \"现场抢修\"    | 3     | 342      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"按顺序生成现场抢修动作\"                                                                                                                                                                        |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4_3\" | \"3.4.3\"    | \"恢复运行\"    | 3     | 343      | True    | \"kg+gen\"    | \"fault_consequence\"         | \"\"                                 | \"明确恢复供电、恢复运行和恢复后观察要求\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_5\"   | \"3.5\"      | \"响应终止\"    | 2     | 350      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"根据风险解除、设备恢复和现场验收条件生成终止要求\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4\"     | \"4\"        | \"处置措施\"    | 1     | 400      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"结合风险与场景扩写具体措施\"                                                                                                                                                                      |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1\"   | \"4.1\"      | \"隔离与安全控制\" | 2     | 410      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"针对安全风险生成隔离、警戒、接地、验电等控制措施\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1_1\" | \"4.1.1\"    | \"隔离措施\"    | 3     | 411      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"生成停电隔离、机械隔离和区域隔离措施\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1_2\" | \"4.1.2\"    | \"安全措施\"    | 3     | 412      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"生成验电、接地、防误操作和个人防护要求\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1_3\" | \"4.1.3\"    | \"现场警戒\"    | 3     | 413      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"生成警戒范围、人员管控和外部告知要求\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2\"   | \"4.2\"      | \"故障检查与确认\" | 2     | 420      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"结合现象和原因生成检查确认要点\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2_1\" | \"4.2.1\"    | \"故障现象检查\"  | 3     | 421      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"列出应重点检查的现场现象和异常信号\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2_2\" | \"4.2.2\"    | \"故障原因排查\"  | 3     | 422      | True    | \"kg+gen\"    | \"fault_cause\"               | \"\"                                 | \"列出需要排查的可能故障原因\"                                                                                                                                                                      |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2_3\" | \"4.2.3\"    | \"故障点确认\"   | 3     | 423      | True    | \"kg+gen\"    | \"fault_symptom,fault_cause\" | \"\"                                 | \"结合检查结果确认故障点和故障类型\"                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3\"   | \"4.3\"      | \"现场抢修措施\"  | 2     | 430      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"将图谱措施组织成可执行抢修动作\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3_1\" | \"4.3.1\"    | \"临时处置措施\"  | 3     | 431      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"优先生成保障安全和临时恢复能力的措施\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3_2\" | \"4.3.2\"    | \"正式抢修措施\"  | 3     | 432      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"生成正式消缺、修复、更换或治理措施\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3_3\" | \"4.3.3\"    | \"恢复验证措施\"  | 3     | 433      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"生成恢复后试验、验收和观察要求\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_4\"   | \"4.4\"      | \"风险防控措施\"  | 2     | 440      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"补充防触电、防火、防误操作和二次伤害控制要求\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5\"     | \"5\"        | \"应急保障\"    | 1     | 500      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"将资源组织成物资、人员、通信保障\"                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_1\"   | \"5.1\"      | \"人员保障\"    | 2     | 510      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"根据资源需求补充人员专业分工\"                                                                                                                                                                     |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2\"   | \"5.2\"      | \"物资装备保障\"  | 2     | 520      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"将图谱资源整理为装备、仪器、工器具和备品备件\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2_1\" | \"5.2.1\"    | \"仪器仪表\"    | 3     | 521      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"从图谱资源中归纳测量、试验和检测仪器\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2_2\" | \"5.2.2\"    | \"工器具\"     | 3     | 522      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"从图谱资源中归纳作业工器具和安全工器具\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2_3\" | \"5.2.3\"    | \"备品备件\"    | 3     | 523      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"从图谱资源中归纳备品备件和替换材料\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_3\"   | \"5.3\"      | \"通信与交通保障\" | 2     | 530      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"根据场景补充通信联络、交通到场和现场保障要求\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6\"     | \"6\"        | \"附件\"      | 1     | 600      | True    | \"fixed+gen\" | \"\"                          | \"提供标准附件清单骨架\"                       | \"根据场景补齐附件建议\"                                                                                                                                                                         |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_1\"   | \"6.1\"      | \"应急物资清单\"  | 2     | 610      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"根据图谱资源生成物资清单\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_2\"   | \"6.2\"      | \"联系方式清单\"  | 2     | 620      | True    | \"fixed+gen\" | \"\"                          | \"列出现场负责人、专业班组、调度、安监和外协单位联系方式。\"     | \"结合场景补充需要联系的岗位类型\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3\"   | \"6.3\"      | \"现场记录表\"   | 2     | 630      | True    | \"fixed+gen\" | \"\"                          | \"记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\" | \"结合具体场景补充记录字段\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3_1\" | \"6.3.1\"    | \"基础事件信息\"  | 3     | 631      | True    | \"fixed+gen\" | \"\"                          | \"记录事件时间、地点、设备、天气、值班和报告信息。\"         | \"补充适用的基础字段\"                                                                                                                                                                          |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3_2\" | \"6.3.2\"    | \"处置过程记录\"  | 3     | 632      | True    | \"fixed\"     | \"\"                          | \"记录处置步骤、执行人、时间点和关键决策。\"             | \"\"                                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3_3\" | \"6.3.3\"    | \"恢复情况记录\"  | 3     | 633      | True    | \"fixed\"     | \"\"                          | \"记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。\"      | \"\"                                                                                                                                                                                   |\n+-------------------------+---------------+-----------------+----------------------------------+------------+-----------+-------+----------+---------+-------------+-----------------------------+------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\nGot 56 rows\n",
+            "stderr": "",
+            "meta": {
+              "driver_mode": "client",
+              "nebula_host": "graphd",
+              "nebula_port": 9669,
+              "max_concurrency": 8
+            }
+          },
+          "id": "csySfUURu5LjiRPR",
+          "nodeId": "qXpkzZYaNZa27y8S",
+          "runningTime": 0.02
+        },
+        {
+          "moduleName": "代码运行",
+          "moduleType": "code",
+          "moduleLogo": "core/workflow/template/codeRun",
+          "customInputs": {
+            "httpRawResponse": {
+              "ok": true,
+              "duration_ms": 12,
+              "queue_wait_ms": 0,
+              "return_code": 0,
+              "errors": [],
+              "stdout": "\n+-------------------------+---------------+-----------------+----------------------------------+------------+-----------+-------+----------+---------+-------------+-----------------------------+------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| template_id             | template_name | current_version | section_id                       | section_no | title     | level | order_no | enabled | source_type | kg_field                    | fixed_text                         | gen_instruction                                                                                                                                                                      |\n+-------------------------+---------------+-----------------+----------------------------------+------------+-----------+-------+----------+---------+-------------+-----------------------------+------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1\"     | \"1\"        | \"事件特征\"    | 1     | 100      | True    | \"kg+gen\"    | \"\"                          | \"\"                                 | \"结合图谱事实与场景约束生成事件特征概述\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_1\"   | \"1.1\"      | \"事件类型\"    | 2     | 110      | True    | \"kg\"        | \"fault_name\"                | \"\"                                 | \"\"                                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_2\"   | \"1.2\"      | \"故障原因\"    | 2     | 120      | True    | \"kg+gen\"    | \"fault_cause\"               | \"\"                                 | \"基于图谱故障原因并结合现场场景说明可能诱因\"                                                                                                                                                              |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_3\"   | \"1.3\"      | \"事件范围\"    | 2     | 130      | True    | \"gen\"       | \"fault_consequence\"         | \"\"                                 | \"结合用户场景补充影响范围\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_4\"   | \"1.4\"      | \"事件危害程度\"  | 2     | 140      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"结合风险和现场约束判断危害程度\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_1_5\"   | \"1.5\"      | \"响应等级\"    | 2     | 150      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由\" |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2\"     | \"2\"        | \"应急组织与职责\" | 1     | 200      | True    | \"fixed+gen\" | \"\"                          | \"采用标准组织职责模板\"                       | \"结合场景补充角色职责\"                                                                                                                                                                         |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2_1\"   | \"2.1\"      | \"应急指挥机构\"  | 2     | 210      | True    | \"fixed+gen\" | \"\"                          | \"成立现场应急指挥组，统一组织协调应急处置。\"            | \"结合设备类型和事件场景补充指挥职责\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2_2\"   | \"2.2\"      | \"专业处置组\"   | 2     | 220      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"结合图谱资源配置专业抢修、试验、运行配合等岗位\"                                                                                                                                                            |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_2_3\"   | \"2.3\"      | \"现场安全监护组\" | 2     | 230      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"围绕安全风险补充监护、警戒和作业许可职责\"                                                                                                                                                               |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3\"     | \"3\"        | \"处置程序\"    | 1     | 300      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"按先后顺序组织程序，必要时拆分阶段\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1\"   | \"3.1\"      | \"信息报告\"    | 2     | 310      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"根据事件场景生成报告对象、报告内容和报告时限\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1_1\" | \"3.1.1\"    | \"报告对象\"    | 3     | 311      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"列出应报告的调度、运维、安监、管理和外协对象\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1_2\" | \"3.1.2\"    | \"报告内容\"    | 3     | 312      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"说明需要报告的事件信息、影响范围、风险和现场需求\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_1_3\" | \"3.1.3\"    | \"报告时限\"    | 3     | 313      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"明确首报、续报和终报时限\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2\"   | \"3.2\"      | \"先期处置\"    | 2     | 320      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"优先组织隔离、停运、警戒、排险等先期动作\"                                                                                                                                                               |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2_1\" | \"3.2.1\"    | \"现场隔离\"    | 3     | 321      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"明确隔离区域、隔离方式和防止扩大事故的要求\"                                                                                                                                                              |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2_2\" | \"3.2.2\"    | \"停运或限制运行\" | 3     | 322      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"根据设备状态生成停运、转供、限负荷或限制运行要求\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_2_3\" | \"3.2.3\"    | \"警戒与排险\"   | 3     | 323      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"根据现场风险生成警戒、疏散和排险动作\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3\"   | \"3.3\"      | \"现场研判\"    | 2     | 330      | True    | \"kg+gen\"    | \"fault_cause,fault_symptom\" | \"\"                                 | \"结合故障原因、故障现象和现场条件生成研判要点\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3_1\" | \"3.3.1\"    | \"原因研判\"    | 3     | 331      | True    | \"kg+gen\"    | \"fault_cause\"               | \"\"                                 | \"围绕图谱故障原因和现场条件推断主要诱因\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3_2\" | \"3.3.2\"    | \"现象核验\"    | 3     | 332      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"核验当前现象与典型故障现象是否一致\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_3_3\" | \"3.3.3\"    | \"风险判定\"    | 3     | 333      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"结合风险和现场状态判定作业风险与设备风险\"                                                                                                                                                               |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4\"   | \"3.4\"      | \"抢修恢复\"    | 2     | 340      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"结合应对措施生成抢修和恢复步骤\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4_1\" | \"3.4.1\"    | \"抢修准备\"    | 3     | 341      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"整理抢修前需要的人员、物资、工器具和作业条件\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4_2\" | \"3.4.2\"    | \"现场抢修\"    | 3     | 342      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"按顺序生成现场抢修动作\"                                                                                                                                                                        |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_4_3\" | \"3.4.3\"    | \"恢复运行\"    | 3     | 343      | True    | \"kg+gen\"    | \"fault_consequence\"         | \"\"                                 | \"明确恢复供电、恢复运行和恢复后观察要求\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_3_5\"   | \"3.5\"      | \"响应终止\"    | 2     | 350      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"根据风险解除、设备恢复和现场验收条件生成终止要求\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4\"     | \"4\"        | \"处置措施\"    | 1     | 400      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"结合风险与场景扩写具体措施\"                                                                                                                                                                      |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1\"   | \"4.1\"      | \"隔离与安全控制\" | 2     | 410      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"针对安全风险生成隔离、警戒、接地、验电等控制措施\"                                                                                                                                                           |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1_1\" | \"4.1.1\"    | \"隔离措施\"    | 3     | 411      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"生成停电隔离、机械隔离和区域隔离措施\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1_2\" | \"4.1.2\"    | \"安全措施\"    | 3     | 412      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"生成验电、接地、防误操作和个人防护要求\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_1_3\" | \"4.1.3\"    | \"现场警戒\"    | 3     | 413      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"生成警戒范围、人员管控和外部告知要求\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2\"   | \"4.2\"      | \"故障检查与确认\" | 2     | 420      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"结合现象和原因生成检查确认要点\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2_1\" | \"4.2.1\"    | \"故障现象检查\"  | 3     | 421      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"列出应重点检查的现场现象和异常信号\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2_2\" | \"4.2.2\"    | \"故障原因排查\"  | 3     | 422      | True    | \"kg+gen\"    | \"fault_cause\"               | \"\"                                 | \"列出需要排查的可能故障原因\"                                                                                                                                                                      |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_2_3\" | \"4.2.3\"    | \"故障点确认\"   | 3     | 423      | True    | \"kg+gen\"    | \"fault_symptom,fault_cause\" | \"\"                                 | \"结合检查结果确认故障点和故障类型\"                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3\"   | \"4.3\"      | \"现场抢修措施\"  | 2     | 430      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"将图谱措施组织成可执行抢修动作\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3_1\" | \"4.3.1\"    | \"临时处置措施\"  | 3     | 431      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"优先生成保障安全和临时恢复能力的措施\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3_2\" | \"4.3.2\"    | \"正式抢修措施\"  | 3     | 432      | True    | \"kg+gen\"    | \"response_measure\"          | \"\"                                 | \"生成正式消缺、修复、更换或治理措施\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_3_3\" | \"4.3.3\"    | \"恢复验证措施\"  | 3     | 433      | True    | \"kg+gen\"    | \"fault_symptom\"             | \"\"                                 | \"生成恢复后试验、验收和观察要求\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_4_4\"   | \"4.4\"      | \"风险防控措施\"  | 2     | 440      | True    | \"kg+gen\"    | \"safety_risk\"               | \"\"                                 | \"补充防触电、防火、防误操作和二次伤害控制要求\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5\"     | \"5\"        | \"应急保障\"    | 1     | 500      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"将资源组织成物资、人员、通信保障\"                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_1\"   | \"5.1\"      | \"人员保障\"    | 2     | 510      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"根据资源需求补充人员专业分工\"                                                                                                                                                                     |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2\"   | \"5.2\"      | \"物资装备保障\"  | 2     | 520      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"将图谱资源整理为装备、仪器、工器具和备品备件\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2_1\" | \"5.2.1\"    | \"仪器仪表\"    | 3     | 521      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"从图谱资源中归纳测量、试验和检测仪器\"                                                                                                                                                                 |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2_2\" | \"5.2.2\"    | \"工器具\"     | 3     | 522      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"从图谱资源中归纳作业工器具和安全工器具\"                                                                                                                                                                |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_2_3\" | \"5.2.3\"    | \"备品备件\"    | 3     | 523      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"从图谱资源中归纳备品备件和替换材料\"                                                                                                                                                                  |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_5_3\"   | \"5.3\"      | \"通信与交通保障\" | 2     | 530      | True    | \"gen\"       | \"\"                          | \"\"                                 | \"根据场景补充通信联络、交通到场和现场保障要求\"                                                                                                                                                             |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6\"     | \"6\"        | \"附件\"      | 1     | 600      | True    | \"fixed+gen\" | \"\"                          | \"提供标准附件清单骨架\"                       | \"根据场景补齐附件建议\"                                                                                                                                                                         |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_1\"   | \"6.1\"      | \"应急物资清单\"  | 2     | 610      | True    | \"kg+gen\"    | \"emergency_resource\"        | \"\"                                 | \"根据图谱资源生成物资清单\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_2\"   | \"6.2\"      | \"联系方式清单\"  | 2     | 620      | True    | \"fixed+gen\" | \"\"                          | \"列出现场负责人、专业班组、调度、安监和外协单位联系方式。\"     | \"结合场景补充需要联系的岗位类型\"                                                                                                                                                                    |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3\"   | \"6.3\"      | \"现场记录表\"   | 2     | 630      | True    | \"fixed+gen\" | \"\"                          | \"记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\" | \"结合具体场景补充记录字段\"                                                                                                                                                                       |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3_1\" | \"6.3.1\"    | \"基础事件信息\"  | 3     | 631      | True    | \"fixed+gen\" | \"\"                          | \"记录事件时间、地点、设备、天气、值班和报告信息。\"         | \"补充适用的基础字段\"                                                                                                                                                                          |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3_2\" | \"6.3.2\"    | \"处置过程记录\"  | 3     | 632      | True    | \"fixed\"     | \"\"                          | \"记录处置步骤、执行人、时间点和关键决策。\"             | \"\"                                                                                                                                                                                   |\n| \"tpl_default_emergency\" | \"默认应急预案模板\"    | \"v1\"            | \"tpls_default_emergency_1_6_3_3\" | \"6.3.3\"    | \"恢复情况记录\"  | 3     | 633      | True    | \"fixed\"     | \"\"                          | \"记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。\"      | \"\"                                                                                                                                                                                   |\n+-------------------------+---------------+-----------------+----------------------------------+------------+-----------+-------+----------+---------+-------------+-----------------------------+------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\nGot 56 rows\n",
+              "stderr": "",
+              "meta": {
+                "driver_mode": "client",
+                "nebula_host": "graphd",
+                "nebula_port": 9669,
+                "max_concurrency": 8
+              }
+            }
+          },
+          "customOutputs": {
+            "result": {
+              "template_id": "tpl_default_emergency",
+              "template_name": "默认应急预案模板",
+              "current_version": "v1",
+              "chapter_count": 6,
+              "chapters": [
+                {
+                  "chapter_no": "1",
+                  "title": "事件特征",
+                  "section_count": 6,
+                  "text": "## 第1章 事件特征\n内容来源：kg+gen\n生成要求：结合图谱事实与场景约束生成事件特征概述\n\n### 1.1 事件类型\n内容来源：kg\n图谱字段：fault_name\n\n### 1.2 故障原因\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：基于图谱故障原因并结合现场场景说明可能诱因\n\n### 1.3 事件范围\n内容来源：gen\n图谱字段：fault_consequence\n生成要求：结合用户场景补充影响范围\n\n### 1.4 事件危害程度\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场约束判断危害程度\n\n### 1.5 响应等级\n内容来源：gen\n生成要求：响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由"
+                },
+                {
+                  "chapter_no": "2",
+                  "title": "应急组织与职责",
+                  "section_count": 4,
+                  "text": "## 第2章 应急组织与职责\n内容来源：fixed+gen\n预定义文本：采用标准组织职责模板\n生成要求：结合场景补充角色职责\n\n### 2.1 应急指挥机构\n内容来源：fixed+gen\n预定义文本：成立现场应急指挥组，统一组织协调应急处置。\n生成要求：结合设备类型和事件场景补充指挥职责\n\n### 2.2 专业处置组\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：结合图谱资源配置专业抢修、试验、运行配合等岗位\n\n### 2.3 现场安全监护组\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：围绕安全风险补充监护、警戒和作业许可职责"
+                },
+                {
+                  "chapter_no": "3",
+                  "title": "处置程序",
+                  "section_count": 18,
+                  "text": "## 第3章 处置程序\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n内容来源：gen\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n内容来源：gen\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n内容来源：gen\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n内容来源：gen\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n内容来源：kg+gen\n图谱字段：fault_cause,fault_symptom\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n内容来源：kg+gen\n图谱字段：fault_consequence\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n内容来源：gen\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求"
+                },
+                {
+                  "chapter_no": "4",
+                  "title": "处置措施",
+                  "section_count": 14,
+                  "text": "## 第4章 处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合风险与场景扩写具体措施\n\n### 4.1 隔离与安全控制\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：针对安全风险生成隔离、警戒、接地、验电等控制措施\n\n#### 4.1.1 隔离措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成停电隔离、机械隔离和区域隔离措施\n\n#### 4.1.2 安全措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成验电、接地、防误操作和个人防护要求\n\n#### 4.1.3 现场警戒\n内容来源：gen\n生成要求：生成警戒范围、人员管控和外部告知要求\n\n### 4.2 故障检查与确认\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：结合现象和原因生成检查确认要点\n\n#### 4.2.1 故障现象检查\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：列出应重点检查的现场现象和异常信号\n\n#### 4.2.2 故障原因排查\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：列出需要排查的可能故障原因\n\n#### 4.2.3 故障点确认\n内容来源：kg+gen\n图谱字段：fault_symptom,fault_cause\n生成要求：结合检查结果确认故障点和故障类型\n\n### 4.3 现场抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：将图谱措施组织成可执行抢修动作\n\n#### 4.3.1 临时处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先生成保障安全和临时恢复能力的措施\n\n#### 4.3.2 正式抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：生成正式消缺、修复、更换或治理措施\n\n#### 4.3.3 恢复验证措施\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：生成恢复后试验、验收和观察要求\n\n### 4.4 风险防控措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：补充防触电、防火、防误操作和二次伤害控制要求"
+                },
+                {
+                  "chapter_no": "5",
+                  "title": "应急保障",
+                  "section_count": 7,
+                  "text": "## 第5章 应急保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将资源组织成物资、人员、通信保障\n\n### 5.1 人员保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据资源需求补充人员专业分工\n\n### 5.2 物资装备保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将图谱资源整理为装备、仪器、工器具和备品备件\n\n#### 5.2.1 仪器仪表\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳测量、试验和检测仪器\n\n#### 5.2.2 工器具\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳作业工器具和安全工器具\n\n#### 5.2.3 备品备件\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳备品备件和替换材料\n\n### 5.3 通信与交通保障\n内容来源：gen\n生成要求：根据场景补充通信联络、交通到场和现场保障要求"
+                },
+                {
+                  "chapter_no": "6",
+                  "title": "附件",
+                  "section_count": 7,
+                  "text": "## 第6章 附件\n内容来源：fixed+gen\n预定义文本：提供标准附件清单骨架\n生成要求：根据场景补齐附件建议\n\n### 6.1 应急物资清单\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据图谱资源生成物资清单\n\n### 6.2 联系方式清单\n内容来源：fixed+gen\n预定义文本：列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n生成要求：结合场景补充需要联系的岗位类型\n\n### 6.3 现场记录表\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n生成要求：结合具体场景补充记录字段\n\n#### 6.3.1 基础事件信息\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、天气、值班和报告信息。\n生成要求：补充适用的基础字段\n\n#### 6.3.2 处置过程记录\n内容来源：fixed\n预定义文本：记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n内容来源：fixed\n预定义文本：记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+                }
+              ]
+            }
+          },
+          "codeLog": "",
+          "id": "pHpRbUZpF5vC1cgi",
+          "nodeId": "qc6N4phsDyrhSIFA",
+          "runningTime": 0.01
+        },
+        {
+          "moduleName": "common:core.module.template.self_output",
+          "moduleType": "pluginOutput",
+          "moduleLogo": "core/workflow/template/pluginOutput",
+          "pluginOutput": {
+            "切分结果": {
+              "template_id": "tpl_default_emergency",
+              "template_name": "默认应急预案模板",
+              "current_version": "v1",
+              "chapter_count": 6,
+              "chapters": [
+                {
+                  "chapter_no": "1",
+                  "title": "事件特征",
+                  "section_count": 6,
+                  "text": "## 第1章 事件特征\n内容来源：kg+gen\n生成要求：结合图谱事实与场景约束生成事件特征概述\n\n### 1.1 事件类型\n内容来源：kg\n图谱字段：fault_name\n\n### 1.2 故障原因\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：基于图谱故障原因并结合现场场景说明可能诱因\n\n### 1.3 事件范围\n内容来源：gen\n图谱字段：fault_consequence\n生成要求：结合用户场景补充影响范围\n\n### 1.4 事件危害程度\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场约束判断危害程度\n\n### 1.5 响应等级\n内容来源：gen\n生成要求：响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由"
+                },
+                {
+                  "chapter_no": "2",
+                  "title": "应急组织与职责",
+                  "section_count": 4,
+                  "text": "## 第2章 应急组织与职责\n内容来源：fixed+gen\n预定义文本：采用标准组织职责模板\n生成要求：结合场景补充角色职责\n\n### 2.1 应急指挥机构\n内容来源：fixed+gen\n预定义文本：成立现场应急指挥组，统一组织协调应急处置。\n生成要求：结合设备类型和事件场景补充指挥职责\n\n### 2.2 专业处置组\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：结合图谱资源配置专业抢修、试验、运行配合等岗位\n\n### 2.3 现场安全监护组\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：围绕安全风险补充监护、警戒和作业许可职责"
+                },
+                {
+                  "chapter_no": "3",
+                  "title": "处置程序",
+                  "section_count": 18,
+                  "text": "## 第3章 处置程序\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n内容来源：gen\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n内容来源：gen\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n内容来源：gen\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n内容来源：gen\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n内容来源：kg+gen\n图谱字段：fault_cause,fault_symptom\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n内容来源：kg+gen\n图谱字段：fault_consequence\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n内容来源：gen\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求"
+                },
+                {
+                  "chapter_no": "4",
+                  "title": "处置措施",
+                  "section_count": 14,
+                  "text": "## 第4章 处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合风险与场景扩写具体措施\n\n### 4.1 隔离与安全控制\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：针对安全风险生成隔离、警戒、接地、验电等控制措施\n\n#### 4.1.1 隔离措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成停电隔离、机械隔离和区域隔离措施\n\n#### 4.1.2 安全措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成验电、接地、防误操作和个人防护要求\n\n#### 4.1.3 现场警戒\n内容来源：gen\n生成要求：生成警戒范围、人员管控和外部告知要求\n\n### 4.2 故障检查与确认\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：结合现象和原因生成检查确认要点\n\n#### 4.2.1 故障现象检查\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：列出应重点检查的现场现象和异常信号\n\n#### 4.2.2 故障原因排查\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：列出需要排查的可能故障原因\n\n#### 4.2.3 故障点确认\n内容来源：kg+gen\n图谱字段：fault_symptom,fault_cause\n生成要求：结合检查结果确认故障点和故障类型\n\n### 4.3 现场抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：将图谱措施组织成可执行抢修动作\n\n#### 4.3.1 临时处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先生成保障安全和临时恢复能力的措施\n\n#### 4.3.2 正式抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：生成正式消缺、修复、更换或治理措施\n\n#### 4.3.3 恢复验证措施\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：生成恢复后试验、验收和观察要求\n\n### 4.4 风险防控措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：补充防触电、防火、防误操作和二次伤害控制要求"
+                },
+                {
+                  "chapter_no": "5",
+                  "title": "应急保障",
+                  "section_count": 7,
+                  "text": "## 第5章 应急保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将资源组织成物资、人员、通信保障\n\n### 5.1 人员保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据资源需求补充人员专业分工\n\n### 5.2 物资装备保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将图谱资源整理为装备、仪器、工器具和备品备件\n\n#### 5.2.1 仪器仪表\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳测量、试验和检测仪器\n\n#### 5.2.2 工器具\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳作业工器具和安全工器具\n\n#### 5.2.3 备品备件\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳备品备件和替换材料\n\n### 5.3 通信与交通保障\n内容来源：gen\n生成要求：根据场景补充通信联络、交通到场和现场保障要求"
+                },
+                {
+                  "chapter_no": "6",
+                  "title": "附件",
+                  "section_count": 7,
+                  "text": "## 第6章 附件\n内容来源：fixed+gen\n预定义文本：提供标准附件清单骨架\n生成要求：根据场景补齐附件建议\n\n### 6.1 应急物资清单\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据图谱资源生成物资清单\n\n### 6.2 联系方式清单\n内容来源：fixed+gen\n预定义文本：列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n生成要求：结合场景补充需要联系的岗位类型\n\n### 6.3 现场记录表\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n生成要求：结合具体场景补充记录字段\n\n#### 6.3.1 基础事件信息\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、天气、值班和报告信息。\n生成要求：补充适用的基础字段\n\n#### 6.3.2 处置过程记录\n内容来源：fixed\n预定义文本：记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n内容来源：fixed\n预定义文本：记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+                }
+              ]
+            }
+          },
+          "id": "qpLBeUwBSQhTbWkY",
+          "nodeId": "pluginOutput",
+          "runningTime": 0
+        }
+      ],
+      "newVariables": {},
+      "id": "",
+      "model": "",
+      "usage": {
+        "prompt_tokens": 1,
+        "completion_tokens": 1,
+        "total_tokens": 1
+      },
+      "choices": [
+        {
+          "message": {
+            "role": "assistant",
+            "content": ""
+          },
+          "finish_reason": "stop",
+          "index": 0
+        }
+      ]
+    }
+  },
+  "parallel_generations": [
+    {
+      "chapter_no": "1",
+      "title": "事件特征",
+      "section_count": 6,
+      "template_text": "## 第1章 事件特征\n内容来源：kg+gen\n生成要求：结合图谱事实与场景约束生成事件特征概述\n\n### 1.1 事件类型\n内容来源：kg\n图谱字段：fault_name\n\n### 1.2 故障原因\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：基于图谱故障原因并结合现场场景说明可能诱因\n\n### 1.3 事件范围\n内容来源：gen\n图谱字段：fault_consequence\n生成要求：结合用户场景补充影响范围\n\n### 1.4 事件危害程度\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场约束判断危害程度\n\n### 1.5 响应等级\n内容来源：gen\n生成要求：响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由",
+      "elapsed_sec": 11.747,
+      "response": {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "## 第1章 事件特征\n\n[GEN] 站内光缆经过高压断路器间隔后发生通信中断，导致该间隔对应的保护通道退出运行。现场运维人员应迅速确认中断点位置，评估对保护系统的影响，并立即启动应急抢修流程，确保电力系统安全稳定运行。\n\n### 1.1 事件类型\n\n[GEN] 站内光缆中断故障，具体为高压断路器间隔内光缆通信中断，引发保护通道退出。\n\n### 1.2 故障原因\n\n[GEN] 高压断路器间隔内光缆中断的可能诱因包括：光缆敷设时未做足够防护，断路器分合闸操作产生的机械振动导致光缆损伤或断裂；间隔内小动物（如老鼠）啃咬光缆；光缆接头盒密封不良进水导致光纤衰耗增大直至中断；运维过程中人为误碰或施工挖掘损伤光缆；光缆自然老化或长期受力疲劳断裂。\n\n### 1.3 事件范围\n\n[GEN] 本次故障直接影响高压断路器间隔所对应的保护通道，导致该线路的主保护（如纵联差动保护、距离保护）退出运行。若该线路为重要联络线或送出线路，将导致对侧变电站相应保护通道同时退出，降低线路故障时的快速切除能力。影响范围包括本站该间隔的二次设备、通信设备以及相关联的调度自动化系统。\n\n### 1.4 事件危害程度\n\n[GEN] 保护通道退出后，线路失去主保护，仅靠后备保护（如三段式距离保护、零序保护）动作，故障切除时间将延长，可能造成设备过热、系统稳定水平下降，甚至引发线路连锁跳闸或系统振荡。若线路发生永久性故障，后备保护动作可能需配合断路器失灵保护，事故扩大风险较高。同时，光缆中断本身不直接导致人身触电或火灾，但抢修过程中若操作不当可能引发二次伤害。\n\n### 1.5 响应等级\n\n[GEN] 响应等级判定为III级。判定理由：故障导致高压断路器对应保护通道退出，属于局部停运、保护动作，需现场紧急抢修恢复，影响范围限于该间隔，未造成人员伤亡或大面积停电，班组及运维单位可自主处置，符合III级响应特征。"
+            }
+          }
+        ],
+        "responseData": [
+          {
+            "moduleName": "workflow:template.plugin_start",
+            "moduleType": "pluginInput",
+            "moduleLogo": "core/workflow/template/workflowStart",
+            "id": "cETJQINI7M6dlu60",
+            "nodeId": "pluginInput",
+            "runningTime": 0
+          },
+          {
+            "moduleName": "AI 对话",
+            "moduleType": "chatNode",
+            "moduleLogo": "core/workflow/template/aiChat",
+            "totalPoints": 0,
+            "model": "DSV4F",
+            "inputTokens": 1842,
+            "outputTokens": 854,
+            "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "reasoningText": "我们根据用户问题、故障与场景提取结果、模板文本进行生成。注意：图谱检索得到的方案素材为空，所以没有[KG]内容可用。只能基于[GEN]和可能的[FIX]内容。模板文本中只有第1章事件特征的章节和小节定义，没有固定文本。所以我们需要用[GEN]生成所有内容。注意来源标记规则：只能使用[KG]、[GEN]、[FIX]。由于图谱素材为空，所有内容都是[GEN]。还要注意多故障融合：这里只有一个故障二级节点\"光缆中断故障\"，所以不需要融合。但是故障对象是\"高压断路器\"，事件场景是\"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\"。我们需要严格按照模板章节顺序输出。模板中只有\"## 第1章 事件特征\"及其下小节。不要输出其他章节。总长度控制在2500-4000字，但这里只有一章，内容可能较少，但也要尽量充实。\n\n注意：响应等级判断：根据规则，光缆中断导致保护通道退出，局部停运、保护动作，需现场抢修恢复，影响中等，应判定为III级。输出等级和判定理由。\n\n事件特征概述：结合场景说明。\n\n故障原因：光缆中断可能原因：外力破坏、鼠害、老化、施工挖断等。由于图谱未提供，我们根据常识和场景生成。\n\n事件范围：影响该保护通道对应的线路保护，可能造成线路保护退出，需考虑对侧站配合。\n\n事件危害程度：保护通道退出，若线路发生故障将失去主保护，可能扩大事故。\n\n响应等级：III级。\n\n注意：设备名称规范化：必须使用\"高压断路器\"，不要用\"该设备\"等。\n\n我们按顺序输出。",
+            "historyPreview": [
+              {
+                "obj": "System",
+                "value": "你是“电力设备场景化应急预案生成器”，面向一线运维和应急管理人员输出结构化现场处置预案。\n\n你会收到 4 类输入：\n1. 用户原问题：站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。\n2. 故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}\n3. 图谱检索得到的方案素材：当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。\n4. 模板文本：## 第1章 事件特征\n内容来源：kg+gen\n生成要求：结合图谱事实与场景约束生成事件特征概述\n\n### 1.1 事件类型\n内容来源：kg\n图谱字段：fault_name\n\n### 1.2 故障原因\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：基于图谱故障原因并结合现场场景说明可能诱因\n\n### 1.3 事件范围\n内容来源：gen\n图谱字段：fault_consequence\n生成要求：结合用户场景补充影响范围\n\n### 1.4 事件危害程度\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场约束判断危害程度\n\n### 1.5 响应等级\n内容来源：gen\n生成要求：响应等级判定参考规则：I级适用于人员伤亡、大面积停电、爆炸倒塔、主网关键设备严重事故；II级适用于明显人身/火灾风险、较大范围停电、关键设备停运、需多部门联动；III级适用于局部停运、保护动作、需现场抢修恢复、影响中等；IV级适用于局部缺陷、告警、可控异常、班组可处置；若信息不足则输出“未明确”。只输出对应的等级和判定理由即可，无需描述不选其他等级的理由\n\n你的任务：\n1. 按模板章节顺序生成完整预案，不要改章节顺序。\n2. 模板中的内容来源，图谱字段，生成要求仅作为生成指引，在输出中不能把这三个字段写出来。\n3. 不要输出像“- 调度机构：xxx”这样的内容，而要写成“应立即向调度机构、运维管理单位等部门报告”这种完整的句子。只能使用模板中的标题分层级，不能自己加短横杠来分级。\n4. 只基于图谱素材、模板要求和用户场景生成，不要脱离输入随意编造专业知识。\n1. 应急资源必须体现在“应急保障”“应急物资清单”等章节中。\n2. 如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段。\n 严格要求：\n1. 只能生成当前传入模板中的章节与小节，不得补写其他章节。\n2. 不得输出上一章、下一章、总则、附件或任何未在当前模板中出现的标题。\n3. 如果当前模板以“## 第2章 ...”开头，输出必须也从这一章开始，不得从“第1章”开始。\n4. 如果当前模板是“附件”章节，只能输出附件相关内容。\n5. 不要根据历史回答续写，不要补全整篇预案。\n来源标记规则：\n1. 只允许使用三种标记：[KG]、[GEN]、[FIX]。\n2. 直接来自知识图谱检索结果的内容，必须标记为 [KG]。\n3. 根据用户场景自动补全、推导、组织、排序、扩展出的内容，必须标记为 [GEN]。\n4. 标签能且仅能位于一段话的开头，要写下一段话，必须换行后生成标签再写，不能出现一个段落里有两个标签的问题。\n5. 直接来自模板中的预定义固定文本，必须标记为 [FIX]。\n6. 不允许写混合标记。\n7. 同一个句子、同一个编号条目、同一个项目符号内，只能出现一种来源标记。\n8. 绝对禁止输出 `[KG]&[GEN]`、`[KG] & [GEN]`、`[KG]/[GEN]`、`[KG][GEN]`、`[FIX]&[GEN]`、`[FIX][KG]` 等任何组合式来源标记。也禁止在各级标题上加标签，标签只能加载内容上。\n9. 绝对禁止用 `&`、`/`、`+` 把不同来源标记连接在一起。\n10. 一条内容如果同时包含图谱事实、模板固定文本、模型补全，必须拆成多条相邻内容分别标注。\n11. `[FIX]` 只用于模板里明确存在的固定文本（但是不包括标题，只包括固定的内容），不要把你自己写的套话标成 `[FIX]`。\n12. `[KG]` 只用于图谱素材中的故障原因、现象、措施、后果、风险、资源等内容。\n13. `[GEN]` 只用于场景化补充、组织安排、时序安排、响应等级判断、约束解释、恢复策略等模型生成内容。\n14. 最终正文中保留这些标记，不要在文末再解释。\n多故障融合规则：\n1. 若“故障与场景提取结果”中存在多个故障二级节点，必须将其视为“同一事件中的复合故障”，输出时要进行融合表达，不能按每个故障分别整段平铺罗列。\n2. 若存在“主故障二级节点”，应以主故障为主线组织内容，其余故障作为伴随故障、诱发因素、叠加风险或并发异常纳入分析。\n3. 对于故障原因、故障后果、安全风险、应对措施等内容：\n  - 相近或重复的图谱信息必须合并概括；\n  - 不得使用“故障A-故障原因：... 故障B-故障原因：...”这种逐条照抄式表达；\n  - 应改写为面向现场事件的综合描述。\n4. “事件类型”只能输出一个综合事件类型描述，不得把多个故障名称直接并列成一串。\n5. “故障原因”应围绕本次复合故障总结 2~4 个主要原因或诱因，不得把每个故障的完整原因原文全部依次照搬。\n6. “事件范围”“事件危害程度”应描述多故障叠加后的整体影响，不得逐个故障重复罗列完整后果和风险。\n7. “响应等级”只能给出一个最终等级判断，不得分别对多个故障单独评级。\n8. 当图谱素材中包含多个故障的多条 [KG] 内容时，可以拆成多个 [KG] 段落或条目，但每条都必须服务于“同一综合事件”的表达，不能变成“多个独立故障说明书”。\n9. 若多个故障之间存在明显主次关系，应优先保留主故障的细节，其他故障只保留与当前事件直接相关的关键点。\n10. 在任一小节中，若同类KG信息超过3条，必须先归纳再输出，不得机械堆砌。\n输出要求：\n- 不要输出总标题。\n- 严格依据模板文本中的章节和小节组织内容。\n- 总长度控制在 2500~4000 字。\n- 语言要正式、清晰、可执行。\n- 必须体现：响应等级、故障对象、事件场景、关键处置要求、特殊约束。\n\n- 设备名称规范化：全文所有提到设备的地方，必须使用\"故障与场景提取结果\"中\"故障对象\"字段给出的具体设备实名（如\"高压断路器\"、\"变压器\"等），严禁照搬用户原问题中的模糊指代（如\"某110kV设备\"\"该设备\"\"本设备\"等）。在首次提及设备时明确写出完整设备名称。\n- 若模板某节是固定文本为主，先输出对应 [FIX] 内容，再按需要补充 [GEN] 或 [KG]内容。若只包含FIX，则只输出FIX的内容，不要输出其他任何东西。\n- 每个小节下的主要要点都应带来源标记。\n- 生成完成前自检：全文不得出现任何组合式来源标记；如出现必须拆分重写。\n\n不要输出 JSON，不要输出解释，不要说“作为 AI”。直接输出成文预案。"
+              },
+              {
+                "obj": "Human",
+                "value": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。"
+              },
+              {
+                "obj": "AI",
+                "value": "## 第1章 事件特征\n\n[GEN] 站内光缆经过高压断路器间隔后发生通信中断，导致该间隔对应的保护通道退出运行。现场运维人员应迅速确认中断点位置，评估对保护系统的影响，并立即启动应急抢修流程，确保电力系统安全稳定运行。\n\n### 1.1 事件类型\n\n[GEN] 站内光缆中断故障，具体为高压断路器间隔内光缆通信中断，引发保护通道退出。\n\n### 1.2 故障原因\n\n[GEN] 高压断路器间隔内光缆中断的可能诱因包括：光缆敷设时未做足够防护，断路器分合闸操作产生的机械振动导致光缆损伤或断裂；间隔内小动物（如老鼠）啃咬光缆；光缆接头盒密封不良进水导致光纤衰耗增大直至中断；运维过程中人为误碰或施工挖掘损伤光缆；光缆自然老化或长期受力疲劳断裂。\n\n### 1.3 事件范围\n\n[GEN] 本次故障直接影响高压断路器间隔所对应的保护通道，导致该线路的主保护（如纵联差动保护、距离保护）退出运行。若该线路为重要联络线或送出线路，将导致对侧变电站相应保护通道同时退出，降低线路故障时的快速切除能力。影响范围包括本站该间隔的二次设备、通信设备以及相关联的调度自动化系统。\n\n### 1.4 事件危害程度\n\n[GEN] 保护通道退出后，线路失去主保护，仅靠后备保护（如三段式距离保护、零序保护）动作，故障切除时间将延长，可能造成设备过热、系统稳定水平下降，甚至引发线路连锁跳闸或系统振荡。若线路发生永久性故障，后备保护动作可能需配合断路器失灵保护，事故扩大风险较高。同时，光缆中断本身不直接导致人身触电或火灾，但抢修过程中若操作不当可能引发二次伤害。\n\n### 1.5 响应等级\n\n[GEN] 响应等级判定为III级。判定理由：故障导致高压断路器对应保护通道退出，属于局部停运、保护动作，需现场紧急抢修恢复，影响范围限于该间隔，未造成人员伤亡或大面积停电，班组及运维单位可自主处置，符合III级响应特征。"
+              }
+            ],
+            "contextTotalLen": 3,
+            "finishReason": "stop",
+            "llmRequestIds": [
+              "ooae_zigDAYjuIu6"
+            ],
+            "id": "m7cHfG5HLiHz09Sf",
+            "nodeId": "bGnjDQW0yaqJ8a8V",
+            "runningTime": 11.67
+          },
+          {
+            "moduleName": "common:core.module.template.self_output",
+            "moduleType": "pluginOutput",
+            "moduleLogo": "core/workflow/template/pluginOutput",
+            "pluginOutput": {
+              "template": "## 第1章 事件特征\n\n[GEN] 站内光缆经过高压断路器间隔后发生通信中断，导致该间隔对应的保护通道退出运行。现场运维人员应迅速确认中断点位置，评估对保护系统的影响，并立即启动应急抢修流程，确保电力系统安全稳定运行。\n\n### 1.1 事件类型\n\n[GEN] 站内光缆中断故障，具体为高压断路器间隔内光缆通信中断，引发保护通道退出。\n\n### 1.2 故障原因\n\n[GEN] 高压断路器间隔内光缆中断的可能诱因包括：光缆敷设时未做足够防护，断路器分合闸操作产生的机械振动导致光缆损伤或断裂；间隔内小动物（如老鼠）啃咬光缆；光缆接头盒密封不良进水导致光纤衰耗增大直至中断；运维过程中人为误碰或施工挖掘损伤光缆；光缆自然老化或长期受力疲劳断裂。\n\n### 1.3 事件范围\n\n[GEN] 本次故障直接影响高压断路器间隔所对应的保护通道，导致该线路的主保护（如纵联差动保护、距离保护）退出运行。若该线路为重要联络线或送出线路，将导致对侧变电站相应保护通道同时退出，降低线路故障时的快速切除能力。影响范围包括本站该间隔的二次设备、通信设备以及相关联的调度自动化系统。\n\n### 1.4 事件危害程度\n\n[GEN] 保护通道退出后，线路失去主保护，仅靠后备保护（如三段式距离保护、零序保护）动作，故障切除时间将延长，可能造成设备过热、系统稳定水平下降，甚至引发线路连锁跳闸或系统振荡。若线路发生永久性故障，后备保护动作可能需配合断路器失灵保护，事故扩大风险较高。同时，光缆中断本身不直接导致人身触电或火灾，但抢修过程中若操作不当可能引发二次伤害。\n\n### 1.5 响应等级\n\n[GEN] 响应等级判定为III级。判定理由：故障导致高压断路器对应保护通道退出，属于局部停运、保护动作，需现场紧急抢修恢复，影响范围限于该间隔，未造成人员伤亡或大面积停电，班组及运维单位可自主处置，符合III级响应特征。"
+            },
+            "id": "bQgsywURp9Tu3hLU",
+            "nodeId": "pluginOutput",
+            "runningTime": 0
+          }
+        ]
+      },
+      "output_text": "## 第1章 事件特征\n\n[GEN] 站内光缆经过高压断路器间隔后发生通信中断，导致该间隔对应的保护通道退出运行。现场运维人员应迅速确认中断点位置，评估对保护系统的影响，并立即启动应急抢修流程，确保电力系统安全稳定运行。\n\n### 1.1 事件类型\n\n[GEN] 站内光缆中断故障，具体为高压断路器间隔内光缆通信中断，引发保护通道退出。\n\n### 1.2 故障原因\n\n[GEN] 高压断路器间隔内光缆中断的可能诱因包括：光缆敷设时未做足够防护，断路器分合闸操作产生的机械振动导致光缆损伤或断裂；间隔内小动物（如老鼠）啃咬光缆；光缆接头盒密封不良进水导致光纤衰耗增大直至中断；运维过程中人为误碰或施工挖掘损伤光缆；光缆自然老化或长期受力疲劳断裂。\n\n### 1.3 事件范围\n\n[GEN] 本次故障直接影响高压断路器间隔所对应的保护通道，导致该线路的主保护（如纵联差动保护、距离保护）退出运行。若该线路为重要联络线或送出线路，将导致对侧变电站相应保护通道同时退出，降低线路故障时的快速切除能力。影响范围包括本站该间隔的二次设备、通信设备以及相关联的调度自动化系统。\n\n### 1.4 事件危害程度\n\n[GEN] 保护通道退出后，线路失去主保护，仅靠后备保护（如三段式距离保护、零序保护）动作，故障切除时间将延长，可能造成设备过热、系统稳定水平下降，甚至引发线路连锁跳闸或系统振荡。若线路发生永久性故障，后备保护动作可能需配合断路器失灵保护，事故扩大风险较高。同时，光缆中断本身不直接导致人身触电或火灾，但抢修过程中若操作不当可能引发二次伤害。\n\n### 1.5 响应等级\n\n[GEN] 响应等级判定为III级。判定理由：故障导致高压断路器对应保护通道退出，属于局部停运、保护动作，需现场紧急抢修恢复，影响范围限于该间隔，未造成人员伤亡或大面积停电，班组及运维单位可自主处置，符合III级响应特征。"
+    },
+    {
+      "chapter_no": "2",
+      "title": "应急组织与职责",
+      "section_count": 4,
+      "template_text": "## 第2章 应急组织与职责\n内容来源：fixed+gen\n预定义文本：采用标准组织职责模板\n生成要求：结合场景补充角色职责\n\n### 2.1 应急指挥机构\n内容来源：fixed+gen\n预定义文本：成立现场应急指挥组，统一组织协调应急处置。\n生成要求：结合设备类型和事件场景补充指挥职责\n\n### 2.2 专业处置组\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：结合图谱资源配置专业抢修、试验、运行配合等岗位\n\n### 2.3 现场安全监护组\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：围绕安全风险补充监护、警戒和作业许可职责",
+      "elapsed_sec": 12.447,
+      "response": {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "## 第2章 应急组织与职责\n\n### 2.1 应急指挥机构\n[FIX] 成立现场应急指挥组，统一组织协调应急处置。  \n[GEN] 现场应急指挥组由运维管理单位、调度机构及相关专业部门人员组成，负责针对高压断路器间隔内光缆中断导致保护通道退出的故障，统筹指挥抢修工作、协调资源调配、下达操作指令，并向上级主管部门报告事态进展。  \n[GEN] 指挥组组长由运维管理单位分管领导担任，负责全面决策；副组长由调度机构值班负责人担任，负责应急处置中的运行方式调整与安全管控。  \n[GEN] 应立即向调度机构、运维管理单位等部门报告故障情况，包括光缆中断位置、保护通道退出影响范围及初步处置计划。  \n\n### 2.2 专业处置组\n[GEN] 专业处置组由通信专业抢修人员、继电保护专业人员、高压断路器运维人员及试验人员组成，负责光缆中断故障的现场勘查、修复及恢复工作。  \n[GEN] 通信专业抢修人员应在确保安全的前提下迅速排查光缆断点，完成光缆熔接或更换，并测试通信通道恢复情况。  \n[GEN] 继电保护专业人员负责确认保护装置状态，在光缆修复后配合进行保护通道联调及传动试验，确保保护功能恢复正常。  \n[GEN] 高压断路器运维人员配合执行断路器间隔的隔离、接地及恢复操作，提供间隔内设备图纸及现场条件说明。  \n[GEN] 试验人员负责对修复后的光缆及保护通道进行测试，出具合格报告后方可恢复保护运行。  \n\n### 2.3 现场安全监护组\n[GEN] 现场安全监护组由安全监察人员、工作许可人及专职监护人员组成，负责应急处置全过程的安全监督、作业许可和风险管控。  \n[GEN] 在高压断路器间隔内作业时，必须严格执行停电、验电、接地等安全措施，防止误入带电间隔或误操作断路器。  \n[GEN] 应设置专职监护人，对光缆抢修作业进行全程监护，重点盯防高空作业、有限空间作业及带电设备附近作业的风险。  \n[GEN] 工作许可人负责办理工作票，确认安全措施已完善，并与调度核实保护退出期间的运行方式变更许可。  \n[GEN] 现场应设置警戒区域，无关人员禁止进入，防止因通信中断导致保护误动或人员触电事故。"
+            }
+          }
+        ],
+        "responseData": [
+          {
+            "moduleName": "workflow:template.plugin_start",
+            "moduleType": "pluginInput",
+            "moduleLogo": "core/workflow/template/workflowStart",
+            "id": "bfHn11YDIzWbeNrn",
+            "nodeId": "pluginInput",
+            "runningTime": 0
+          },
+          {
+            "moduleName": "AI 对话",
+            "moduleType": "chatNode",
+            "moduleLogo": "core/workflow/template/aiChat",
+            "totalPoints": 0,
+            "model": "DSV4F",
+            "inputTokens": 1721,
+            "outputTokens": 1015,
+            "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "reasoningText": "我们根据用户输入和模板要求生成预案。用户问题：站内光缆经过断路器间隔后通信中断，保护通道退出。故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}。图谱检索结果为空（所有字段都是\"未检索到\"）。模板文本为第2章应急组织与职责，包含3个小节：2.1应急指挥机构、2.2专业处置组、2.3现场安全监护组。要求：按模板章节顺序生成，不要改顺序；不能输出内容来源、图谱字段、生成要求等字段；使用完整句子；只基于图谱素材、模板要求和用户场景生成；应急资源体现在后续章节（但模板只有第2章，没有后续章节，注意模板只有第2章，我们只能生成第2章的内容，不能补写其他章节。但用户要求\"应急资源必须体现在“应急保障”“应急物资清单”等章节中\"，但当前模板没有这些章节，所以我们在第2章中不涉及应急资源，因为不能超出模板。严格遵守：只能生成当前传入模板中的章节与小节。所以只能输出第2章的内容。另外用户要求“如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段”，但用户问题未提及双阶段，可以忽略。来源标记使用[KG]、[GEN]、[FIX]。由于图谱没有数据，所以[KG]内容很少，需要根据场景生成[GEN]内容。模板有预定义文本：2.1有“成立现场应急指挥组，统一组织协调应急处置。”这是[FIX]。2.2和2.3没有预定义文本，需要根据图谱字段生成，但图谱为空，所以只能模型生成[GEN]。注意安全要求：不能编造专业知识，但可以根据常见应急组织职责进行合理补充。输出时每个句子开头加标记。标题不能加标记。先输出## 第2章 应急组织与职责，然后2.1等。",
+            "historyPreview": [
+              {
+                "obj": "System",
+                "value": "你是“电力设备场景化应急预案生成器”，面向一线运维和应急管理人员输出结构化现场处置预案。\n\n你会收到 4 类输入：\n1. 用户原问题：站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。\n2. 故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}\n3. 图谱检索得到的方案素材：当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。\n4. 模板文本：## 第2章 应急组织与职责\n内容来源：fixed+gen\n预定义文本：采用标准组织职责模板\n生成要求：结合场景补充角色职责\n\n### 2.1 应急指挥机构\n内容来源：fixed+gen\n预定义文本：成立现场应急指挥组，统一组织协调应急处置。\n生成要求：结合设备类型和事件场景补充指挥职责\n\n### 2.2 专业处置组\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：结合图谱资源配置专业抢修、试验、运行配合等岗位\n\n### 2.3 现场安全监护组\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：围绕安全风险补充监护、警戒和作业许可职责\n\n你的任务：\n1. 按模板章节顺序生成完整预案，不要改章节顺序。\n2. 模板中的内容来源，图谱字段，生成要求仅作为生成指引，在输出中不能把这三个字段写出来。\n3. 不要输出像“- 调度机构：xxx”这样的内容，而要写成“应立即向调度机构、运维管理单位等部门报告”这种完整的句子。只能使用模板中的标题分层级，不能自己加短横杠来分级。\n4. 只基于图谱素材、模板要求和用户场景生成，不要脱离输入随意编造专业知识。\n1. 应急资源必须体现在“应急保障”“应急物资清单”等章节中。\n2. 如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段。\n 严格要求：\n1. 只能生成当前传入模板中的章节与小节，不得补写其他章节。\n2. 不得输出上一章、下一章、总则、附件或任何未在当前模板中出现的标题。\n3. 如果当前模板以“## 第2章 ...”开头，输出必须也从这一章开始，不得从“第1章”开始。\n4. 如果当前模板是“附件”章节，只能输出附件相关内容。\n5. 不要根据历史回答续写，不要补全整篇预案。\n来源标记规则：\n1. 只允许使用三种标记：[KG]、[GEN]、[FIX]。\n2. 直接来自知识图谱检索结果的内容，必须标记为 [KG]。\n3. 根据用户场景自动补全、推导、组织、排序、扩展出的内容，必须标记为 [GEN]。\n4. 标签能且仅能位于一段话的开头，要写下一段话，必须换行后生成标签再写，不能出现一个段落里有两个标签的问题。\n5. 直接来自模板中的预定义固定文本，必须标记为 [FIX]。\n6. 不允许写混合标记。\n7. 同一个句子、同一个编号条目、同一个项目符号内，只能出现一种来源标记。\n8. 绝对禁止输出 `[KG]&[GEN]`、`[KG] & [GEN]`、`[KG]/[GEN]`、`[KG][GEN]`、`[FIX]&[GEN]`、`[FIX][KG]` 等任何组合式来源标记。也禁止在各级标题上加标签，标签只能加载内容上。\n9. 绝对禁止用 `&`、`/`、`+` 把不同来源标记连接在一起。\n10. 一条内容如果同时包含图谱事实、模板固定文本、模型补全，必须拆成多条相邻内容分别标注。\n11. `[FIX]` 只用于模板里明确存在的固定文本（但是不包括标题，只包括固定的内容），不要把你自己写的套话标成 `[FIX]`。\n12. `[KG]` 只用于图谱素材中的故障原因、现象、措施、后果、风险、资源等内容。\n13. `[GEN]` 只用于场景化补充、组织安排、时序安排、响应等级判断、约束解释、恢复策略等模型生成内容。\n14. 最终正文中保留这些标记，不要在文末再解释。\n多故障融合规则：\n1. 若“故障与场景提取结果”中存在多个故障二级节点，必须将其视为“同一事件中的复合故障”，输出时要进行融合表达，不能按每个故障分别整段平铺罗列。\n2. 若存在“主故障二级节点”，应以主故障为主线组织内容，其余故障作为伴随故障、诱发因素、叠加风险或并发异常纳入分析。\n3. 对于故障原因、故障后果、安全风险、应对措施等内容：\n  - 相近或重复的图谱信息必须合并概括；\n  - 不得使用“故障A-故障原因：... 故障B-故障原因：...”这种逐条照抄式表达；\n  - 应改写为面向现场事件的综合描述。\n4. “事件类型”只能输出一个综合事件类型描述，不得把多个故障名称直接并列成一串。\n5. “故障原因”应围绕本次复合故障总结 2~4 个主要原因或诱因，不得把每个故障的完整原因原文全部依次照搬。\n6. “事件范围”“事件危害程度”应描述多故障叠加后的整体影响，不得逐个故障重复罗列完整后果和风险。\n7. “响应等级”只能给出一个最终等级判断，不得分别对多个故障单独评级。\n8. 当图谱素材中包含多个故障的多条 [KG] 内容时，可以拆成多个 [KG] 段落或条目，但每条都必须服务于“同一综合事件”的表达，不能变成“多个独立故障说明书”。\n9. 若多个故障之间存在明显主次关系，应优先保留主故障的细节，其他故障只保留与当前事件直接相关的关键点。\n10. 在任一小节中，若同类KG信息超过3条，必须先归纳再输出，不得机械堆砌。\n输出要求：\n- 不要输出总标题。\n- 严格依据模板文本中的章节和小节组织内容。\n- 总长度控制在 2500~4000 字。\n- 语言要正式、清晰、可执行。\n- 必须体现：响应等级、故障对象、事件场景、关键处置要求、特殊约束。\n\n- 设备名称规范化：全文所有提到设备的地方，必须使用\"故障与场景提取结果\"中\"故障对象\"字段给出的具体设备实名（如\"高压断路器\"、\"变压器\"等），严禁照搬用户原问题中的模糊指代（如\"某110kV设备\"\"该设备\"\"本设备\"等）。在首次提及设备时明确写出完整设备名称。\n- 若模板某节是固定文本为主，先输出对应 [FIX] 内容，再按需要补充 [GEN] 或 [KG]内容。若只包含FIX，则只输出FIX的内容，不要输出其他任何东西。\n- 每个小节下的主要要点都应带来源标记。\n- 生成完成前自检：全文不得出现任何组合式来源标记；如出现必须拆分重写。\n\n不要输出 JSON，不要输出解释，不要说“作为 AI”。直接输出成文预案。"
+              },
+              {
+                "obj": "Human",
+                "value": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。"
+              },
+              {
+                "obj": "AI",
+                "value": "## 第2章 应急组织与职责\n\n### 2.1 应急指挥机构\n[FIX] 成立现场应急指挥组，统一组织协调应急处置。  \n[GEN] 现场应急指挥组由运维管理单位、调度机构及相关专业部门人员组成，负责针对高压断路器间隔内光缆中断导致保护通道退出的故障，统筹指挥抢修工作、协调资源调配、下达操作指令，并向上级主管部门报告事态进展。  \n[GEN] 指挥组组长由运维管理单位分管领导担任，负责全面决策；副组长由调度机构值班负责人担任，负责应急处置中的运行方式调整与安全管控。  \n[GEN] 应立即向调度机构、运维管理单位等部门报告故障情况，包括光缆中断位置、保护通道退出影响范围及初步处置计划。  \n\n### 2.2 专业处置组\n[GEN] 专业处置组由通信专业抢修人员、继电保护专业人员、高压断路器运维人员及试验人员组成，负责光缆中断故障的现场勘查、修复及恢复工作。  \n[GEN] 通信专业抢修人员应在确保安全的前提下迅速排查光缆断点，完成光缆熔接或更换，并测试通信通道恢复情况。  \n[GEN] 继电保护专业人员负责确认保护装置状态，在光缆修复后配合进行保护通道联调及传动试验，确保保护功能恢复正常。  \n[GEN] 高压断路器运维人员配合执行断路器间隔的隔离、接地及恢复操作，提供间隔内设备图纸及现场条件说明。  \n[GEN] 试验人员负责对修复后的光缆及保护通道进行测试，出具合格报告后方可恢复保护运行。  \n\n### 2.3 现场安全监护组\n[GEN] 现场安全监护组由安全监察人员、工作许可人及专职监护人员组成，负责应急处置全过程的安全监督、作业许可和风险管控。  \n[GEN] 在高压断路器间隔内作业时，必须严格执行停电、验电、接地等安全措施，防止误入带电间隔或误操作断路器。  \n[GEN] 应设置专职监护人，对光缆抢修作业进行全程监护，重点盯防高空作业、有限空间作业及带电设备附近作业的风险。  \n[GEN] 工作许可人负责办理工作票，确认安全措施已完善，并与调度核实保护退出期间的运行方式变更许可。  \n[GEN] 现场应设置警戒区域，无关人员禁止进入，防止因通信中断导致保护误动或人员触电事故。"
+              }
+            ],
+            "contextTotalLen": 3,
+            "finishReason": "stop",
+            "llmRequestIds": [
+              "zdEw6tLJUKBpJP38"
+            ],
+            "id": "tIeOuEdxWfQNIdVg",
+            "nodeId": "bGnjDQW0yaqJ8a8V",
+            "runningTime": 12.37
+          },
+          {
+            "moduleName": "common:core.module.template.self_output",
+            "moduleType": "pluginOutput",
+            "moduleLogo": "core/workflow/template/pluginOutput",
+            "pluginOutput": {
+              "template": "## 第2章 应急组织与职责\n\n### 2.1 应急指挥机构\n[FIX] 成立现场应急指挥组，统一组织协调应急处置。  \n[GEN] 现场应急指挥组由运维管理单位、调度机构及相关专业部门人员组成，负责针对高压断路器间隔内光缆中断导致保护通道退出的故障，统筹指挥抢修工作、协调资源调配、下达操作指令，并向上级主管部门报告事态进展。  \n[GEN] 指挥组组长由运维管理单位分管领导担任，负责全面决策；副组长由调度机构值班负责人担任，负责应急处置中的运行方式调整与安全管控。  \n[GEN] 应立即向调度机构、运维管理单位等部门报告故障情况，包括光缆中断位置、保护通道退出影响范围及初步处置计划。  \n\n### 2.2 专业处置组\n[GEN] 专业处置组由通信专业抢修人员、继电保护专业人员、高压断路器运维人员及试验人员组成，负责光缆中断故障的现场勘查、修复及恢复工作。  \n[GEN] 通信专业抢修人员应在确保安全的前提下迅速排查光缆断点，完成光缆熔接或更换，并测试通信通道恢复情况。  \n[GEN] 继电保护专业人员负责确认保护装置状态，在光缆修复后配合进行保护通道联调及传动试验，确保保护功能恢复正常。  \n[GEN] 高压断路器运维人员配合执行断路器间隔的隔离、接地及恢复操作，提供间隔内设备图纸及现场条件说明。  \n[GEN] 试验人员负责对修复后的光缆及保护通道进行测试，出具合格报告后方可恢复保护运行。  \n\n### 2.3 现场安全监护组\n[GEN] 现场安全监护组由安全监察人员、工作许可人及专职监护人员组成，负责应急处置全过程的安全监督、作业许可和风险管控。  \n[GEN] 在高压断路器间隔内作业时，必须严格执行停电、验电、接地等安全措施，防止误入带电间隔或误操作断路器。  \n[GEN] 应设置专职监护人，对光缆抢修作业进行全程监护，重点盯防高空作业、有限空间作业及带电设备附近作业的风险。  \n[GEN] 工作许可人负责办理工作票，确认安全措施已完善，并与调度核实保护退出期间的运行方式变更许可。  \n[GEN] 现场应设置警戒区域，无关人员禁止进入，防止因通信中断导致保护误动或人员触电事故。"
+            },
+            "id": "s0Ws3z7GElpGWUID",
+            "nodeId": "pluginOutput",
+            "runningTime": 0
+          }
+        ]
+      },
+      "output_text": "## 第2章 应急组织与职责\n\n### 2.1 应急指挥机构\n[FIX] 成立现场应急指挥组，统一组织协调应急处置。  \n[GEN] 现场应急指挥组由运维管理单位、调度机构及相关专业部门人员组成，负责针对高压断路器间隔内光缆中断导致保护通道退出的故障，统筹指挥抢修工作、协调资源调配、下达操作指令，并向上级主管部门报告事态进展。  \n[GEN] 指挥组组长由运维管理单位分管领导担任，负责全面决策；副组长由调度机构值班负责人担任，负责应急处置中的运行方式调整与安全管控。  \n[GEN] 应立即向调度机构、运维管理单位等部门报告故障情况，包括光缆中断位置、保护通道退出影响范围及初步处置计划。  \n\n### 2.2 专业处置组\n[GEN] 专业处置组由通信专业抢修人员、继电保护专业人员、高压断路器运维人员及试验人员组成，负责光缆中断故障的现场勘查、修复及恢复工作。  \n[GEN] 通信专业抢修人员应在确保安全的前提下迅速排查光缆断点，完成光缆熔接或更换，并测试通信通道恢复情况。  \n[GEN] 继电保护专业人员负责确认保护装置状态，在光缆修复后配合进行保护通道联调及传动试验，确保保护功能恢复正常。  \n[GEN] 高压断路器运维人员配合执行断路器间隔的隔离、接地及恢复操作，提供间隔内设备图纸及现场条件说明。  \n[GEN] 试验人员负责对修复后的光缆及保护通道进行测试，出具合格报告后方可恢复保护运行。  \n\n### 2.3 现场安全监护组\n[GEN] 现场安全监护组由安全监察人员、工作许可人及专职监护人员组成，负责应急处置全过程的安全监督、作业许可和风险管控。  \n[GEN] 在高压断路器间隔内作业时，必须严格执行停电、验电、接地等安全措施，防止误入带电间隔或误操作断路器。  \n[GEN] 应设置专职监护人，对光缆抢修作业进行全程监护，重点盯防高空作业、有限空间作业及带电设备附近作业的风险。  \n[GEN] 工作许可人负责办理工作票，确认安全措施已完善，并与调度核实保护退出期间的运行方式变更许可。  \n[GEN] 现场应设置警戒区域，无关人员禁止进入，防止因通信中断导致保护误动或人员触电事故。"
+    },
+    {
+      "chapter_no": "3",
+      "title": "处置程序",
+      "section_count": 18,
+      "template_text": "## 第3章 处置程序\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n内容来源：gen\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n内容来源：gen\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n内容来源：gen\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n内容来源：gen\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n内容来源：kg+gen\n图谱字段：fault_cause,fault_symptom\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n内容来源：kg+gen\n图谱字段：fault_consequence\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n内容来源：gen\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求",
+      "elapsed_sec": 21.714,
+      "response": {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "## 第3章 处置程序\n\n### 3.1 信息报告\n\n#### 3.1.1 报告对象\n\n[GEN] 应立即向电网调度机构、运维管理单位、安全监察部门、设备管理部门以及光缆抢修外协单位报告。\n\n#### 3.1.2 报告内容\n\n[GEN] 报告内容应包括：事件简要经过（站内光缆经过高压断路器间隔后通信中断，保护通道退出）、当前影响范围（该断路器保护功能丧失，涉及相关线路及母线保护）、已确认的风险（保护拒动风险增大，可能导致故障越级）、现场初步判断（光缆损伤位置可能在断路器间隔内）、现场所需的支援（光缆熔接工具、备用光缆、备品备件及专业抢修人员）。\n\n#### 3.1.3 报告时限\n\n[GEN] 首报应在事件发生后15分钟内完成；续报应每30分钟更新一次抢修进展及电网风险变化；终报应在设备恢复运行后2小时内完成。\n\n### 3.2 先期处置\n\n#### 3.2.1 现场隔离\n\n[GEN] 应立即将故障光缆所在的断路器间隔及其相邻间隔划为隔离区域，设置明显警戒标识并安排专人监护，防止无关人员误入。同时通知运维人员将受影响的光缆两端接口断开，避免误操作损伤其他光缆。\n\n#### 3.2.2 停运或限制运行\n\n[GEN] 由于保护通道退出，该高压断路器所对应的保护装置已失效，应立即申请将该断路器由运行转为热备用或冷备用状态，或采取临时保护替代方案（如启用母线差动保护或远方后备保护）。若无法立即停运，应申请调度降低该线路输送功率，限制负荷至安全值以下，并加强特巡。\n\n#### 3.2.3 警戒与排险\n\n[GEN] 现场警戒范围以故障光缆所在高压断路器间隔为中心，向外延伸至相邻间隔及电缆沟入口。运维人员应穿戴全套绝缘防护装备，在确认停止相关操作电源后方可接近。排险动作：先断开该光缆在两端通信配线架上的连接，清除可能存在的金属碎屑或积水，确认无短路或触电风险后再进行后续抢修。\n\n### 3.3 现场研判\n\n#### 3.3.1 原因研判\n\n[GEN] 结合现场条件，光缆中断的主要原因可能有：高压断路器间隔内电缆沟盖板被碾压或振动导致光缆被夹断；光缆在间隔内未设置足够弯曲半径，长期运行后疲劳断裂；施工或检修时误伤光缆；外界小动物啃咬。应重点检查间隔内光缆转角处、穿墙孔及盖板下压点。\n\n#### 3.3.2 现象核验\n\n[GEN] 典型现象为：通信指示灯熄灭、SDH网管报“光功率过低”或“光信号丢失”、保护装置报“通道异常”等。现地应使用光时域反射仪（OTDR）测试故障光缆断点位置，并与网管告警时间、保护装置动作记录进行比对，确认是否一致。\n\n#### 3.3.3 风险判定\n\n[GEN] 设备风险：该高压断路器因失去保护通道，一旦发生区内故障可能导致保护拒动，造成断路器爆炸或越级跳闸，扩大停电范围。作业风险：在间隔内进行光缆熔接时，存在高压感应电触电、误碰带电端子的风险；夜间抢修能见度低，作业人员跌落风险增加。\n\n### 3.4 抢修恢复\n\n#### 3.4.1 抢修准备\n\n[GEN] 人员：需配置光缆熔接工2名、辅助人员1名、运维监护人员1名。物资：备用光缆（与现用型号一致）、光纤熔接机、OTDR、切割刀、热缩套管、酒精棉、绑扎带、防水胶带、电缆沟盖板开启工具。作业条件：需办理电力线路第二种工作票（通信光缆作业），确认该间隔已停运并挂接地线，夜间作业需配备照明灯。同时协调调度确认保护退出期间的系统运行方式。\n\n#### 3.4.2 现场抢修\n\n[GEN] 第一步：确认高压断路器间隔已转为检修状态，验电并挂接地线后，打开电缆沟盖板。第二步：沿光缆走向排查，用OTDR精确定位断点。第三步：清理断点附近积水、淤泥，留出足够操作空间。第四步：将故障段剪除，使用熔接机重新熔接并加装热缩套管保护。第五步：将修复后的光缆按规范绑扎固定，避免与金属棱角接触，并恢复电缆沟盖板。第六步：两端人员配合，测试光功率及误码率，确认恢复正常。\n\n#### 3.4.3 恢复运行\n\n[GEN] 光缆通信恢复后，应先进行复用保护通道联调试验，验证保护装置两侧收发数据正常、差流为零。经调度和继保人员确认无误后，将该高压断路器保护投入运行。恢复后需持续观察2小时，监测光功率波动及保护装置告警，确认无异常后方可恢复正常运行方式。\n\n### 3.5 响应终止\n\n[GEN] 当满足以下全部条件时，可终止应急响应：光缆通信完全恢复，保护通道投入正常；高压断路器保护装置运行稳定，无告警；现场抢修人员及工器具已撤离，电缆沟盖板恢复完好；所有相关设备状态经复查确认安全；已向调度、运维、安监等部门完成终报并获认可。"
+            }
+          }
+        ],
+        "responseData": [
+          {
+            "moduleName": "workflow:template.plugin_start",
+            "moduleType": "pluginInput",
+            "moduleLogo": "core/workflow/template/workflowStart",
+            "id": "uWfyYngvMmqfGdc4",
+            "nodeId": "pluginInput",
+            "runningTime": 0
+          },
+          {
+            "moduleName": "AI 对话",
+            "moduleType": "chatNode",
+            "moduleLogo": "core/workflow/template/aiChat",
+            "totalPoints": 0,
+            "model": "DSV4F",
+            "inputTokens": 2250,
+            "outputTokens": 1748,
+            "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "reasoningText": "我们根据用户场景：站内光缆经过高压断路器间隔后通信中断，保护通道退出。故障对象：高压断路器。需要生成应急方案。图谱检索结果为空，所以大部分内容需由GEN生成。但模板要求严格按章节。注意：用户原问题与提取结果一致。输出需包含响应等级、故障对象等。由于图谱素材为空，所有内容标记为[GEN]或模板固定文本[FIX]（但模板无固定文本）。注意：不能编造专业知识，但可以基于通用电力知识合理推导。例如光缆中断后的处置：先报告，隔离，抢修等。注意特殊约束：未明确。响应等级未明确，但根据保护通道退出，应定为紧急或一般？我们定为一般（因为光缆中断不直接危及人身，但保护退出影响系统安全）。稳妥起见，响应等级由GEN生成，可写“响应等级：III级（一般故障）”。但模板中无响应等级章节？模板从第3章开始。注意用户要求“只能生成当前传入模板中的章节与小节”，所以不能补写第1章。但要求“必须体现：响应等级”，可以在处置程序中提及？例如在信息报告写明响应等级？或者可以在先期处置中写明。但最好在某个地方体现。根据模板，没有专门小节写响应等级，但可以在信息报告或整体描述中写。为满足要求，我们在3.1信息报告或3.2先期处置中体现。另外，注意“双阶段处置”用户未提出，不处理。\n\n输出严格按模板：第3章 处置程序，然后3.1信息报告（3.1.1报告对象，3.1.2报告内容，3.1.3报告时限），3.2先期处置（3.2.1现场隔离，3.2.2停运或限制运行，3.2.3警戒与排险），3.3现场研判（3.3.1原因研判，3.3.2现象核验，3.3.3风险判定），3.4抢修恢复（3.4.1抢修准备，3.4.2现场抢修，3.4.3恢复运行），3.5响应终止。\n\n所有内容无KG，全部GEN。注意来源标记每段开头加[GEN]。段落换行。标题不加标签。注意语言正式，完整句子。不要使用短横杠分级，只能用模板标题。\n\n我们逐节生成。",
+            "historyPreview": [
+              {
+                "obj": "System",
+                "value": "你是“电力设备场景化应急预案生成器”，面向一线运维和应急管理人员输出结构化现场处置预案。\n\n你会收到 4 类输入：\n1. 用户原问题：站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。\n2. 故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}\n3. 图谱检索得到的方案素材：当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。\n4. 模板文本：## 第3章 处置程序\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按先后顺序组织程序，必要时拆分阶段\n\n### 3.1 信息报告\n内容来源：gen\n生成要求：根据事件场景生成报告对象、报告内容和报告时限\n\n#### 3.1.1 报告对象\n内容来源：gen\n生成要求：列出应报告的调度、运维、安监、管理和外协对象\n\n#### 3.1.2 报告内容\n内容来源：gen\n生成要求：说明需要报告的事件信息、影响范围、风险和现场需求\n\n#### 3.1.3 报告时限\n内容来源：gen\n生成要求：明确首报、续报和终报时限\n\n### 3.2 先期处置\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先组织隔离、停运、警戒、排险等先期动作\n\n#### 3.2.1 现场隔离\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：明确隔离区域、隔离方式和防止扩大事故的要求\n\n#### 3.2.2 停运或限制运行\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：根据设备状态生成停运、转供、限负荷或限制运行要求\n\n#### 3.2.3 警戒与排险\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：根据现场风险生成警戒、疏散和排险动作\n\n### 3.3 现场研判\n内容来源：kg+gen\n图谱字段：fault_cause,fault_symptom\n生成要求：结合故障原因、故障现象和现场条件生成研判要点\n\n#### 3.3.1 原因研判\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：围绕图谱故障原因和现场条件推断主要诱因\n\n#### 3.3.2 现象核验\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：核验当前现象与典型故障现象是否一致\n\n#### 3.3.3 风险判定\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：结合风险和现场状态判定作业风险与设备风险\n\n### 3.4 抢修恢复\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合应对措施生成抢修和恢复步骤\n\n#### 3.4.1 抢修准备\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：整理抢修前需要的人员、物资、工器具和作业条件\n\n#### 3.4.2 现场抢修\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：按顺序生成现场抢修动作\n\n#### 3.4.3 恢复运行\n内容来源：kg+gen\n图谱字段：fault_consequence\n生成要求：明确恢复供电、恢复运行和恢复后观察要求\n\n### 3.5 响应终止\n内容来源：gen\n生成要求：根据风险解除、设备恢复和现场验收条件生成终止要求\n\n你的任务：\n1. 按模板章节顺序生成完整预案，不要改章节顺序。\n2. 模板中的内容来源，图谱字段，生成要求仅作为生成指引，在输出中不能把这三个字段写出来。\n3. 不要输出像“- 调度机构：xxx”这样的内容，而要写成“应立即向调度机构、运维管理单位等部门报告”这种完整的句子。只能使用模板中的标题分层级，不能自己加短横杠来分级。\n4. 只基于图谱素材、模板要求和用户场景生成，不要脱离输入随意编造专业知识。\n1. 应急资源必须体现在“应急保障”“应急物资清单”等章节中。\n2. 如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段。\n 严格要求：\n1. 只能生成当前传入模板中的章节与小节，不得补写其他章节。\n2. 不得输出上一章、下一章、总则、附件或任何未在当前模板中出现的标题。\n3. 如果当前模板以“## 第2章 ...”开头，输出必须也从这一章开始，不得从“第1章”开始。\n4. 如果当前模板是“附件”章节，只能输出附件相关内容。\n5. 不要根据历史回答续写，不要补全整篇预案。\n来源标记规则：\n1. 只允许使用三种标记：[KG]、[GEN]、[FIX]。\n2. 直接来自知识图谱检索结果的内容，必须标记为 [KG]。\n3. 根据用户场景自动补全、推导、组织、排序、扩展出的内容，必须标记为 [GEN]。\n4. 标签能且仅能位于一段话的开头，要写下一段话，必须换行后生成标签再写，不能出现一个段落里有两个标签的问题。\n5. 直接来自模板中的预定义固定文本，必须标记为 [FIX]。\n6. 不允许写混合标记。\n7. 同一个句子、同一个编号条目、同一个项目符号内，只能出现一种来源标记。\n8. 绝对禁止输出 `[KG]&[GEN]`、`[KG] & [GEN]`、`[KG]/[GEN]`、`[KG][GEN]`、`[FIX]&[GEN]`、`[FIX][KG]` 等任何组合式来源标记。也禁止在各级标题上加标签，标签只能加载内容上。\n9. 绝对禁止用 `&`、`/`、`+` 把不同来源标记连接在一起。\n10. 一条内容如果同时包含图谱事实、模板固定文本、模型补全，必须拆成多条相邻内容分别标注。\n11. `[FIX]` 只用于模板里明确存在的固定文本（但是不包括标题，只包括固定的内容），不要把你自己写的套话标成 `[FIX]`。\n12. `[KG]` 只用于图谱素材中的故障原因、现象、措施、后果、风险、资源等内容。\n13. `[GEN]` 只用于场景化补充、组织安排、时序安排、响应等级判断、约束解释、恢复策略等模型生成内容。\n14. 最终正文中保留这些标记，不要在文末再解释。\n多故障融合规则：\n1. 若“故障与场景提取结果”中存在多个故障二级节点，必须将其视为“同一事件中的复合故障”，输出时要进行融合表达，不能按每个故障分别整段平铺罗列。\n2. 若存在“主故障二级节点”，应以主故障为主线组织内容，其余故障作为伴随故障、诱发因素、叠加风险或并发异常纳入分析。\n3. 对于故障原因、故障后果、安全风险、应对措施等内容：\n  - 相近或重复的图谱信息必须合并概括；\n  - 不得使用“故障A-故障原因：... 故障B-故障原因：...”这种逐条照抄式表达；\n  - 应改写为面向现场事件的综合描述。\n4. “事件类型”只能输出一个综合事件类型描述，不得把多个故障名称直接并列成一串。\n5. “故障原因”应围绕本次复合故障总结 2~4 个主要原因或诱因，不得把每个故障的完整原因原文全部依次照搬。\n6. “事件范围”“事件危害程度”应描述多故障叠加后的整体影响，不得逐个故障重复罗列完整后果和风险。\n7. “响应等级”只能给出一个最终等级判断，不得分别对多个故障单独评级。\n8. 当图谱素材中包含多个故障的多条 [KG] 内容时，可以拆成多个 [KG] 段落或条目，但每条都必须服务于“同一综合事件”的表达，不能变成“多个独立故障说明书”。\n9. 若多个故障之间存在明显主次关系，应优先保留主故障的细节，其他故障只保留与当前事件直接相关的关键点。\n10. 在任一小节中，若同类KG信息超过3条，必须先归纳再输出，不得机械堆砌。\n输出要求：\n- 不要输出总标题。\n- 严格依据模板文本中的章节和小节组织内容。\n- 总长度控制在 2500~4000 字。\n- 语言要正式、清晰、可执行。\n- 必须体现：响应等级、故障对象、事件场景、关键处置要求、特殊约束。\n\n- 设备名称规范化：全文所有提到设备的地方，必须使用\"故障与场景提取结果\"中\"故障对象\"字段给出的具体设备实名（如\"高压断路器\"、\"变压器\"等），严禁照搬用户原问题中的模糊指代（如\"某110kV设备\"\"该设备\"\"本设备\"等）。在首次提及设备时明确写出完整设备名称。\n- 若模板某节是固定文本为主，先输出对应 [FIX] 内容，再按需要补充 [GEN] 或 [KG]内容。若只包含FIX，则只输出FIX的内容，不要输出其他任何东西。\n- 每个小节下的主要要点都应带来源标记。\n- 生成完成前自检：全文不得出现任何组合式来源标记；如出现必须拆分重写。\n\n不要输出 JSON，不要输出解释，不要说“作为 AI”。直接输出成文预案。"
+              },
+              {
+                "obj": "Human",
+                "value": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。"
+              },
+              {
+                "obj": "AI",
+                "value": "## 第3章 处置程序\n\n### 3.1 信息报告\n\n#### 3.1.1 报告对象\n\n[GEN] 应立即向电网调度机构、运维管理单位、安全监察部门、设备管理部门以及光缆抢修外协单位报告。\n\n#### 3.1.2 报告内容\n\n[GEN] 报告内容应包括：事件简要经过（站内光缆经过高压断路器间隔后通信中断，保护通道退出）、当前影响范围（该断路器保护功能丧失，涉及相关线路及母线保护）、已确认的风险（保护拒动风险增大，可能导致故障越级）、现场初步判断（光缆损伤位置可能在断路器间隔内）、现场所需的支援（光缆熔接工具、备用光缆、备品备件及专业抢修人员）。\n\n#### 3.1.3 报告时限\n\n[GEN] 首报应在事件发生后15分钟内完成；续报应每30分钟更新一次抢修进展及电网风险变化；终报应在设备恢复运行后2小时内完成。\n\n### 3.2 先期处置\n\n#### 3.2.1 现场隔离\n\n[GEN] 应立即将故障光缆所在的断路器间隔及其相邻间隔划为隔离区域，设置明显警戒标识并安排专人监护，防止无关人员误入。同时通知运维人员将受影响的光缆两端接口断开，避免误操作损伤其他光缆。\n\n#### 3.2.2 停运或限制运行\n\n[GEN] 由于保护通道退出，该高压断路器所对应的保护装置已失效，应立即申请将该断路器由运行转为热备用或冷备用状态，或采取临时保护替代方案（如启用母线差动保护或远方后备保护）。若无法立即停运，应申请调度降低该线路输送功率，限制负荷至安全值以下，并加强特巡。\n\n#### 3.2.3 警戒与排险\n\n[GEN] 现场警戒范围以故障光缆所在高压断路器间隔为中心，向外延伸至相邻间隔及电缆沟入口。运维人员应穿戴全套绝缘防护装备，在确认停止相关操作电源后方可接近。排险动作：先断开该光缆在两端通信配线架上的连接，清除可能存在的金属碎屑或积水，确认无短路或触电风险后再进行后续抢修。\n\n### 3.3 现场研判\n\n#### 3.3.1 原因研判\n\n[GEN] 结合现场条件，光缆中断的主要原因可能有：高压断路器间隔内电缆沟盖板被碾压或振动导致光缆被夹断；光缆在间隔内未设置足够弯曲半径，长期运行后疲劳断裂；施工或检修时误伤光缆；外界小动物啃咬。应重点检查间隔内光缆转角处、穿墙孔及盖板下压点。\n\n#### 3.3.2 现象核验\n\n[GEN] 典型现象为：通信指示灯熄灭、SDH网管报“光功率过低”或“光信号丢失”、保护装置报“通道异常”等。现地应使用光时域反射仪（OTDR）测试故障光缆断点位置，并与网管告警时间、保护装置动作记录进行比对，确认是否一致。\n\n#### 3.3.3 风险判定\n\n[GEN] 设备风险：该高压断路器因失去保护通道，一旦发生区内故障可能导致保护拒动，造成断路器爆炸或越级跳闸，扩大停电范围。作业风险：在间隔内进行光缆熔接时，存在高压感应电触电、误碰带电端子的风险；夜间抢修能见度低，作业人员跌落风险增加。\n\n### 3.4 抢修恢复\n\n#### 3.4.1 抢修准备\n\n[GEN] 人员：需配置光缆熔接工2名、辅助人员1名、运维监护人员1名。物资：备用光缆（与现用型号一致）、光纤熔接机、OTDR、切割刀、热缩套管、酒精棉、绑扎带、防水胶带、电缆沟盖板开启工具。作业条件：需办理电力线路第二种工作票（通信光缆作业），确认该间隔已停运并挂接地线，夜间作业需配备照明灯。同时协调调度确认保护退出期间的系统运行方式。\n\n#### 3.4.2 现场抢修\n\n[GEN] 第一步：确认高压断路器间隔已转为检修状态，验电并挂接地线后，打开电缆沟盖板。第二步：沿光缆走向排查，用OTDR精确定位断点。第三步：清理断点附近积水、淤泥，留出足够操作空间。第四步：将故障段剪除，使用熔接机重新熔接并加装热缩套管保护。第五步：将修复后的光缆按规范绑扎固定，避免与金属棱角接触，并恢复电缆沟盖板。第六步：两端人员配合，测试光功率及误码率，确认恢复正常。\n\n#### 3.4.3 恢复运行\n\n[GEN] 光缆通信恢复后，应先进行复用保护通道联调试验，验证保护装置两侧收发数据正常、差流为零。经调度和继保人员确认无误后，将该高压断路器保护投入运行。恢复后需持续观察2小时，监测光功率波动及保护装置告警，确认无异常后方可恢复正常运行方式。\n\n### 3.5 响应终止\n\n[GEN] 当满足以下全部条件时，可终止应急响应：光缆通信完全恢复，保护通道投入正常；高压断路器保护装置运行稳定，无告警；现场抢修人员及工器具已撤离，电缆沟盖板恢复完好；所有相关设备状态经复查确认安全；已向调度、运维、安监等部门完成终报并获认可。"
+              }
+            ],
+            "contextTotalLen": 3,
+            "finishReason": "stop",
+            "llmRequestIds": [
+              "l-O78vOgNSsutyPs"
+            ],
+            "id": "dGopWyzkcjMT656k",
+            "nodeId": "bGnjDQW0yaqJ8a8V",
+            "runningTime": 21.62
+          },
+          {
+            "moduleName": "common:core.module.template.self_output",
+            "moduleType": "pluginOutput",
+            "moduleLogo": "core/workflow/template/pluginOutput",
+            "pluginOutput": {
+              "template": "## 第3章 处置程序\n\n### 3.1 信息报告\n\n#### 3.1.1 报告对象\n\n[GEN] 应立即向电网调度机构、运维管理单位、安全监察部门、设备管理部门以及光缆抢修外协单位报告。\n\n#### 3.1.2 报告内容\n\n[GEN] 报告内容应包括：事件简要经过（站内光缆经过高压断路器间隔后通信中断，保护通道退出）、当前影响范围（该断路器保护功能丧失，涉及相关线路及母线保护）、已确认的风险（保护拒动风险增大，可能导致故障越级）、现场初步判断（光缆损伤位置可能在断路器间隔内）、现场所需的支援（光缆熔接工具、备用光缆、备品备件及专业抢修人员）。\n\n#### 3.1.3 报告时限\n\n[GEN] 首报应在事件发生后15分钟内完成；续报应每30分钟更新一次抢修进展及电网风险变化；终报应在设备恢复运行后2小时内完成。\n\n### 3.2 先期处置\n\n#### 3.2.1 现场隔离\n\n[GEN] 应立即将故障光缆所在的断路器间隔及其相邻间隔划为隔离区域，设置明显警戒标识并安排专人监护，防止无关人员误入。同时通知运维人员将受影响的光缆两端接口断开，避免误操作损伤其他光缆。\n\n#### 3.2.2 停运或限制运行\n\n[GEN] 由于保护通道退出，该高压断路器所对应的保护装置已失效，应立即申请将该断路器由运行转为热备用或冷备用状态，或采取临时保护替代方案（如启用母线差动保护或远方后备保护）。若无法立即停运，应申请调度降低该线路输送功率，限制负荷至安全值以下，并加强特巡。\n\n#### 3.2.3 警戒与排险\n\n[GEN] 现场警戒范围以故障光缆所在高压断路器间隔为中心，向外延伸至相邻间隔及电缆沟入口。运维人员应穿戴全套绝缘防护装备，在确认停止相关操作电源后方可接近。排险动作：先断开该光缆在两端通信配线架上的连接，清除可能存在的金属碎屑或积水，确认无短路或触电风险后再进行后续抢修。\n\n### 3.3 现场研判\n\n#### 3.3.1 原因研判\n\n[GEN] 结合现场条件，光缆中断的主要原因可能有：高压断路器间隔内电缆沟盖板被碾压或振动导致光缆被夹断；光缆在间隔内未设置足够弯曲半径，长期运行后疲劳断裂；施工或检修时误伤光缆；外界小动物啃咬。应重点检查间隔内光缆转角处、穿墙孔及盖板下压点。\n\n#### 3.3.2 现象核验\n\n[GEN] 典型现象为：通信指示灯熄灭、SDH网管报“光功率过低”或“光信号丢失”、保护装置报“通道异常”等。现地应使用光时域反射仪（OTDR）测试故障光缆断点位置，并与网管告警时间、保护装置动作记录进行比对，确认是否一致。\n\n#### 3.3.3 风险判定\n\n[GEN] 设备风险：该高压断路器因失去保护通道，一旦发生区内故障可能导致保护拒动，造成断路器爆炸或越级跳闸，扩大停电范围。作业风险：在间隔内进行光缆熔接时，存在高压感应电触电、误碰带电端子的风险；夜间抢修能见度低，作业人员跌落风险增加。\n\n### 3.4 抢修恢复\n\n#### 3.4.1 抢修准备\n\n[GEN] 人员：需配置光缆熔接工2名、辅助人员1名、运维监护人员1名。物资：备用光缆（与现用型号一致）、光纤熔接机、OTDR、切割刀、热缩套管、酒精棉、绑扎带、防水胶带、电缆沟盖板开启工具。作业条件：需办理电力线路第二种工作票（通信光缆作业），确认该间隔已停运并挂接地线，夜间作业需配备照明灯。同时协调调度确认保护退出期间的系统运行方式。\n\n#### 3.4.2 现场抢修\n\n[GEN] 第一步：确认高压断路器间隔已转为检修状态，验电并挂接地线后，打开电缆沟盖板。第二步：沿光缆走向排查，用OTDR精确定位断点。第三步：清理断点附近积水、淤泥，留出足够操作空间。第四步：将故障段剪除，使用熔接机重新熔接并加装热缩套管保护。第五步：将修复后的光缆按规范绑扎固定，避免与金属棱角接触，并恢复电缆沟盖板。第六步：两端人员配合，测试光功率及误码率，确认恢复正常。\n\n#### 3.4.3 恢复运行\n\n[GEN] 光缆通信恢复后，应先进行复用保护通道联调试验，验证保护装置两侧收发数据正常、差流为零。经调度和继保人员确认无误后，将该高压断路器保护投入运行。恢复后需持续观察2小时，监测光功率波动及保护装置告警，确认无异常后方可恢复正常运行方式。\n\n### 3.5 响应终止\n\n[GEN] 当满足以下全部条件时，可终止应急响应：光缆通信完全恢复，保护通道投入正常；高压断路器保护装置运行稳定，无告警；现场抢修人员及工器具已撤离，电缆沟盖板恢复完好；所有相关设备状态经复查确认安全；已向调度、运维、安监等部门完成终报并获认可。"
+            },
+            "id": "mr3u6SjLA8fQ4wwn",
+            "nodeId": "pluginOutput",
+            "runningTime": 0
+          }
+        ]
+      },
+      "output_text": "## 第3章 处置程序\n\n### 3.1 信息报告\n\n#### 3.1.1 报告对象\n\n[GEN] 应立即向电网调度机构、运维管理单位、安全监察部门、设备管理部门以及光缆抢修外协单位报告。\n\n#### 3.1.2 报告内容\n\n[GEN] 报告内容应包括：事件简要经过（站内光缆经过高压断路器间隔后通信中断，保护通道退出）、当前影响范围（该断路器保护功能丧失，涉及相关线路及母线保护）、已确认的风险（保护拒动风险增大，可能导致故障越级）、现场初步判断（光缆损伤位置可能在断路器间隔内）、现场所需的支援（光缆熔接工具、备用光缆、备品备件及专业抢修人员）。\n\n#### 3.1.3 报告时限\n\n[GEN] 首报应在事件发生后15分钟内完成；续报应每30分钟更新一次抢修进展及电网风险变化；终报应在设备恢复运行后2小时内完成。\n\n### 3.2 先期处置\n\n#### 3.2.1 现场隔离\n\n[GEN] 应立即将故障光缆所在的断路器间隔及其相邻间隔划为隔离区域，设置明显警戒标识并安排专人监护，防止无关人员误入。同时通知运维人员将受影响的光缆两端接口断开，避免误操作损伤其他光缆。\n\n#### 3.2.2 停运或限制运行\n\n[GEN] 由于保护通道退出，该高压断路器所对应的保护装置已失效，应立即申请将该断路器由运行转为热备用或冷备用状态，或采取临时保护替代方案（如启用母线差动保护或远方后备保护）。若无法立即停运，应申请调度降低该线路输送功率，限制负荷至安全值以下，并加强特巡。\n\n#### 3.2.3 警戒与排险\n\n[GEN] 现场警戒范围以故障光缆所在高压断路器间隔为中心，向外延伸至相邻间隔及电缆沟入口。运维人员应穿戴全套绝缘防护装备，在确认停止相关操作电源后方可接近。排险动作：先断开该光缆在两端通信配线架上的连接，清除可能存在的金属碎屑或积水，确认无短路或触电风险后再进行后续抢修。\n\n### 3.3 现场研判\n\n#### 3.3.1 原因研判\n\n[GEN] 结合现场条件，光缆中断的主要原因可能有：高压断路器间隔内电缆沟盖板被碾压或振动导致光缆被夹断；光缆在间隔内未设置足够弯曲半径，长期运行后疲劳断裂；施工或检修时误伤光缆；外界小动物啃咬。应重点检查间隔内光缆转角处、穿墙孔及盖板下压点。\n\n#### 3.3.2 现象核验\n\n[GEN] 典型现象为：通信指示灯熄灭、SDH网管报“光功率过低”或“光信号丢失”、保护装置报“通道异常”等。现地应使用光时域反射仪（OTDR）测试故障光缆断点位置，并与网管告警时间、保护装置动作记录进行比对，确认是否一致。\n\n#### 3.3.3 风险判定\n\n[GEN] 设备风险：该高压断路器因失去保护通道，一旦发生区内故障可能导致保护拒动，造成断路器爆炸或越级跳闸，扩大停电范围。作业风险：在间隔内进行光缆熔接时，存在高压感应电触电、误碰带电端子的风险；夜间抢修能见度低，作业人员跌落风险增加。\n\n### 3.4 抢修恢复\n\n#### 3.4.1 抢修准备\n\n[GEN] 人员：需配置光缆熔接工2名、辅助人员1名、运维监护人员1名。物资：备用光缆（与现用型号一致）、光纤熔接机、OTDR、切割刀、热缩套管、酒精棉、绑扎带、防水胶带、电缆沟盖板开启工具。作业条件：需办理电力线路第二种工作票（通信光缆作业），确认该间隔已停运并挂接地线，夜间作业需配备照明灯。同时协调调度确认保护退出期间的系统运行方式。\n\n#### 3.4.2 现场抢修\n\n[GEN] 第一步：确认高压断路器间隔已转为检修状态，验电并挂接地线后，打开电缆沟盖板。第二步：沿光缆走向排查，用OTDR精确定位断点。第三步：清理断点附近积水、淤泥，留出足够操作空间。第四步：将故障段剪除，使用熔接机重新熔接并加装热缩套管保护。第五步：将修复后的光缆按规范绑扎固定，避免与金属棱角接触，并恢复电缆沟盖板。第六步：两端人员配合，测试光功率及误码率，确认恢复正常。\n\n#### 3.4.3 恢复运行\n\n[GEN] 光缆通信恢复后，应先进行复用保护通道联调试验，验证保护装置两侧收发数据正常、差流为零。经调度和继保人员确认无误后，将该高压断路器保护投入运行。恢复后需持续观察2小时，监测光功率波动及保护装置告警，确认无异常后方可恢复正常运行方式。\n\n### 3.5 响应终止\n\n[GEN] 当满足以下全部条件时，可终止应急响应：光缆通信完全恢复，保护通道投入正常；高压断路器保护装置运行稳定，无告警；现场抢修人员及工器具已撤离，电缆沟盖板恢复完好；所有相关设备状态经复查确认安全；已向调度、运维、安监等部门完成终报并获认可。"
+    },
+    {
+      "chapter_no": "4",
+      "title": "处置措施",
+      "section_count": 14,
+      "template_text": "## 第4章 处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合风险与场景扩写具体措施\n\n### 4.1 隔离与安全控制\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：针对安全风险生成隔离、警戒、接地、验电等控制措施\n\n#### 4.1.1 隔离措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成停电隔离、机械隔离和区域隔离措施\n\n#### 4.1.2 安全措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成验电、接地、防误操作和个人防护要求\n\n#### 4.1.3 现场警戒\n内容来源：gen\n生成要求：生成警戒范围、人员管控和外部告知要求\n\n### 4.2 故障检查与确认\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：结合现象和原因生成检查确认要点\n\n#### 4.2.1 故障现象检查\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：列出应重点检查的现场现象和异常信号\n\n#### 4.2.2 故障原因排查\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：列出需要排查的可能故障原因\n\n#### 4.2.3 故障点确认\n内容来源：kg+gen\n图谱字段：fault_symptom,fault_cause\n生成要求：结合检查结果确认故障点和故障类型\n\n### 4.3 现场抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：将图谱措施组织成可执行抢修动作\n\n#### 4.3.1 临时处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先生成保障安全和临时恢复能力的措施\n\n#### 4.3.2 正式抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：生成正式消缺、修复、更换或治理措施\n\n#### 4.3.3 恢复验证措施\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：生成恢复后试验、验收和观察要求\n\n### 4.4 风险防控措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：补充防触电、防火、防误操作和二次伤害控制要求",
+      "elapsed_sec": 26.106,
+      "response": {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "## 第4章 处置措施\n\n### 4.1 隔离与安全控制\n\n#### 4.1.1 隔离措施\n[GEN] 应立即申请将受影响的保护通道所关联的高压断路器间隔由运行状态转为冷备用或检修状态，切断一次设备电能供应，防止在光缆抢修过程中发生误合闸或感应电伤人事故。\n[GEN] 对该光缆路径经过的其他间隔设备，若可能受到作业影响，也应同步停电隔离。在断路器间隔操作机构箱及汇控柜处悬挂“禁止合闸，有人工作”标示牌。\n[GEN] 对光缆接头盒所在电缆层、端子箱等区域设置临时围栏，与运行设备区域物理隔离，禁止无关人员进入光缆抢修作业区。\n\n#### 4.1.2 安全措施\n[GEN] 抢修人员进入现场前，必须对光缆金属护层及加强芯进行验电，确认无感应电压后方可开始工作。必要时加装临时接地线，接地线应使用截面不小于25mm²的软铜线，并可靠连接至接地网。\n[GEN] 涉及断路器间隔二次回路时，应执行“三核对”措施：核对图纸、核对端子排、核对电缆芯线，防止误碰运行的保护装置。拆接线人员应使用绝缘工具，佩戴防静电手环。\n[GEN] 所有作业人员必须佩戴安全帽、穿绝缘鞋，高处作业时系挂安全带。进入光缆沟道或电缆夹层前应通风并检测有害气体。\n\n#### 4.1.3 现场警戒\n[GEN] 以断路器间隔端子箱、光缆尾纤配线架及路径上各接头盒为中心，向外扩展3米范围设为警戒区，拉设警戒带，夜间加设警示灯。\n[GEN] 指定专人在保护小室门口及断路器就地操作处值守，禁止非抢修人员进入警戒区。安排一名安全监护人全程监护光缆熔接及纤芯测试作业。\n[GEN] 立即向调度机构、运维管理单位及通信专业部门报告本次保护通道中断情况及抢修计划，必要时通过调度向相关变电站发出风险预警告知。\n\n### 4.2 故障检查与确认\n\n#### 4.2.1 故障现象检查\n[GEN] 检查与保护通道对应的站内光缆配线架（ODF）上对应端口的光功率告警状态，确认是否显示“LOS”（光信号丢失）或“RDI”（远端缺陷指示）。\n[GEN] 检查高压断路器间隔端子箱内光缆尾纤是否松动、弯曲半径异常或受外力挤压；查看光缆余缆架及接头盒外观有无破损、进水、受力拉伸痕迹。\n[GEN] 检查线路保护装置面板，查看“通道异常”“收信消失”等告警信号记录，调取保护装置自检事件列表，确认保护通道退出的具体时间点。\n[GEN] 使用光时域反射仪（OTDR）对接入保护装置的光缆进行测试，重点关注断路器间隔至保护小室光缆路径上是否有明显的高衰耗点或断点。\n\n#### 4.2.2 故障原因排查\n[GEN] 排查光缆在断路器间隔路径上是否存在施工损伤，如近期是否有其他专业在间隔内进行接地刀闸操作、断路器机构检修或电缆敷设作业，是否误碰或挂断光缆。\n[GEN] 排查光缆接头盒密封是否失效，内部是否进水或纤芯断裂。检查尾纤连接器端面是否脏污、磨损坏或未紧固到位。\n[GEN] 排查光缆是否存在鼠咬、挤压或老化脆断，重点检查断路器间隔电缆层转角处、穿管端口等易受损位置。\n[GEN] 排查保护装置光模块是否存在性能劣化或故障，通过更换备用光模块或交叉跳纤试验，区分故障点位于光缆还是设备侧。\n\n#### 4.2.3 故障点确认\n[GEN] 综合OTDR测试曲线、保护装置告警时间、现场外观检查结果，定位光缆中断或高损点具体位置。若OTDR显示断点在断路器间隔附近，则重点检查该段光缆及接头盒。\n[GEN] 在故障点位置确认后，进一步判断故障类型：若为纤芯断裂，需重新熔接；若为接头盒进水或连接器脏污，需清洁及重新密封；若为光缆外护层破损但纤芯未断，需进行加强保护处理。\n[GEN] 将确认结果记录在《现场故障检查确认记录表》中，包括故障点所在间隔、光缆编号、纤芯号、故障性质及影响范围。\n\n### 4.3 现场抢修措施\n\n#### 4.3.1 临时处置措施\n[GEN] 若故障点可快速修复（如尾纤松动、连接器脏污），立即按标准化流程重新插拔并清洁，用光功率计验证光路恢复，确认保护通道可重新投入。\n[GEN] 若光缆断芯或严重损坏，且具备备用纤芯条件（同缆或同路径光缆中存在备用纤芯），优先跳通备用纤芯，将保护通道转移至备用芯，恢复保护运行。跳纤前需核对备用纤芯的全程衰减和完好性。\n[GEN] 若无备用纤芯或备用芯亦异常，应考虑使用应急光纤（如临时敷设一段铠装跳纤从断路器间隔直接连接至保护小室ODF），作为临时恢复保护通道的手段。临时纤缆需固定牢固，防止人员绊倒或误触碰。\n\n#### 4.3.2 正式抢修措施\n[GEN] 对确认断裂的纤芯，使用高精度熔接机进行熔接。熔接前清洁光纤涂覆层，切割端面角度≤1°，熔接后立即用热缩套管保护接头。熔接损耗应≤0.05dB。\n[GEN] 若故障点位于光缆接头盒内部，需更换或修复接头盒，并重新固定光缆余量。接头盒应密封良好，填充防水胶泥，并按规定挂标牌标注芯线对应关系。\n[GEN] 若光缆外护层受损或存在机械应力隐患，应更换该段光缆或加装金属软管保护。对于经断路器间隔的裸露光缆，建议敷设于定向保护管（如HDPE管）并锚固。\n[GEN] 修复完成后，对所有涉及的保护通道进行收发光功率、误码率及保护装置自环测试，确认通信恢复正常。同时记录光缆修复后的全程衰耗值，建立台账。\n\n#### 4.3.3 恢复验证措施\n[GEN] 抢修结束后，由运维人员与通信专业人员共同进行保护通道的联动试验：在保护装置侧模拟故障，验证保护通道能否正常收发信号、保护逻辑能否正确动作。\n[GEN] 通过调度管理系统（OMS）或调度电话申请核对保护通道的实际运行状态，确认保护装置“通道异常”告消失，保护通道恢复正常运行。\n[GEN] 对修复后的光缆路径进行72小时观察，期间每日巡检一次，检查断路器间隔附近是否有异常振动、热源或积水，确保修复质量稳定。\n[GEN] 填写《保护通道抢修恢复验收单》，由运维、通信、调度三方会签，整理光缆中断原因分析及改进措施报告。\n\n### 4.4 风险防控措施\n\n[GEN] 防触电风险：在断路器间隔停电隔离后，作业前必须验电、接地，防止电容器残余电荷或感应电伤害。涉及二次回路作业时，确认控制电源已断开。\n[GEN] 防火风险：光缆熔接作业现场禁止堆放易燃物，配备足量干粉灭火器。使用切割机或角磨机时，应清理可燃物并设置防火挡板。\n[GEN] 防误操作风险：在抢修作业过程中，严格禁止擅自更动其他运行设备的连接端子、压板和操作把手。需分合检修设备的分合闸回路时，必须经调度许可并在监护下执行。\n[GEN] 二次伤害风险：在电缆层、光缆沟道内作业时，注意防坠落、防跌伤。有限空间作业必须执行“先通风、再检测、后作业”原则，安排专人监护。抢修结束后，及时恢复所有隔离措施，收回临时接地线，确保设备具备恢复运行条件。"
+            }
+          }
+        ],
+        "responseData": [
+          {
+            "moduleName": "workflow:template.plugin_start",
+            "moduleType": "pluginInput",
+            "moduleLogo": "core/workflow/template/workflowStart",
+            "id": "r5QY5gwCqJozYQW9",
+            "nodeId": "pluginInput",
+            "runningTime": 0
+          },
+          {
+            "moduleName": "AI 对话",
+            "moduleType": "chatNode",
+            "moduleLogo": "core/workflow/template/aiChat",
+            "totalPoints": 0,
+            "model": "DSV4F",
+            "inputTokens": 2115,
+            "outputTokens": 1908,
+            "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "reasoningText": "我们按照模板章节顺序生成预案。模板是第4章处置措施及其子节。需要包含来源标记。输入中图谱检索结果为空，所以大部分内容需要由GEN生成，结合用户场景。故障对象是\"高压断路器\"，场景是站内光缆经过断路器间隔后通信中断，保护通道退出。需要生成完整的第4章处置措施。\n\n注意：只输出指定章节，不要输出其他章节。\n\n开始生成。",
+            "historyPreview": [
+              {
+                "obj": "System",
+                "value": "你是“电力设备场景化应急预案生成器”，面向一线运维和应急管理人员输出结构化现场处置预案。\n\n你会收到 4 类输入：\n1. 用户原问题：站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。\n2. 故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}\n3. 图谱检索得到的方案素材：当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。\n4. 模板文本：## 第4章 处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：结合风险与场景扩写具体措施\n\n### 4.1 隔离与安全控制\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：针对安全风险生成隔离、警戒、接地、验电等控制措施\n\n#### 4.1.1 隔离措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成停电隔离、机械隔离和区域隔离措施\n\n#### 4.1.2 安全措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：生成验电、接地、防误操作和个人防护要求\n\n#### 4.1.3 现场警戒\n内容来源：gen\n生成要求：生成警戒范围、人员管控和外部告知要求\n\n### 4.2 故障检查与确认\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：结合现象和原因生成检查确认要点\n\n#### 4.2.1 故障现象检查\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：列出应重点检查的现场现象和异常信号\n\n#### 4.2.2 故障原因排查\n内容来源：kg+gen\n图谱字段：fault_cause\n生成要求：列出需要排查的可能故障原因\n\n#### 4.2.3 故障点确认\n内容来源：kg+gen\n图谱字段：fault_symptom,fault_cause\n生成要求：结合检查结果确认故障点和故障类型\n\n### 4.3 现场抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：将图谱措施组织成可执行抢修动作\n\n#### 4.3.1 临时处置措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：优先生成保障安全和临时恢复能力的措施\n\n#### 4.3.2 正式抢修措施\n内容来源：kg+gen\n图谱字段：response_measure\n生成要求：生成正式消缺、修复、更换或治理措施\n\n#### 4.3.3 恢复验证措施\n内容来源：kg+gen\n图谱字段：fault_symptom\n生成要求：生成恢复后试验、验收和观察要求\n\n### 4.4 风险防控措施\n内容来源：kg+gen\n图谱字段：safety_risk\n生成要求：补充防触电、防火、防误操作和二次伤害控制要求\n\n你的任务：\n1. 按模板章节顺序生成完整预案，不要改章节顺序。\n2. 模板中的内容来源，图谱字段，生成要求仅作为生成指引，在输出中不能把这三个字段写出来。\n3. 不要输出像“- 调度机构：xxx”这样的内容，而要写成“应立即向调度机构、运维管理单位等部门报告”这种完整的句子。只能使用模板中的标题分层级，不能自己加短横杠来分级。\n4. 只基于图谱素材、模板要求和用户场景生成，不要脱离输入随意编造专业知识。\n1. 应急资源必须体现在“应急保障”“应急物资清单”等章节中。\n2. 如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段。\n 严格要求：\n1. 只能生成当前传入模板中的章节与小节，不得补写其他章节。\n2. 不得输出上一章、下一章、总则、附件或任何未在当前模板中出现的标题。\n3. 如果当前模板以“## 第2章 ...”开头，输出必须也从这一章开始，不得从“第1章”开始。\n4. 如果当前模板是“附件”章节，只能输出附件相关内容。\n5. 不要根据历史回答续写，不要补全整篇预案。\n来源标记规则：\n1. 只允许使用三种标记：[KG]、[GEN]、[FIX]。\n2. 直接来自知识图谱检索结果的内容，必须标记为 [KG]。\n3. 根据用户场景自动补全、推导、组织、排序、扩展出的内容，必须标记为 [GEN]。\n4. 标签能且仅能位于一段话的开头，要写下一段话，必须换行后生成标签再写，不能出现一个段落里有两个标签的问题。\n5. 直接来自模板中的预定义固定文本，必须标记为 [FIX]。\n6. 不允许写混合标记。\n7. 同一个句子、同一个编号条目、同一个项目符号内，只能出现一种来源标记。\n8. 绝对禁止输出 `[KG]&[GEN]`、`[KG] & [GEN]`、`[KG]/[GEN]`、`[KG][GEN]`、`[FIX]&[GEN]`、`[FIX][KG]` 等任何组合式来源标记。也禁止在各级标题上加标签，标签只能加载内容上。\n9. 绝对禁止用 `&`、`/`、`+` 把不同来源标记连接在一起。\n10. 一条内容如果同时包含图谱事实、模板固定文本、模型补全，必须拆成多条相邻内容分别标注。\n11. `[FIX]` 只用于模板里明确存在的固定文本（但是不包括标题，只包括固定的内容），不要把你自己写的套话标成 `[FIX]`。\n12. `[KG]` 只用于图谱素材中的故障原因、现象、措施、后果、风险、资源等内容。\n13. `[GEN]` 只用于场景化补充、组织安排、时序安排、响应等级判断、约束解释、恢复策略等模型生成内容。\n14. 最终正文中保留这些标记，不要在文末再解释。\n多故障融合规则：\n1. 若“故障与场景提取结果”中存在多个故障二级节点，必须将其视为“同一事件中的复合故障”，输出时要进行融合表达，不能按每个故障分别整段平铺罗列。\n2. 若存在“主故障二级节点”，应以主故障为主线组织内容，其余故障作为伴随故障、诱发因素、叠加风险或并发异常纳入分析。\n3. 对于故障原因、故障后果、安全风险、应对措施等内容：\n  - 相近或重复的图谱信息必须合并概括；\n  - 不得使用“故障A-故障原因：... 故障B-故障原因：...”这种逐条照抄式表达；\n  - 应改写为面向现场事件的综合描述。\n4. “事件类型”只能输出一个综合事件类型描述，不得把多个故障名称直接并列成一串。\n5. “故障原因”应围绕本次复合故障总结 2~4 个主要原因或诱因，不得把每个故障的完整原因原文全部依次照搬。\n6. “事件范围”“事件危害程度”应描述多故障叠加后的整体影响，不得逐个故障重复罗列完整后果和风险。\n7. “响应等级”只能给出一个最终等级判断，不得分别对多个故障单独评级。\n8. 当图谱素材中包含多个故障的多条 [KG] 内容时，可以拆成多个 [KG] 段落或条目，但每条都必须服务于“同一综合事件”的表达，不能变成“多个独立故障说明书”。\n9. 若多个故障之间存在明显主次关系，应优先保留主故障的细节，其他故障只保留与当前事件直接相关的关键点。\n10. 在任一小节中，若同类KG信息超过3条，必须先归纳再输出，不得机械堆砌。\n输出要求：\n- 不要输出总标题。\n- 严格依据模板文本中的章节和小节组织内容。\n- 总长度控制在 2500~4000 字。\n- 语言要正式、清晰、可执行。\n- 必须体现：响应等级、故障对象、事件场景、关键处置要求、特殊约束。\n\n- 设备名称规范化：全文所有提到设备的地方，必须使用\"故障与场景提取结果\"中\"故障对象\"字段给出的具体设备实名（如\"高压断路器\"、\"变压器\"等），严禁照搬用户原问题中的模糊指代（如\"某110kV设备\"\"该设备\"\"本设备\"等）。在首次提及设备时明确写出完整设备名称。\n- 若模板某节是固定文本为主，先输出对应 [FIX] 内容，再按需要补充 [GEN] 或 [KG]内容。若只包含FIX，则只输出FIX的内容，不要输出其他任何东西。\n- 每个小节下的主要要点都应带来源标记。\n- 生成完成前自检：全文不得出现任何组合式来源标记；如出现必须拆分重写。\n\n不要输出 JSON，不要输出解释，不要说“作为 AI”。直接输出成文预案。"
+              },
+              {
+                "obj": "Human",
+                "value": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。"
+              },
+              {
+                "obj": "AI",
+                "value": "## 第4章 处置措施\n\n### 4.1 隔离与安全控制\n\n#### 4.1.1 隔离措施\n[GEN] 应立即申请将受影响的保护通道所关联的高压断路器间隔由运行状态转为冷备用或检修状态，切断一次设备电能供应，防止在光缆抢修过程中发生误合闸或感应电伤人事故。\n[GEN] 对该光缆路径经过的其他间隔设备，若可能受到作业影响，也应同步停电隔离。在断路器间隔操作机构箱及汇控柜处悬挂“禁止合闸，有人工作”标示牌。\n[GEN] 对光缆接头盒所在电缆层、端子箱等区域设置临时围栏，与运行设备区域物理隔离，禁止无关人员进入光缆抢修作业区。\n\n#### 4.1.2 安全措施\n[GEN] 抢修人员进入现场前，必须对光缆金属护层及加强芯进行验电，确认无感应电压后方可开始工作。必要时加装临时接地线，接地线应使用截面不小于25mm²的软铜线，并可靠连接至接地网。\n[GEN] 涉及断路器间隔二次回路时，应执行“三核对”措施：核对图纸、核对端子排、核对电缆芯线，防止误碰运行的保护装置。拆接线人员应使用绝缘工具，佩戴防静电手环。\n[GEN] 所有作业人员必须佩戴安全帽、穿绝缘鞋，高处作业时系挂安全带。进入光缆沟道或电缆夹层前应通风并检测有害气体。\n\n#### 4.1.3 现场警戒\n[GEN] 以断路器间隔端子箱、光缆尾纤配线架及路径上各接头盒为中心，向外扩展3米范围设为警戒区，拉设警戒带，夜间加设警示灯。\n[GEN] 指定专人在保护小室门口及断路器就地操作处值守，禁止非抢修人员进入警戒区。安排一名安全监护人全程监护光缆熔接及纤芯测试作业。\n[GEN] 立即向调度机构、运维管理单位及通信专业部门报告本次保护通道中断情况及抢修计划，必要时通过调度向相关变电站发出风险预警告知。\n\n### 4.2 故障检查与确认\n\n#### 4.2.1 故障现象检查\n[GEN] 检查与保护通道对应的站内光缆配线架（ODF）上对应端口的光功率告警状态，确认是否显示“LOS”（光信号丢失）或“RDI”（远端缺陷指示）。\n[GEN] 检查高压断路器间隔端子箱内光缆尾纤是否松动、弯曲半径异常或受外力挤压；查看光缆余缆架及接头盒外观有无破损、进水、受力拉伸痕迹。\n[GEN] 检查线路保护装置面板，查看“通道异常”“收信消失”等告警信号记录，调取保护装置自检事件列表，确认保护通道退出的具体时间点。\n[GEN] 使用光时域反射仪（OTDR）对接入保护装置的光缆进行测试，重点关注断路器间隔至保护小室光缆路径上是否有明显的高衰耗点或断点。\n\n#### 4.2.2 故障原因排查\n[GEN] 排查光缆在断路器间隔路径上是否存在施工损伤，如近期是否有其他专业在间隔内进行接地刀闸操作、断路器机构检修或电缆敷设作业，是否误碰或挂断光缆。\n[GEN] 排查光缆接头盒密封是否失效，内部是否进水或纤芯断裂。检查尾纤连接器端面是否脏污、磨损坏或未紧固到位。\n[GEN] 排查光缆是否存在鼠咬、挤压或老化脆断，重点检查断路器间隔电缆层转角处、穿管端口等易受损位置。\n[GEN] 排查保护装置光模块是否存在性能劣化或故障，通过更换备用光模块或交叉跳纤试验，区分故障点位于光缆还是设备侧。\n\n#### 4.2.3 故障点确认\n[GEN] 综合OTDR测试曲线、保护装置告警时间、现场外观检查结果，定位光缆中断或高损点具体位置。若OTDR显示断点在断路器间隔附近，则重点检查该段光缆及接头盒。\n[GEN] 在故障点位置确认后，进一步判断故障类型：若为纤芯断裂，需重新熔接；若为接头盒进水或连接器脏污，需清洁及重新密封；若为光缆外护层破损但纤芯未断，需进行加强保护处理。\n[GEN] 将确认结果记录在《现场故障检查确认记录表》中，包括故障点所在间隔、光缆编号、纤芯号、故障性质及影响范围。\n\n### 4.3 现场抢修措施\n\n#### 4.3.1 临时处置措施\n[GEN] 若故障点可快速修复（如尾纤松动、连接器脏污），立即按标准化流程重新插拔并清洁，用光功率计验证光路恢复，确认保护通道可重新投入。\n[GEN] 若光缆断芯或严重损坏，且具备备用纤芯条件（同缆或同路径光缆中存在备用纤芯），优先跳通备用纤芯，将保护通道转移至备用芯，恢复保护运行。跳纤前需核对备用纤芯的全程衰减和完好性。\n[GEN] 若无备用纤芯或备用芯亦异常，应考虑使用应急光纤（如临时敷设一段铠装跳纤从断路器间隔直接连接至保护小室ODF），作为临时恢复保护通道的手段。临时纤缆需固定牢固，防止人员绊倒或误触碰。\n\n#### 4.3.2 正式抢修措施\n[GEN] 对确认断裂的纤芯，使用高精度熔接机进行熔接。熔接前清洁光纤涂覆层，切割端面角度≤1°，熔接后立即用热缩套管保护接头。熔接损耗应≤0.05dB。\n[GEN] 若故障点位于光缆接头盒内部，需更换或修复接头盒，并重新固定光缆余量。接头盒应密封良好，填充防水胶泥，并按规定挂标牌标注芯线对应关系。\n[GEN] 若光缆外护层受损或存在机械应力隐患，应更换该段光缆或加装金属软管保护。对于经断路器间隔的裸露光缆，建议敷设于定向保护管（如HDPE管）并锚固。\n[GEN] 修复完成后，对所有涉及的保护通道进行收发光功率、误码率及保护装置自环测试，确认通信恢复正常。同时记录光缆修复后的全程衰耗值，建立台账。\n\n#### 4.3.3 恢复验证措施\n[GEN] 抢修结束后，由运维人员与通信专业人员共同进行保护通道的联动试验：在保护装置侧模拟故障，验证保护通道能否正常收发信号、保护逻辑能否正确动作。\n[GEN] 通过调度管理系统（OMS）或调度电话申请核对保护通道的实际运行状态，确认保护装置“通道异常”告消失，保护通道恢复正常运行。\n[GEN] 对修复后的光缆路径进行72小时观察，期间每日巡检一次，检查断路器间隔附近是否有异常振动、热源或积水，确保修复质量稳定。\n[GEN] 填写《保护通道抢修恢复验收单》，由运维、通信、调度三方会签，整理光缆中断原因分析及改进措施报告。\n\n### 4.4 风险防控措施\n\n[GEN] 防触电风险：在断路器间隔停电隔离后，作业前必须验电、接地，防止电容器残余电荷或感应电伤害。涉及二次回路作业时，确认控制电源已断开。\n[GEN] 防火风险：光缆熔接作业现场禁止堆放易燃物，配备足量干粉灭火器。使用切割机或角磨机时，应清理可燃物并设置防火挡板。\n[GEN] 防误操作风险：在抢修作业过程中，严格禁止擅自更动其他运行设备的连接端子、压板和操作把手。需分合检修设备的分合闸回路时，必须经调度许可并在监护下执行。\n[GEN] 二次伤害风险：在电缆层、光缆沟道内作业时，注意防坠落、防跌伤。有限空间作业必须执行“先通风、再检测、后作业”原则，安排专人监护。抢修结束后，及时恢复所有隔离措施，收回临时接地线，确保设备具备恢复运行条件。"
+              }
+            ],
+            "contextTotalLen": 3,
+            "finishReason": "stop",
+            "llmRequestIds": [
+              "NaKvDeSEsNHfvxUP"
+            ],
+            "id": "cQCbyOMlL1sKioIy",
+            "nodeId": "bGnjDQW0yaqJ8a8V",
+            "runningTime": 26.01
+          },
+          {
+            "moduleName": "common:core.module.template.self_output",
+            "moduleType": "pluginOutput",
+            "moduleLogo": "core/workflow/template/pluginOutput",
+            "pluginOutput": {
+              "template": "## 第4章 处置措施\n\n### 4.1 隔离与安全控制\n\n#### 4.1.1 隔离措施\n[GEN] 应立即申请将受影响的保护通道所关联的高压断路器间隔由运行状态转为冷备用或检修状态，切断一次设备电能供应，防止在光缆抢修过程中发生误合闸或感应电伤人事故。\n[GEN] 对该光缆路径经过的其他间隔设备，若可能受到作业影响，也应同步停电隔离。在断路器间隔操作机构箱及汇控柜处悬挂“禁止合闸，有人工作”标示牌。\n[GEN] 对光缆接头盒所在电缆层、端子箱等区域设置临时围栏，与运行设备区域物理隔离，禁止无关人员进入光缆抢修作业区。\n\n#### 4.1.2 安全措施\n[GEN] 抢修人员进入现场前，必须对光缆金属护层及加强芯进行验电，确认无感应电压后方可开始工作。必要时加装临时接地线，接地线应使用截面不小于25mm²的软铜线，并可靠连接至接地网。\n[GEN] 涉及断路器间隔二次回路时，应执行“三核对”措施：核对图纸、核对端子排、核对电缆芯线，防止误碰运行的保护装置。拆接线人员应使用绝缘工具，佩戴防静电手环。\n[GEN] 所有作业人员必须佩戴安全帽、穿绝缘鞋，高处作业时系挂安全带。进入光缆沟道或电缆夹层前应通风并检测有害气体。\n\n#### 4.1.3 现场警戒\n[GEN] 以断路器间隔端子箱、光缆尾纤配线架及路径上各接头盒为中心，向外扩展3米范围设为警戒区，拉设警戒带，夜间加设警示灯。\n[GEN] 指定专人在保护小室门口及断路器就地操作处值守，禁止非抢修人员进入警戒区。安排一名安全监护人全程监护光缆熔接及纤芯测试作业。\n[GEN] 立即向调度机构、运维管理单位及通信专业部门报告本次保护通道中断情况及抢修计划，必要时通过调度向相关变电站发出风险预警告知。\n\n### 4.2 故障检查与确认\n\n#### 4.2.1 故障现象检查\n[GEN] 检查与保护通道对应的站内光缆配线架（ODF）上对应端口的光功率告警状态，确认是否显示“LOS”（光信号丢失）或“RDI”（远端缺陷指示）。\n[GEN] 检查高压断路器间隔端子箱内光缆尾纤是否松动、弯曲半径异常或受外力挤压；查看光缆余缆架及接头盒外观有无破损、进水、受力拉伸痕迹。\n[GEN] 检查线路保护装置面板，查看“通道异常”“收信消失”等告警信号记录，调取保护装置自检事件列表，确认保护通道退出的具体时间点。\n[GEN] 使用光时域反射仪（OTDR）对接入保护装置的光缆进行测试，重点关注断路器间隔至保护小室光缆路径上是否有明显的高衰耗点或断点。\n\n#### 4.2.2 故障原因排查\n[GEN] 排查光缆在断路器间隔路径上是否存在施工损伤，如近期是否有其他专业在间隔内进行接地刀闸操作、断路器机构检修或电缆敷设作业，是否误碰或挂断光缆。\n[GEN] 排查光缆接头盒密封是否失效，内部是否进水或纤芯断裂。检查尾纤连接器端面是否脏污、磨损坏或未紧固到位。\n[GEN] 排查光缆是否存在鼠咬、挤压或老化脆断，重点检查断路器间隔电缆层转角处、穿管端口等易受损位置。\n[GEN] 排查保护装置光模块是否存在性能劣化或故障，通过更换备用光模块或交叉跳纤试验，区分故障点位于光缆还是设备侧。\n\n#### 4.2.3 故障点确认\n[GEN] 综合OTDR测试曲线、保护装置告警时间、现场外观检查结果，定位光缆中断或高损点具体位置。若OTDR显示断点在断路器间隔附近，则重点检查该段光缆及接头盒。\n[GEN] 在故障点位置确认后，进一步判断故障类型：若为纤芯断裂，需重新熔接；若为接头盒进水或连接器脏污，需清洁及重新密封；若为光缆外护层破损但纤芯未断，需进行加强保护处理。\n[GEN] 将确认结果记录在《现场故障检查确认记录表》中，包括故障点所在间隔、光缆编号、纤芯号、故障性质及影响范围。\n\n### 4.3 现场抢修措施\n\n#### 4.3.1 临时处置措施\n[GEN] 若故障点可快速修复（如尾纤松动、连接器脏污），立即按标准化流程重新插拔并清洁，用光功率计验证光路恢复，确认保护通道可重新投入。\n[GEN] 若光缆断芯或严重损坏，且具备备用纤芯条件（同缆或同路径光缆中存在备用纤芯），优先跳通备用纤芯，将保护通道转移至备用芯，恢复保护运行。跳纤前需核对备用纤芯的全程衰减和完好性。\n[GEN] 若无备用纤芯或备用芯亦异常，应考虑使用应急光纤（如临时敷设一段铠装跳纤从断路器间隔直接连接至保护小室ODF），作为临时恢复保护通道的手段。临时纤缆需固定牢固，防止人员绊倒或误触碰。\n\n#### 4.3.2 正式抢修措施\n[GEN] 对确认断裂的纤芯，使用高精度熔接机进行熔接。熔接前清洁光纤涂覆层，切割端面角度≤1°，熔接后立即用热缩套管保护接头。熔接损耗应≤0.05dB。\n[GEN] 若故障点位于光缆接头盒内部，需更换或修复接头盒，并重新固定光缆余量。接头盒应密封良好，填充防水胶泥，并按规定挂标牌标注芯线对应关系。\n[GEN] 若光缆外护层受损或存在机械应力隐患，应更换该段光缆或加装金属软管保护。对于经断路器间隔的裸露光缆，建议敷设于定向保护管（如HDPE管）并锚固。\n[GEN] 修复完成后，对所有涉及的保护通道进行收发光功率、误码率及保护装置自环测试，确认通信恢复正常。同时记录光缆修复后的全程衰耗值，建立台账。\n\n#### 4.3.3 恢复验证措施\n[GEN] 抢修结束后，由运维人员与通信专业人员共同进行保护通道的联动试验：在保护装置侧模拟故障，验证保护通道能否正常收发信号、保护逻辑能否正确动作。\n[GEN] 通过调度管理系统（OMS）或调度电话申请核对保护通道的实际运行状态，确认保护装置“通道异常”告消失，保护通道恢复正常运行。\n[GEN] 对修复后的光缆路径进行72小时观察，期间每日巡检一次，检查断路器间隔附近是否有异常振动、热源或积水，确保修复质量稳定。\n[GEN] 填写《保护通道抢修恢复验收单》，由运维、通信、调度三方会签，整理光缆中断原因分析及改进措施报告。\n\n### 4.4 风险防控措施\n\n[GEN] 防触电风险：在断路器间隔停电隔离后，作业前必须验电、接地，防止电容器残余电荷或感应电伤害。涉及二次回路作业时，确认控制电源已断开。\n[GEN] 防火风险：光缆熔接作业现场禁止堆放易燃物，配备足量干粉灭火器。使用切割机或角磨机时，应清理可燃物并设置防火挡板。\n[GEN] 防误操作风险：在抢修作业过程中，严格禁止擅自更动其他运行设备的连接端子、压板和操作把手。需分合检修设备的分合闸回路时，必须经调度许可并在监护下执行。\n[GEN] 二次伤害风险：在电缆层、光缆沟道内作业时，注意防坠落、防跌伤。有限空间作业必须执行“先通风、再检测、后作业”原则，安排专人监护。抢修结束后，及时恢复所有隔离措施，收回临时接地线，确保设备具备恢复运行条件。"
+            },
+            "id": "nlavYuTE6pxQITZ1",
+            "nodeId": "pluginOutput",
+            "runningTime": 0
+          }
+        ]
+      },
+      "output_text": "## 第4章 处置措施\n\n### 4.1 隔离与安全控制\n\n#### 4.1.1 隔离措施\n[GEN] 应立即申请将受影响的保护通道所关联的高压断路器间隔由运行状态转为冷备用或检修状态，切断一次设备电能供应，防止在光缆抢修过程中发生误合闸或感应电伤人事故。\n[GEN] 对该光缆路径经过的其他间隔设备，若可能受到作业影响，也应同步停电隔离。在断路器间隔操作机构箱及汇控柜处悬挂“禁止合闸，有人工作”标示牌。\n[GEN] 对光缆接头盒所在电缆层、端子箱等区域设置临时围栏，与运行设备区域物理隔离，禁止无关人员进入光缆抢修作业区。\n\n#### 4.1.2 安全措施\n[GEN] 抢修人员进入现场前，必须对光缆金属护层及加强芯进行验电，确认无感应电压后方可开始工作。必要时加装临时接地线，接地线应使用截面不小于25mm²的软铜线，并可靠连接至接地网。\n[GEN] 涉及断路器间隔二次回路时，应执行“三核对”措施：核对图纸、核对端子排、核对电缆芯线，防止误碰运行的保护装置。拆接线人员应使用绝缘工具，佩戴防静电手环。\n[GEN] 所有作业人员必须佩戴安全帽、穿绝缘鞋，高处作业时系挂安全带。进入光缆沟道或电缆夹层前应通风并检测有害气体。\n\n#### 4.1.3 现场警戒\n[GEN] 以断路器间隔端子箱、光缆尾纤配线架及路径上各接头盒为中心，向外扩展3米范围设为警戒区，拉设警戒带，夜间加设警示灯。\n[GEN] 指定专人在保护小室门口及断路器就地操作处值守，禁止非抢修人员进入警戒区。安排一名安全监护人全程监护光缆熔接及纤芯测试作业。\n[GEN] 立即向调度机构、运维管理单位及通信专业部门报告本次保护通道中断情况及抢修计划，必要时通过调度向相关变电站发出风险预警告知。\n\n### 4.2 故障检查与确认\n\n#### 4.2.1 故障现象检查\n[GEN] 检查与保护通道对应的站内光缆配线架（ODF）上对应端口的光功率告警状态，确认是否显示“LOS”（光信号丢失）或“RDI”（远端缺陷指示）。\n[GEN] 检查高压断路器间隔端子箱内光缆尾纤是否松动、弯曲半径异常或受外力挤压；查看光缆余缆架及接头盒外观有无破损、进水、受力拉伸痕迹。\n[GEN] 检查线路保护装置面板，查看“通道异常”“收信消失”等告警信号记录，调取保护装置自检事件列表，确认保护通道退出的具体时间点。\n[GEN] 使用光时域反射仪（OTDR）对接入保护装置的光缆进行测试，重点关注断路器间隔至保护小室光缆路径上是否有明显的高衰耗点或断点。\n\n#### 4.2.2 故障原因排查\n[GEN] 排查光缆在断路器间隔路径上是否存在施工损伤，如近期是否有其他专业在间隔内进行接地刀闸操作、断路器机构检修或电缆敷设作业，是否误碰或挂断光缆。\n[GEN] 排查光缆接头盒密封是否失效，内部是否进水或纤芯断裂。检查尾纤连接器端面是否脏污、磨损坏或未紧固到位。\n[GEN] 排查光缆是否存在鼠咬、挤压或老化脆断，重点检查断路器间隔电缆层转角处、穿管端口等易受损位置。\n[GEN] 排查保护装置光模块是否存在性能劣化或故障，通过更换备用光模块或交叉跳纤试验，区分故障点位于光缆还是设备侧。\n\n#### 4.2.3 故障点确认\n[GEN] 综合OTDR测试曲线、保护装置告警时间、现场外观检查结果，定位光缆中断或高损点具体位置。若OTDR显示断点在断路器间隔附近，则重点检查该段光缆及接头盒。\n[GEN] 在故障点位置确认后，进一步判断故障类型：若为纤芯断裂，需重新熔接；若为接头盒进水或连接器脏污，需清洁及重新密封；若为光缆外护层破损但纤芯未断，需进行加强保护处理。\n[GEN] 将确认结果记录在《现场故障检查确认记录表》中，包括故障点所在间隔、光缆编号、纤芯号、故障性质及影响范围。\n\n### 4.3 现场抢修措施\n\n#### 4.3.1 临时处置措施\n[GEN] 若故障点可快速修复（如尾纤松动、连接器脏污），立即按标准化流程重新插拔并清洁，用光功率计验证光路恢复，确认保护通道可重新投入。\n[GEN] 若光缆断芯或严重损坏，且具备备用纤芯条件（同缆或同路径光缆中存在备用纤芯），优先跳通备用纤芯，将保护通道转移至备用芯，恢复保护运行。跳纤前需核对备用纤芯的全程衰减和完好性。\n[GEN] 若无备用纤芯或备用芯亦异常，应考虑使用应急光纤（如临时敷设一段铠装跳纤从断路器间隔直接连接至保护小室ODF），作为临时恢复保护通道的手段。临时纤缆需固定牢固，防止人员绊倒或误触碰。\n\n#### 4.3.2 正式抢修措施\n[GEN] 对确认断裂的纤芯，使用高精度熔接机进行熔接。熔接前清洁光纤涂覆层，切割端面角度≤1°，熔接后立即用热缩套管保护接头。熔接损耗应≤0.05dB。\n[GEN] 若故障点位于光缆接头盒内部，需更换或修复接头盒，并重新固定光缆余量。接头盒应密封良好，填充防水胶泥，并按规定挂标牌标注芯线对应关系。\n[GEN] 若光缆外护层受损或存在机械应力隐患，应更换该段光缆或加装金属软管保护。对于经断路器间隔的裸露光缆，建议敷设于定向保护管（如HDPE管）并锚固。\n[GEN] 修复完成后，对所有涉及的保护通道进行收发光功率、误码率及保护装置自环测试，确认通信恢复正常。同时记录光缆修复后的全程衰耗值，建立台账。\n\n#### 4.3.3 恢复验证措施\n[GEN] 抢修结束后，由运维人员与通信专业人员共同进行保护通道的联动试验：在保护装置侧模拟故障，验证保护通道能否正常收发信号、保护逻辑能否正确动作。\n[GEN] 通过调度管理系统（OMS）或调度电话申请核对保护通道的实际运行状态，确认保护装置“通道异常”告消失，保护通道恢复正常运行。\n[GEN] 对修复后的光缆路径进行72小时观察，期间每日巡检一次，检查断路器间隔附近是否有异常振动、热源或积水，确保修复质量稳定。\n[GEN] 填写《保护通道抢修恢复验收单》，由运维、通信、调度三方会签，整理光缆中断原因分析及改进措施报告。\n\n### 4.4 风险防控措施\n\n[GEN] 防触电风险：在断路器间隔停电隔离后，作业前必须验电、接地，防止电容器残余电荷或感应电伤害。涉及二次回路作业时，确认控制电源已断开。\n[GEN] 防火风险：光缆熔接作业现场禁止堆放易燃物，配备足量干粉灭火器。使用切割机或角磨机时，应清理可燃物并设置防火挡板。\n[GEN] 防误操作风险：在抢修作业过程中，严格禁止擅自更动其他运行设备的连接端子、压板和操作把手。需分合检修设备的分合闸回路时，必须经调度许可并在监护下执行。\n[GEN] 二次伤害风险：在电缆层、光缆沟道内作业时，注意防坠落、防跌伤。有限空间作业必须执行“先通风、再检测、后作业”原则，安排专人监护。抢修结束后，及时恢复所有隔离措施，收回临时接地线，确保设备具备恢复运行条件。"
+    },
+    {
+      "chapter_no": "5",
+      "title": "应急保障",
+      "section_count": 7,
+      "template_text": "## 第5章 应急保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将资源组织成物资、人员、通信保障\n\n### 5.1 人员保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据资源需求补充人员专业分工\n\n### 5.2 物资装备保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将图谱资源整理为装备、仪器、工器具和备品备件\n\n#### 5.2.1 仪器仪表\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳测量、试验和检测仪器\n\n#### 5.2.2 工器具\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳作业工器具和安全工器具\n\n#### 5.2.3 备品备件\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳备品备件和替换材料\n\n### 5.3 通信与交通保障\n内容来源：gen\n生成要求：根据场景补充通信联络、交通到场和现场保障要求",
+      "elapsed_sec": 22.965,
+      "response": {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "## 第5章 应急保障\n\n[GEN]本章应急保障内容针对站内光缆经过高压断路器间隔后通信中断、导致保护通道退出运行的突发事件编制，旨在为现场应急处置提供人员、物资、通信与交通的全方位支撑，确保响应及时、措施有效。\n\n### 5.1 人员保障\n\n[GEN]应急处置应设立现场指挥部，由运维管理单位负责人担任总指挥，统一协调指挥。\n\n[GEN]应明确以下人员专业分工与职责：\n[GEN]应急抢修组：由通信专业人员2至3人组成，负责光缆断点查找、修复及光通道恢复工作。人员应具备光纤熔接、测试及通信设备调试能力。\n[GEN]运行监控组：由运行值班人员1至2人组成，负责监控高压断路器本体及相邻设备的运行状态，监视保护装置告警信息，并做好与调度的运行信息沟通。\n[GEN]安全监护组：由安全监督人员1至2人组成，负责现场作业安全管控，监督安全措施落实，防止误入带电间隔或误操作。\n[GEN]后勤保障组：由后勤管理人员1人组成，负责应急物资调配、车辆安排及现场后勤支持。\n\n[GEN]所有应急人员应熟知本次事件的应急方案，熟悉现场设备和作业环境，并确认具备相关资质。\n\n### 5.2 物资装备保障\n\n[GEN]应提前储备并定期检查、维护应急物资装备，确保在故障发生后能够快速调配到位。\n\n#### 5.2.1 仪器仪表\n\n[GEN]应配备以下仪器仪表：\n[GEN]光时域反射仪（OTDR）1台，用于光缆故障点精确定位和光纤衰减测试。\n[GEN]光纤熔接机1台，用于光缆断点熔接恢复。\n[GEN]光功率计和稳定光源各1套，用于光通道性能测试和光路诊断。\n[GEN]万用表1块，用于现场通信设备电源及接口电压测试。\n\n#### 5.2.2 工器具\n\n[GEN]应配备以下工器具：\n[GEN]光纤切割刀、光纤剥线钳、光纤接头清洁工具等光纤处理专用工具1套。\n[GEN]光缆接续盒及防水密封材料若干，用于光缆接续保护。\n[GEN]绝缘手套、安全帽、绝缘鞋、验电器等个人安全防护用品1套。\n[GEN]警示标识、临时围栏、应急照明灯等现场安全警示与照明用具。\n\n#### 5.2.3 备品备件\n\n[GEN]应储备以下备品备件：\n[GEN]与现场使用型号一致的光缆（单模或多模，根据实际配置而定），长度不少于200米，用于故障光缆替换。\n[GEN]光纤尾纤和跳纤若干（包括不同接头类型，如FC/LC等）。\n[GEN]通信接口板、光模块等备件，用于更换故障的光通信设备部件。\n\n### 5.3 通信与交通保障\n\n[GEN]通信联络保障：\n[GEN]现场指挥部应建立与调度机构、运维管理单位、上级应急管理部门及相邻变电站的固定通信联络机制。\n[GEN]当主用通信通道（如调度电话、行政电话）因本次事件同时受到影响时，应立即启用备用通信方式，如移动电话、卫星电话或应急通信指挥车，确保指挥链路畅通。\n[GEN]应急抢修组应配备对讲机，用于现场作业人员之间以及与控制室的联络。\n\n[GEN]交通到场保障：\n[GEN]应安排专用应急车辆至少1辆，保证应急人员和物资能安全、快速到达故障现场。\n[GEN]车辆应保持油量充足、车况良好，并预先规划好最优到场路线，避开可能的交通拥堵区域。\n\n[GEN]现场保障要求：\n[GEN]现场作业区域应设置明显的安全围栏和警示标志，防止无关人员误入。\n[GEN]现场应配备必要的应急照明、通风、降温等设施，确保夜间或恶劣天气下的作业条件。\n[GEN]后勤保障组应提供充足的饮用水、防暑降温用品等，保障现场人员基本需求。"
+            }
+          }
+        ],
+        "responseData": [
+          {
+            "moduleName": "workflow:template.plugin_start",
+            "moduleType": "pluginInput",
+            "moduleLogo": "core/workflow/template/workflowStart",
+            "id": "hyPPrhBqZfs8rXMf",
+            "nodeId": "pluginInput",
+            "runningTime": 0
+          },
+          {
+            "moduleName": "AI 对话",
+            "moduleType": "chatNode",
+            "moduleLogo": "core/workflow/template/aiChat",
+            "totalPoints": 0,
+            "model": "DSV4F",
+            "inputTokens": 1827,
+            "outputTokens": 1839,
+            "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "reasoningText": "好的，用户需要我生成一个应急方案，针对的是站内光缆经过断路器间隔后通信中断导致保护通道退出的问题。我收到了结构化的输入，包括用户的原始问题、故障提取结果、图谱检索素材和模板文本。我的角色是作为一个电力设备场景化应急预案生成器，面向一线运维和应急管理人员输出结构化的现场处置预案。\n\n用户的核心需求是生成一个可执行的应急方案，深层需求可能是快速恢复通信和保护通道，确保电力系统安全稳定运行，避免事故扩大。用户可能没有明确说出需要明确响应等级、安全措施、资源调配等具体细节，但这些都需要在方案中体现。\n\n我需要严格按照模板的章节顺序来输出，只能生成当前模板中的章节，不能补写其他章节。模板文本是从第5章应急保障开始的，所以我的输出必须从\"## 第5章 应急保障\"开始，不能从第1章开始。\n\n对于来源标记，我需要严格遵守规则。只允许使用三种标记：[KG]、[GEN]、[FIX]。[KG]用于来自知识图谱检索结果的内容，[GEN]用于根据用户场景自动补全、推导、组织的内容，[FIX]用于模板中的预定义固定文本。但是当前模板中似乎没有明确的固定文本需要标记为[FIX]，因为模板只是给出了章节结构。所以我会主要使用[GEN]和[KG]。\n\n模板文本要求将资源组织成物资、人员、通信保障，并给出了具体的小节结构。我知道图谱检索得到的方案素材显示“当前二级故障：未知”，所有字段都是“未检索到”，这意味着我没有可用的[KG]内容。因此，所有内容都需要基于用户场景和模板要求由我生成，都需要标记为[GEN]。\n\n用户要求体现响应等级、故障对象、事件场景、关键处置要求和特殊约束。故障与场景提取结果中，响应等级是“未明确”，所以我需要在方案中根据场景自行判断合理的响应等级。故障对象是“高压断路器”，事件场景是“站内光缆经过断路器间隔后通信中断，保护通道退出运行”。关键处置要求是“生成应急方案”，特殊约束是“未明确”。用户原问题中提到了“双阶段处置”，我必须在处置程序和处置措施中显式拆成两个阶段。\n\n我需要基于这些信息来生成内容。由于图谱素材是空的，我不能随意编造专业知识，只能基于常见的光缆中断故障处置经验和电力安全准则来生成。我可以考虑响应等级为II级应急响应，因为保护通道退出可能涉及电网稳定问题，风险较高。故障原因可能包括光缆机械损伤、尾纤接头松动、外部施工等。故障现象是保护通道中断，告警信号。应对措施需要包括先进行光缆抢修，恢复光通道，再验证保护装置。故障后果是保护通道退出，运行风险增加。安全风险包括误动风险和断光风险。应急资源需要列出人员、物资和通信保障。\n\n在输出时，我必须确保设备名称规范化。全文所有提到设备的地方，必须使用“故障与场景提取结果”中“故障对象”字段给出的具体设备实名“高压断路器”，严禁使用“该设备”“本设备”等模糊指代。在首次提及设备时明确写出完整设备名称。\n\n用户明确要求“总长度控制在2500~4000字”，我的回复需要达到这个字数要求，所以内容要详细充实。\n\n我计划先写第5章应急保障，包括5.1人员保障、5.2物资装备保障（再分5.2.1仪器仪表、5.2.2工器具、5.2.3备品备件）、5.3通信与交通保障。由于这是单一场景，不需要多故障融合规则。\n\n每个小节下，主要要点都必须带来源标记。由于可能考虑双阶段，我需要在5.1或5.3中体现，或者虽然模板没有明确要求，但用户输入有提及，我应该考虑在相关章节中嵌入双阶段的概念，可以在“人员保障”或“通信与交通保障”中体现阶段划分，比如应急响应阶段和恢复阶段。\n\n在编写时，我必须使用完整的句子表达，不能输出短横杠格式的内容。例如，不能说“- 调度机构：xxx”，而要说“应立即向调度机构、运维管理单位等部门报告”。\n\n我还需要确保没有组合式来源标记，每个段落只能有一种标记。如果同一段落有不同来源的内容，必须拆分成多个段落分别标记。\n\n最后，我会自检全文，确保没有出现任何违规的组合标记，所有设备名称都已正确规范化，章节结构严格遵循模板，且总字数在要求范围内。",
+            "historyPreview": [
+              {
+                "obj": "System",
+                "value": "你是“电力设备场景化应急预案生成器”，面向一线运维和应急管理人员输出结构化现场处置预案。\n\n你会收到 4 类输入：\n1. 用户原问题：站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。\n2. 故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}\n3. 图谱检索得到的方案素材：当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。\n4. 模板文本：## 第5章 应急保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将资源组织成物资、人员、通信保障\n\n### 5.1 人员保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据资源需求补充人员专业分工\n\n### 5.2 物资装备保障\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：将图谱资源整理为装备、仪器、工器具和备品备件\n\n#### 5.2.1 仪器仪表\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳测量、试验和检测仪器\n\n#### 5.2.2 工器具\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳作业工器具和安全工器具\n\n#### 5.2.3 备品备件\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：从图谱资源中归纳备品备件和替换材料\n\n### 5.3 通信与交通保障\n内容来源：gen\n生成要求：根据场景补充通信联络、交通到场和现场保障要求\n\n你的任务：\n1. 按模板章节顺序生成完整预案，不要改章节顺序。\n2. 模板中的内容来源，图谱字段，生成要求仅作为生成指引，在输出中不能把这三个字段写出来。\n3. 不要输出像“- 调度机构：xxx”这样的内容，而要写成“应立即向调度机构、运维管理单位等部门报告”这种完整的句子。只能使用模板中的标题分层级，不能自己加短横杠来分级。\n4. 只基于图谱素材、模板要求和用户场景生成，不要脱离输入随意编造专业知识。\n1. 应急资源必须体现在“应急保障”“应急物资清单”等章节中。\n2. 如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段。\n 严格要求：\n1. 只能生成当前传入模板中的章节与小节，不得补写其他章节。\n2. 不得输出上一章、下一章、总则、附件或任何未在当前模板中出现的标题。\n3. 如果当前模板以“## 第2章 ...”开头，输出必须也从这一章开始，不得从“第1章”开始。\n4. 如果当前模板是“附件”章节，只能输出附件相关内容。\n5. 不要根据历史回答续写，不要补全整篇预案。\n来源标记规则：\n1. 只允许使用三种标记：[KG]、[GEN]、[FIX]。\n2. 直接来自知识图谱检索结果的内容，必须标记为 [KG]。\n3. 根据用户场景自动补全、推导、组织、排序、扩展出的内容，必须标记为 [GEN]。\n4. 标签能且仅能位于一段话的开头，要写下一段话，必须换行后生成标签再写，不能出现一个段落里有两个标签的问题。\n5. 直接来自模板中的预定义固定文本，必须标记为 [FIX]。\n6. 不允许写混合标记。\n7. 同一个句子、同一个编号条目、同一个项目符号内，只能出现一种来源标记。\n8. 绝对禁止输出 `[KG]&[GEN]`、`[KG] & [GEN]`、`[KG]/[GEN]`、`[KG][GEN]`、`[FIX]&[GEN]`、`[FIX][KG]` 等任何组合式来源标记。也禁止在各级标题上加标签，标签只能加载内容上。\n9. 绝对禁止用 `&`、`/`、`+` 把不同来源标记连接在一起。\n10. 一条内容如果同时包含图谱事实、模板固定文本、模型补全，必须拆成多条相邻内容分别标注。\n11. `[FIX]` 只用于模板里明确存在的固定文本（但是不包括标题，只包括固定的内容），不要把你自己写的套话标成 `[FIX]`。\n12. `[KG]` 只用于图谱素材中的故障原因、现象、措施、后果、风险、资源等内容。\n13. `[GEN]` 只用于场景化补充、组织安排、时序安排、响应等级判断、约束解释、恢复策略等模型生成内容。\n14. 最终正文中保留这些标记，不要在文末再解释。\n多故障融合规则：\n1. 若“故障与场景提取结果”中存在多个故障二级节点，必须将其视为“同一事件中的复合故障”，输出时要进行融合表达，不能按每个故障分别整段平铺罗列。\n2. 若存在“主故障二级节点”，应以主故障为主线组织内容，其余故障作为伴随故障、诱发因素、叠加风险或并发异常纳入分析。\n3. 对于故障原因、故障后果、安全风险、应对措施等内容：\n  - 相近或重复的图谱信息必须合并概括；\n  - 不得使用“故障A-故障原因：... 故障B-故障原因：...”这种逐条照抄式表达；\n  - 应改写为面向现场事件的综合描述。\n4. “事件类型”只能输出一个综合事件类型描述，不得把多个故障名称直接并列成一串。\n5. “故障原因”应围绕本次复合故障总结 2~4 个主要原因或诱因，不得把每个故障的完整原因原文全部依次照搬。\n6. “事件范围”“事件危害程度”应描述多故障叠加后的整体影响，不得逐个故障重复罗列完整后果和风险。\n7. “响应等级”只能给出一个最终等级判断，不得分别对多个故障单独评级。\n8. 当图谱素材中包含多个故障的多条 [KG] 内容时，可以拆成多个 [KG] 段落或条目，但每条都必须服务于“同一综合事件”的表达，不能变成“多个独立故障说明书”。\n9. 若多个故障之间存在明显主次关系，应优先保留主故障的细节，其他故障只保留与当前事件直接相关的关键点。\n10. 在任一小节中，若同类KG信息超过3条，必须先归纳再输出，不得机械堆砌。\n输出要求：\n- 不要输出总标题。\n- 严格依据模板文本中的章节和小节组织内容。\n- 总长度控制在 2500~4000 字。\n- 语言要正式、清晰、可执行。\n- 必须体现：响应等级、故障对象、事件场景、关键处置要求、特殊约束。\n\n- 设备名称规范化：全文所有提到设备的地方，必须使用\"故障与场景提取结果\"中\"故障对象\"字段给出的具体设备实名（如\"高压断路器\"、\"变压器\"等），严禁照搬用户原问题中的模糊指代（如\"某110kV设备\"\"该设备\"\"本设备\"等）。在首次提及设备时明确写出完整设备名称。\n- 若模板某节是固定文本为主，先输出对应 [FIX] 内容，再按需要补充 [GEN] 或 [KG]内容。若只包含FIX，则只输出FIX的内容，不要输出其他任何东西。\n- 每个小节下的主要要点都应带来源标记。\n- 生成完成前自检：全文不得出现任何组合式来源标记；如出现必须拆分重写。\n\n不要输出 JSON，不要输出解释，不要说“作为 AI”。直接输出成文预案。"
+              },
+              {
+                "obj": "Human",
+                "value": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。"
+              },
+              {
+                "obj": "AI",
+                "value": "## 第5章 应急保障\n\n[GEN]本章应急保障内容针对站内光缆经过高压断路器间隔后通信中断、导致保护通道退出运行的突发事件编制，旨在为现场应急处置提供人员、物资、通信与交通的全方位支撑，确保响应及时、措施有效。\n\n### 5.1 人员保障\n\n[GEN]应急处置应设立现场指挥部，由运维管理单位负责人担任总指挥，统一协调指挥。\n\n[GEN]应明确以下人员专业分工与职责：\n[GEN]应急抢修组：由通信专业人员2至3人组成，负责光缆断点查找、修复及光通道恢复工作。人员应具备光纤熔接、测试及通信设备调试能力。\n[GEN]运行监控组：由运行值班人员1至2人组成，负责监控高压断路器本体及相邻设备的运行状态，监视保护装置告警信息，并做好与调度的运行信息沟通。\n[GEN]安全监护组：由安全监督人员1至2人组成，负责现场作业安全管控，监督安全措施落实，防止误入带电间隔或误操作。\n[GEN]后勤保障组：由后勤管理人员1人组成，负责应急物资调配、车辆安排及现场后勤支持。\n\n[GEN]所有应急人员应熟知本次事件的应急方案，熟悉现场设备和作业环境，并确认具备相关资质。\n\n### 5.2 物资装备保障\n\n[GEN]应提前储备并定期检查、维护应急物资装备，确保在故障发生后能够快速调配到位。\n\n#### 5.2.1 仪器仪表\n\n[GEN]应配备以下仪器仪表：\n[GEN]光时域反射仪（OTDR）1台，用于光缆故障点精确定位和光纤衰减测试。\n[GEN]光纤熔接机1台，用于光缆断点熔接恢复。\n[GEN]光功率计和稳定光源各1套，用于光通道性能测试和光路诊断。\n[GEN]万用表1块，用于现场通信设备电源及接口电压测试。\n\n#### 5.2.2 工器具\n\n[GEN]应配备以下工器具：\n[GEN]光纤切割刀、光纤剥线钳、光纤接头清洁工具等光纤处理专用工具1套。\n[GEN]光缆接续盒及防水密封材料若干，用于光缆接续保护。\n[GEN]绝缘手套、安全帽、绝缘鞋、验电器等个人安全防护用品1套。\n[GEN]警示标识、临时围栏、应急照明灯等现场安全警示与照明用具。\n\n#### 5.2.3 备品备件\n\n[GEN]应储备以下备品备件：\n[GEN]与现场使用型号一致的光缆（单模或多模，根据实际配置而定），长度不少于200米，用于故障光缆替换。\n[GEN]光纤尾纤和跳纤若干（包括不同接头类型，如FC/LC等）。\n[GEN]通信接口板、光模块等备件，用于更换故障的光通信设备部件。\n\n### 5.3 通信与交通保障\n\n[GEN]通信联络保障：\n[GEN]现场指挥部应建立与调度机构、运维管理单位、上级应急管理部门及相邻变电站的固定通信联络机制。\n[GEN]当主用通信通道（如调度电话、行政电话）因本次事件同时受到影响时，应立即启用备用通信方式，如移动电话、卫星电话或应急通信指挥车，确保指挥链路畅通。\n[GEN]应急抢修组应配备对讲机，用于现场作业人员之间以及与控制室的联络。\n\n[GEN]交通到场保障：\n[GEN]应安排专用应急车辆至少1辆，保证应急人员和物资能安全、快速到达故障现场。\n[GEN]车辆应保持油量充足、车况良好，并预先规划好最优到场路线，避开可能的交通拥堵区域。\n\n[GEN]现场保障要求：\n[GEN]现场作业区域应设置明显的安全围栏和警示标志，防止无关人员误入。\n[GEN]现场应配备必要的应急照明、通风、降温等设施，确保夜间或恶劣天气下的作业条件。\n[GEN]后勤保障组应提供充足的饮用水、防暑降温用品等，保障现场人员基本需求。"
+              }
+            ],
+            "contextTotalLen": 3,
+            "finishReason": "stop",
+            "llmRequestIds": [
+              "XqfJnq5gxxh49lHY"
+            ],
+            "id": "nrqCw5pDqn9UiPdE",
+            "nodeId": "bGnjDQW0yaqJ8a8V",
+            "runningTime": 22.93
+          },
+          {
+            "moduleName": "common:core.module.template.self_output",
+            "moduleType": "pluginOutput",
+            "moduleLogo": "core/workflow/template/pluginOutput",
+            "pluginOutput": {
+              "template": "## 第5章 应急保障\n\n[GEN]本章应急保障内容针对站内光缆经过高压断路器间隔后通信中断、导致保护通道退出运行的突发事件编制，旨在为现场应急处置提供人员、物资、通信与交通的全方位支撑，确保响应及时、措施有效。\n\n### 5.1 人员保障\n\n[GEN]应急处置应设立现场指挥部，由运维管理单位负责人担任总指挥，统一协调指挥。\n\n[GEN]应明确以下人员专业分工与职责：\n[GEN]应急抢修组：由通信专业人员2至3人组成，负责光缆断点查找、修复及光通道恢复工作。人员应具备光纤熔接、测试及通信设备调试能力。\n[GEN]运行监控组：由运行值班人员1至2人组成，负责监控高压断路器本体及相邻设备的运行状态，监视保护装置告警信息，并做好与调度的运行信息沟通。\n[GEN]安全监护组：由安全监督人员1至2人组成，负责现场作业安全管控，监督安全措施落实，防止误入带电间隔或误操作。\n[GEN]后勤保障组：由后勤管理人员1人组成，负责应急物资调配、车辆安排及现场后勤支持。\n\n[GEN]所有应急人员应熟知本次事件的应急方案，熟悉现场设备和作业环境，并确认具备相关资质。\n\n### 5.2 物资装备保障\n\n[GEN]应提前储备并定期检查、维护应急物资装备，确保在故障发生后能够快速调配到位。\n\n#### 5.2.1 仪器仪表\n\n[GEN]应配备以下仪器仪表：\n[GEN]光时域反射仪（OTDR）1台，用于光缆故障点精确定位和光纤衰减测试。\n[GEN]光纤熔接机1台，用于光缆断点熔接恢复。\n[GEN]光功率计和稳定光源各1套，用于光通道性能测试和光路诊断。\n[GEN]万用表1块，用于现场通信设备电源及接口电压测试。\n\n#### 5.2.2 工器具\n\n[GEN]应配备以下工器具：\n[GEN]光纤切割刀、光纤剥线钳、光纤接头清洁工具等光纤处理专用工具1套。\n[GEN]光缆接续盒及防水密封材料若干，用于光缆接续保护。\n[GEN]绝缘手套、安全帽、绝缘鞋、验电器等个人安全防护用品1套。\n[GEN]警示标识、临时围栏、应急照明灯等现场安全警示与照明用具。\n\n#### 5.2.3 备品备件\n\n[GEN]应储备以下备品备件：\n[GEN]与现场使用型号一致的光缆（单模或多模，根据实际配置而定），长度不少于200米，用于故障光缆替换。\n[GEN]光纤尾纤和跳纤若干（包括不同接头类型，如FC/LC等）。\n[GEN]通信接口板、光模块等备件，用于更换故障的光通信设备部件。\n\n### 5.3 通信与交通保障\n\n[GEN]通信联络保障：\n[GEN]现场指挥部应建立与调度机构、运维管理单位、上级应急管理部门及相邻变电站的固定通信联络机制。\n[GEN]当主用通信通道（如调度电话、行政电话）因本次事件同时受到影响时，应立即启用备用通信方式，如移动电话、卫星电话或应急通信指挥车，确保指挥链路畅通。\n[GEN]应急抢修组应配备对讲机，用于现场作业人员之间以及与控制室的联络。\n\n[GEN]交通到场保障：\n[GEN]应安排专用应急车辆至少1辆，保证应急人员和物资能安全、快速到达故障现场。\n[GEN]车辆应保持油量充足、车况良好，并预先规划好最优到场路线，避开可能的交通拥堵区域。\n\n[GEN]现场保障要求：\n[GEN]现场作业区域应设置明显的安全围栏和警示标志，防止无关人员误入。\n[GEN]现场应配备必要的应急照明、通风、降温等设施，确保夜间或恶劣天气下的作业条件。\n[GEN]后勤保障组应提供充足的饮用水、防暑降温用品等，保障现场人员基本需求。"
+            },
+            "id": "ry6XLk3kercUj4je",
+            "nodeId": "pluginOutput",
+            "runningTime": 0
+          }
+        ]
+      },
+      "output_text": "## 第5章 应急保障\n\n[GEN]本章应急保障内容针对站内光缆经过高压断路器间隔后通信中断、导致保护通道退出运行的突发事件编制，旨在为现场应急处置提供人员、物资、通信与交通的全方位支撑，确保响应及时、措施有效。\n\n### 5.1 人员保障\n\n[GEN]应急处置应设立现场指挥部，由运维管理单位负责人担任总指挥，统一协调指挥。\n\n[GEN]应明确以下人员专业分工与职责：\n[GEN]应急抢修组：由通信专业人员2至3人组成，负责光缆断点查找、修复及光通道恢复工作。人员应具备光纤熔接、测试及通信设备调试能力。\n[GEN]运行监控组：由运行值班人员1至2人组成，负责监控高压断路器本体及相邻设备的运行状态，监视保护装置告警信息，并做好与调度的运行信息沟通。\n[GEN]安全监护组：由安全监督人员1至2人组成，负责现场作业安全管控，监督安全措施落实，防止误入带电间隔或误操作。\n[GEN]后勤保障组：由后勤管理人员1人组成，负责应急物资调配、车辆安排及现场后勤支持。\n\n[GEN]所有应急人员应熟知本次事件的应急方案，熟悉现场设备和作业环境，并确认具备相关资质。\n\n### 5.2 物资装备保障\n\n[GEN]应提前储备并定期检查、维护应急物资装备，确保在故障发生后能够快速调配到位。\n\n#### 5.2.1 仪器仪表\n\n[GEN]应配备以下仪器仪表：\n[GEN]光时域反射仪（OTDR）1台，用于光缆故障点精确定位和光纤衰减测试。\n[GEN]光纤熔接机1台，用于光缆断点熔接恢复。\n[GEN]光功率计和稳定光源各1套，用于光通道性能测试和光路诊断。\n[GEN]万用表1块，用于现场通信设备电源及接口电压测试。\n\n#### 5.2.2 工器具\n\n[GEN]应配备以下工器具：\n[GEN]光纤切割刀、光纤剥线钳、光纤接头清洁工具等光纤处理专用工具1套。\n[GEN]光缆接续盒及防水密封材料若干，用于光缆接续保护。\n[GEN]绝缘手套、安全帽、绝缘鞋、验电器等个人安全防护用品1套。\n[GEN]警示标识、临时围栏、应急照明灯等现场安全警示与照明用具。\n\n#### 5.2.3 备品备件\n\n[GEN]应储备以下备品备件：\n[GEN]与现场使用型号一致的光缆（单模或多模，根据实际配置而定），长度不少于200米，用于故障光缆替换。\n[GEN]光纤尾纤和跳纤若干（包括不同接头类型，如FC/LC等）。\n[GEN]通信接口板、光模块等备件，用于更换故障的光通信设备部件。\n\n### 5.3 通信与交通保障\n\n[GEN]通信联络保障：\n[GEN]现场指挥部应建立与调度机构、运维管理单位、上级应急管理部门及相邻变电站的固定通信联络机制。\n[GEN]当主用通信通道（如调度电话、行政电话）因本次事件同时受到影响时，应立即启用备用通信方式，如移动电话、卫星电话或应急通信指挥车，确保指挥链路畅通。\n[GEN]应急抢修组应配备对讲机，用于现场作业人员之间以及与控制室的联络。\n\n[GEN]交通到场保障：\n[GEN]应安排专用应急车辆至少1辆，保证应急人员和物资能安全、快速到达故障现场。\n[GEN]车辆应保持油量充足、车况良好，并预先规划好最优到场路线，避开可能的交通拥堵区域。\n\n[GEN]现场保障要求：\n[GEN]现场作业区域应设置明显的安全围栏和警示标志，防止无关人员误入。\n[GEN]现场应配备必要的应急照明、通风、降温等设施，确保夜间或恶劣天气下的作业条件。\n[GEN]后勤保障组应提供充足的饮用水、防暑降温用品等，保障现场人员基本需求。"
+    },
+    {
+      "chapter_no": "6",
+      "title": "附件",
+      "section_count": 7,
+      "template_text": "## 第6章 附件\n内容来源：fixed+gen\n预定义文本：提供标准附件清单骨架\n生成要求：根据场景补齐附件建议\n\n### 6.1 应急物资清单\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据图谱资源生成物资清单\n\n### 6.2 联系方式清单\n内容来源：fixed+gen\n预定义文本：列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n生成要求：结合场景补充需要联系的岗位类型\n\n### 6.3 现场记录表\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n生成要求：结合具体场景补充记录字段\n\n#### 6.3.1 基础事件信息\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、天气、值班和报告信息。\n生成要求：补充适用的基础字段\n\n#### 6.3.2 处置过程记录\n内容来源：fixed\n预定义文本：记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n内容来源：fixed\n预定义文本：记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。",
+      "elapsed_sec": 18.782,
+      "response": {
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "## 第6章 附件\n\n### 6.1 应急物资清单\n\n[GEN] 针对站内光缆经过高压断路器间隔后通信中断、保护通道退出的场景，现场应配备以下应急物资：\n\n[GEN] 光缆抢修类：备用单模光缆（不低于200米）、光缆接续盒（不少于2个）、光纤熔接机（含电极棒及备件）、光纤切割刀、光纤剥离钳、红光源、OTDR光时域反射仪、光纤清洁工具（无水酒精、无尘纸）、防水胶带、光缆固定夹具。\n\n[GEN] 测试与通信类：手持式光功率计、通信误码测试仪、便携式笔记本电脑（含串口/网口调试工具）、备用尾纤（FC/LC/SC各不少于5根）、光缆备用纤芯测试跳线。\n\n[GEN] 安全与防护类：绝缘手套、安全帽、高压近电报警装置、临时遮栏、标示牌（“禁止合闸，有人工作”“光缆故障抢修”等）、防爆手电筒、对讲机（至少4部）。\n\n[GEN] 保护通道应急类：备用保护装置通信接口板（若适用）、临时光通信通道切换设备（如光端机备件）、相关保护装置的测试线及专用工具。\n\n[GEN] 其他：工具包、梯子（用于断路器间隔高处作业）、备品备件记录本、便签纸、防雨布（若户外作业）。\n\n### 6.2 联系方式清单\n\n[FIX] 列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n\n[GEN] 现场负责人：由变电站运维班组班长或值长担任，负责统一指挥；专业班组包括通信运维班组（负责光缆抢修）和继电保护班组（负责保护通道恢复）；调度机构指调控中心值班调度员；安监部门指安全监察部现场监督人员；外协单位指光缆专业施工队伍或第三方熔接服务商。\n\n[GEN] 需要重点联系的岗位类型：通信专业班组长、继电保护专责、调控中心通信调度、运维管理部门主管、安监部专责、厂家技术支持（如有光缆或保护装置原厂服务）。\n\n### 6.3 现场记录表\n\n[FIX] 记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n\n[GEN] 结合场景补充记录字段：应记录光缆中断的具体断路器间隔编号（如“#2高压断路器间隔”）、光缆型号及编号、保护通道名称（如“XX线保护A通道”）、保护装置型号、通信中断前有无异常操作或告警。\n\n#### 6.3.1 基础事件信息\n\n[FIX] 记录事件时间、地点、设备、天气、值班和报告信息。\n\n[GEN] 补充适用的基础字段：设备名称（高压断路器）、设备运行编号、所属电压等级、光缆路由起点和终点、天气状况（如晴/雨/雷雨）、现场值班人员姓名及联系方式、报告人及时间、首报途径（电话/系统告警）。\n\n#### 6.3.2 处置过程记录\n\n[FIX] 记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n\n[FIX] 记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+            }
+          }
+        ],
+        "responseData": [
+          {
+            "moduleName": "workflow:template.plugin_start",
+            "moduleType": "pluginInput",
+            "moduleLogo": "core/workflow/template/workflowStart",
+            "id": "asXUriIh14jJe7xV",
+            "nodeId": "pluginInput",
+            "runningTime": 0
+          },
+          {
+            "moduleName": "AI 对话",
+            "moduleType": "chatNode",
+            "moduleLogo": "core/workflow/template/aiChat",
+            "totalPoints": 0,
+            "model": "DSV4F",
+            "inputTokens": 1839,
+            "outputTokens": 1409,
+            "query": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。",
+            "reasoningText": "我们按照模板生成附件章节。模板是第6章附件，包含6.1应急物资清单、6.2联系方式清单、6.3现场记录表及其子节。注意不要输出其他章节。输入中故障与场景提取结果明确故障对象是“高压断路器”，事件场景是“站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行”。图谱检索得到的方案素材为空，所以KG信息几乎没有。我们需要根据场景补充GEN内容。注意不要随意编造专业知识，但可以根据常见电力应急场景合理补充。响应等级未明确，但保护通道退出属于紧急情况，可判断为II级或III级，但既然未明确，就写“根据场景评估响应等级”。另外特殊约束未明确，可不提。关键是生成附件内容。\n\n按照模板章节顺序：## 第6章 附件 -> 6.1 应急物资清单 -> 6.2 联系方式清单 -> 6.3 现场记录表 -> 6.3.1 基础事件信息 -> 6.3.2 处置过程记录 -> 6.3.3 恢复情况记录。\n\n注意来源标记：预定义文本标记为[FIX]，图谱字段标记为[KG]（但此处无），场景补充标记为[GEN]。不能有组合标记。每个段落开头一个标记。\n\n先写6.1应急物资清单：图谱字段emergency_resource但这里没有，所以全部GEN。结合场景：光缆中断需要光缆熔接工具、备用光缆、OTDR、红光源、通信测试仪、安全工器具等。同时保护通道退出可能需要保护装置备件？但主要针对光缆。物资清单可以列表形式，每个条目带[GEN]。\n\n6.2联系方式清单：预定义文本“列出现场负责人、专业班组、调度、安监和外协单位联系方式。”然后结合场景补充需要联系的岗位类型：通信专业班组、继电保护专业班组、调度中心、运维管理部门、安监部门、光缆抢修外协单位等。注意用完整句子，不要短横杠。\n\n6.3现场记录表：预定义文本+场景补充。\n\n6.3.1基础事件信息：预定义文本记录事件时间、地点、设备、天气、值班和报告信息。补充适用的基础字段：设备名称（高压断路器）、发生间隔、保护通道名称、光缆编号等。\n\n6.3.2处置过程记录：固定文本记录处置步骤、执行人、时间点和关键决策。可以直接写固定文本，但需带[FIX]。然后补充场景化的记录字段？模板说“记录处置步骤、执行人、时间点和关键决策”，本身就是固定文本，可以写出来。也可以加上GEN说明建议记录哪些步骤。但注意不能改变章节顺序。我们按固定文本输出即可。\n\n6.3.3恢复情况记录：固定文本记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。\n\n注意全文不要出现总标题，直接以## 第6章 附件开始。不要输出其他章节。\n\n最终检查：每个段落带标记，层级正确。字数控制在2500-4000，但附件部分可能较短，但合理即可。\n\n开始生成。",
+            "historyPreview": [
+              {
+                "obj": "System",
+                "value": "你是“电力设备场景化应急预案生成器”，面向一线运维和应急管理人员输出结构化现场处置预案。\n\n你会收到 4 类输入：\n1. 用户原问题：站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。\n2. 故障与场景提取结果：{\"故障二级节点\": \"光缆中断故障\", \"响应等级\": \"未明确\", \"故障对象\": \"高压断路器\", \"事件场景\": \"站内光缆经过断路器间隔后发生通信中断，导致保护通道退出运行\", \"关键处置要求\": \"生成应急方案\", \"特殊约束\": \"未明确\", \"主故障二级节点\": \"光缆中断故障\"}\n3. 图谱检索得到的方案素材：当前二级故障：未知。故障原因：未检索到。故障现象：未检索到。应对措施：未检索到。故障后果：未检索到。安全风险：未检索到。应急资源：未检索到。其他相关节点：无。\n4. 模板文本：## 第6章 附件\n内容来源：fixed+gen\n预定义文本：提供标准附件清单骨架\n生成要求：根据场景补齐附件建议\n\n### 6.1 应急物资清单\n内容来源：kg+gen\n图谱字段：emergency_resource\n生成要求：根据图谱资源生成物资清单\n\n### 6.2 联系方式清单\n内容来源：fixed+gen\n预定义文本：列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n生成要求：结合场景补充需要联系的岗位类型\n\n### 6.3 现场记录表\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n生成要求：结合具体场景补充记录字段\n\n#### 6.3.1 基础事件信息\n内容来源：fixed+gen\n预定义文本：记录事件时间、地点、设备、天气、值班和报告信息。\n生成要求：补充适用的基础字段\n\n#### 6.3.2 处置过程记录\n内容来源：fixed\n预定义文本：记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n内容来源：fixed\n预定义文本：记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。\n\n你的任务：\n1. 按模板章节顺序生成完整预案，不要改章节顺序。\n2. 模板中的内容来源，图谱字段，生成要求仅作为生成指引，在输出中不能把这三个字段写出来。\n3. 不要输出像“- 调度机构：xxx”这样的内容，而要写成“应立即向调度机构、运维管理单位等部门报告”这种完整的句子。只能使用模板中的标题分层级，不能自己加短横杠来分级。\n4. 只基于图谱素材、模板要求和用户场景生成，不要脱离输入随意编造专业知识。\n1. 应急资源必须体现在“应急保障”“应急物资清单”等章节中。\n2. 如果用户提出“双阶段处置”，必须在处置程序和处置措施中显式拆成两个阶段。\n 严格要求：\n1. 只能生成当前传入模板中的章节与小节，不得补写其他章节。\n2. 不得输出上一章、下一章、总则、附件或任何未在当前模板中出现的标题。\n3. 如果当前模板以“## 第2章 ...”开头，输出必须也从这一章开始，不得从“第1章”开始。\n4. 如果当前模板是“附件”章节，只能输出附件相关内容。\n5. 不要根据历史回答续写，不要补全整篇预案。\n来源标记规则：\n1. 只允许使用三种标记：[KG]、[GEN]、[FIX]。\n2. 直接来自知识图谱检索结果的内容，必须标记为 [KG]。\n3. 根据用户场景自动补全、推导、组织、排序、扩展出的内容，必须标记为 [GEN]。\n4. 标签能且仅能位于一段话的开头，要写下一段话，必须换行后生成标签再写，不能出现一个段落里有两个标签的问题。\n5. 直接来自模板中的预定义固定文本，必须标记为 [FIX]。\n6. 不允许写混合标记。\n7. 同一个句子、同一个编号条目、同一个项目符号内，只能出现一种来源标记。\n8. 绝对禁止输出 `[KG]&[GEN]`、`[KG] & [GEN]`、`[KG]/[GEN]`、`[KG][GEN]`、`[FIX]&[GEN]`、`[FIX][KG]` 等任何组合式来源标记。也禁止在各级标题上加标签，标签只能加载内容上。\n9. 绝对禁止用 `&`、`/`、`+` 把不同来源标记连接在一起。\n10. 一条内容如果同时包含图谱事实、模板固定文本、模型补全，必须拆成多条相邻内容分别标注。\n11. `[FIX]` 只用于模板里明确存在的固定文本（但是不包括标题，只包括固定的内容），不要把你自己写的套话标成 `[FIX]`。\n12. `[KG]` 只用于图谱素材中的故障原因、现象、措施、后果、风险、资源等内容。\n13. `[GEN]` 只用于场景化补充、组织安排、时序安排、响应等级判断、约束解释、恢复策略等模型生成内容。\n14. 最终正文中保留这些标记，不要在文末再解释。\n多故障融合规则：\n1. 若“故障与场景提取结果”中存在多个故障二级节点，必须将其视为“同一事件中的复合故障”，输出时要进行融合表达，不能按每个故障分别整段平铺罗列。\n2. 若存在“主故障二级节点”，应以主故障为主线组织内容，其余故障作为伴随故障、诱发因素、叠加风险或并发异常纳入分析。\n3. 对于故障原因、故障后果、安全风险、应对措施等内容：\n  - 相近或重复的图谱信息必须合并概括；\n  - 不得使用“故障A-故障原因：... 故障B-故障原因：...”这种逐条照抄式表达；\n  - 应改写为面向现场事件的综合描述。\n4. “事件类型”只能输出一个综合事件类型描述，不得把多个故障名称直接并列成一串。\n5. “故障原因”应围绕本次复合故障总结 2~4 个主要原因或诱因，不得把每个故障的完整原因原文全部依次照搬。\n6. “事件范围”“事件危害程度”应描述多故障叠加后的整体影响，不得逐个故障重复罗列完整后果和风险。\n7. “响应等级”只能给出一个最终等级判断，不得分别对多个故障单独评级。\n8. 当图谱素材中包含多个故障的多条 [KG] 内容时，可以拆成多个 [KG] 段落或条目，但每条都必须服务于“同一综合事件”的表达，不能变成“多个独立故障说明书”。\n9. 若多个故障之间存在明显主次关系，应优先保留主故障的细节，其他故障只保留与当前事件直接相关的关键点。\n10. 在任一小节中，若同类KG信息超过3条，必须先归纳再输出，不得机械堆砌。\n输出要求：\n- 不要输出总标题。\n- 严格依据模板文本中的章节和小节组织内容。\n- 总长度控制在 2500~4000 字。\n- 语言要正式、清晰、可执行。\n- 必须体现：响应等级、故障对象、事件场景、关键处置要求、特殊约束。\n\n- 设备名称规范化：全文所有提到设备的地方，必须使用\"故障与场景提取结果\"中\"故障对象\"字段给出的具体设备实名（如\"高压断路器\"、\"变压器\"等），严禁照搬用户原问题中的模糊指代（如\"某110kV设备\"\"该设备\"\"本设备\"等）。在首次提及设备时明确写出完整设备名称。\n- 若模板某节是固定文本为主，先输出对应 [FIX] 内容，再按需要补充 [GEN] 或 [KG]内容。若只包含FIX，则只输出FIX的内容，不要输出其他任何东西。\n- 每个小节下的主要要点都应带来源标记。\n- 生成完成前自检：全文不得出现任何组合式来源标记；如出现必须拆分重写。\n\n不要输出 JSON，不要输出解释，不要说“作为 AI”。直接输出成文预案。"
+              },
+              {
+                "obj": "Human",
+                "value": "站内光缆经过断路器间隔后通信中断，保护通道退出，请生成应急方案。"
+              },
+              {
+                "obj": "AI",
+                "value": "## 第6章 附件\n\n### 6.1 应急物资清单\n\n[GEN] 针对站内光缆经过高压断路器间隔后通信中断、保护通道退出的场景，现场应配备以下应急物资：\n\n[GEN] 光缆抢修类：备用单模光缆（不低于200米）、光缆接续盒（不少于2个）、光纤熔接机（含电极棒及备件）、光纤切割刀、光纤剥离钳、红光源、OTDR光时域反射仪、光纤清洁工具（无水酒精、无尘纸）、防水胶带、光缆固定夹具。\n\n[GEN] 测试与通信类：手持式光功率计、通信误码测试仪、便携式笔记本电脑（含串口/网口调试工具）、备用尾纤（FC/LC/SC各不少于5根）、光缆备用纤芯测试跳线。\n\n[GEN] 安全与防护类：绝缘手套、安全帽、高压近电报警装置、临时遮栏、标示牌（“禁止合闸，有人工作”“光缆故障抢修”等）、防爆手电筒、对讲机（至少4部）。\n\n[GEN] 保护通道应急类：备用保护装置通信接口板（若适用）、临时光通信通道切换设备（如光端机备件）、相关保护装置的测试线及专用工具。\n\n[GEN] 其他：工具包、梯子（用于断路器间隔高处作业）、备品备件记录本、便签纸、防雨布（若户外作业）。\n\n### 6.2 联系方式清单\n\n[FIX] 列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n\n[GEN] 现场负责人：由变电站运维班组班长或值长担任，负责统一指挥；专业班组包括通信运维班组（负责光缆抢修）和继电保护班组（负责保护通道恢复）；调度机构指调控中心值班调度员；安监部门指安全监察部现场监督人员；外协单位指光缆专业施工队伍或第三方熔接服务商。\n\n[GEN] 需要重点联系的岗位类型：通信专业班组长、继电保护专责、调控中心通信调度、运维管理部门主管、安监部专责、厂家技术支持（如有光缆或保护装置原厂服务）。\n\n### 6.3 现场记录表\n\n[FIX] 记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n\n[GEN] 结合场景补充记录字段：应记录光缆中断的具体断路器间隔编号（如“#2高压断路器间隔”）、光缆型号及编号、保护通道名称（如“XX线保护A通道”）、保护装置型号、通信中断前有无异常操作或告警。\n\n#### 6.3.1 基础事件信息\n\n[FIX] 记录事件时间、地点、设备、天气、值班和报告信息。\n\n[GEN] 补充适用的基础字段：设备名称（高压断路器）、设备运行编号、所属电压等级、光缆路由起点和终点、天气状况（如晴/雨/雷雨）、现场值班人员姓名及联系方式、报告人及时间、首报途径（电话/系统告警）。\n\n#### 6.3.2 处置过程记录\n\n[FIX] 记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n\n[FIX] 记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+              }
+            ],
+            "contextTotalLen": 3,
+            "finishReason": "stop",
+            "llmRequestIds": [
+              "nrkom8NVBl0NDCiA"
+            ],
+            "id": "zQ1McavhQelH51MK",
+            "nodeId": "bGnjDQW0yaqJ8a8V",
+            "runningTime": 18.75
+          },
+          {
+            "moduleName": "common:core.module.template.self_output",
+            "moduleType": "pluginOutput",
+            "moduleLogo": "core/workflow/template/pluginOutput",
+            "pluginOutput": {
+              "template": "## 第6章 附件\n\n### 6.1 应急物资清单\n\n[GEN] 针对站内光缆经过高压断路器间隔后通信中断、保护通道退出的场景，现场应配备以下应急物资：\n\n[GEN] 光缆抢修类：备用单模光缆（不低于200米）、光缆接续盒（不少于2个）、光纤熔接机（含电极棒及备件）、光纤切割刀、光纤剥离钳、红光源、OTDR光时域反射仪、光纤清洁工具（无水酒精、无尘纸）、防水胶带、光缆固定夹具。\n\n[GEN] 测试与通信类：手持式光功率计、通信误码测试仪、便携式笔记本电脑（含串口/网口调试工具）、备用尾纤（FC/LC/SC各不少于5根）、光缆备用纤芯测试跳线。\n\n[GEN] 安全与防护类：绝缘手套、安全帽、高压近电报警装置、临时遮栏、标示牌（“禁止合闸，有人工作”“光缆故障抢修”等）、防爆手电筒、对讲机（至少4部）。\n\n[GEN] 保护通道应急类：备用保护装置通信接口板（若适用）、临时光通信通道切换设备（如光端机备件）、相关保护装置的测试线及专用工具。\n\n[GEN] 其他：工具包、梯子（用于断路器间隔高处作业）、备品备件记录本、便签纸、防雨布（若户外作业）。\n\n### 6.2 联系方式清单\n\n[FIX] 列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n\n[GEN] 现场负责人：由变电站运维班组班长或值长担任，负责统一指挥；专业班组包括通信运维班组（负责光缆抢修）和继电保护班组（负责保护通道恢复）；调度机构指调控中心值班调度员；安监部门指安全监察部现场监督人员；外协单位指光缆专业施工队伍或第三方熔接服务商。\n\n[GEN] 需要重点联系的岗位类型：通信专业班组长、继电保护专责、调控中心通信调度、运维管理部门主管、安监部专责、厂家技术支持（如有光缆或保护装置原厂服务）。\n\n### 6.3 现场记录表\n\n[FIX] 记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n\n[GEN] 结合场景补充记录字段：应记录光缆中断的具体断路器间隔编号（如“#2高压断路器间隔”）、光缆型号及编号、保护通道名称（如“XX线保护A通道”）、保护装置型号、通信中断前有无异常操作或告警。\n\n#### 6.3.1 基础事件信息\n\n[FIX] 记录事件时间、地点、设备、天气、值班和报告信息。\n\n[GEN] 补充适用的基础字段：设备名称（高压断路器）、设备运行编号、所属电压等级、光缆路由起点和终点、天气状况（如晴/雨/雷雨）、现场值班人员姓名及联系方式、报告人及时间、首报途径（电话/系统告警）。\n\n#### 6.3.2 处置过程记录\n\n[FIX] 记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n\n[FIX] 记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+            },
+            "id": "uN3YB2C011uTkoHq",
+            "nodeId": "pluginOutput",
+            "runningTime": 0
+          }
+        ]
+      },
+      "output_text": "## 第6章 附件\n\n### 6.1 应急物资清单\n\n[GEN] 针对站内光缆经过高压断路器间隔后通信中断、保护通道退出的场景，现场应配备以下应急物资：\n\n[GEN] 光缆抢修类：备用单模光缆（不低于200米）、光缆接续盒（不少于2个）、光纤熔接机（含电极棒及备件）、光纤切割刀、光纤剥离钳、红光源、OTDR光时域反射仪、光纤清洁工具（无水酒精、无尘纸）、防水胶带、光缆固定夹具。\n\n[GEN] 测试与通信类：手持式光功率计、通信误码测试仪、便携式笔记本电脑（含串口/网口调试工具）、备用尾纤（FC/LC/SC各不少于5根）、光缆备用纤芯测试跳线。\n\n[GEN] 安全与防护类：绝缘手套、安全帽、高压近电报警装置、临时遮栏、标示牌（“禁止合闸，有人工作”“光缆故障抢修”等）、防爆手电筒、对讲机（至少4部）。\n\n[GEN] 保护通道应急类：备用保护装置通信接口板（若适用）、临时光通信通道切换设备（如光端机备件）、相关保护装置的测试线及专用工具。\n\n[GEN] 其他：工具包、梯子（用于断路器间隔高处作业）、备品备件记录本、便签纸、防雨布（若户外作业）。\n\n### 6.2 联系方式清单\n\n[FIX] 列出现场负责人、专业班组、调度、安监和外协单位联系方式。\n\n[GEN] 现场负责人：由变电站运维班组班长或值长担任，负责统一指挥；专业班组包括通信运维班组（负责光缆抢修）和继电保护班组（负责保护通道恢复）；调度机构指调控中心值班调度员；安监部门指安全监察部现场监督人员；外协单位指光缆专业施工队伍或第三方熔接服务商。\n\n[GEN] 需要重点联系的岗位类型：通信专业班组长、继电保护专责、调控中心通信调度、运维管理部门主管、安监部专责、厂家技术支持（如有光缆或保护装置原厂服务）。\n\n### 6.3 现场记录表\n\n[FIX] 记录事件时间、地点、设备、现象、处置过程、人员、物资和恢复情况。\n\n[GEN] 结合场景补充记录字段：应记录光缆中断的具体断路器间隔编号（如“#2高压断路器间隔”）、光缆型号及编号、保护通道名称（如“XX线保护A通道”）、保护装置型号、通信中断前有无异常操作或告警。\n\n#### 6.3.1 基础事件信息\n\n[FIX] 记录事件时间、地点、设备、天气、值班和报告信息。\n\n[GEN] 补充适用的基础字段：设备名称（高压断路器）、设备运行编号、所属电压等级、光缆路由起点和终点、天气状况（如晴/雨/雷雨）、现场值班人员姓名及联系方式、报告人及时间、首报途径（电话/系统告警）。\n\n#### 6.3.2 处置过程记录\n\n[FIX] 记录处置步骤、执行人、时间点和关键决策。\n\n#### 6.3.3 恢复情况记录\n\n[FIX] 记录恢复时间、恢复范围、设备状态、遗留问题和后续安排。"
+    }
+  ]
+}

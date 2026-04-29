@@ -310,7 +310,7 @@ export default function App() {
               </Card>
             }
           >
-            <TemplateViewPage currentUserGroup={auth.currentUserGroup} />
+            <TemplateViewPage currentUserGroup={auth.currentUserGroup} compactLayout={showCompactLayout} />
           </Suspense>
         ) : null}
         {auth.authStatus === 'authenticated' && route === 'experiment' ? (

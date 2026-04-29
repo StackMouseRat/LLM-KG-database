@@ -18,12 +18,15 @@
 - 已完成 Nebula 图数据库的导入、索引与校验脚本沉淀，断路器图谱导入链路已验证可复现。
 - 已打通 FastGPT 通过 HTTP 节点调用 Nebula 查询的原型链路。
 - 已形成论文演示版前端，支持登录、预案生成、图谱溯源、模板查看以及格式优化与质量评估。
+- 已形成 `/experiment` 对比实验工作台，支持四类实验、服务器端运行记录、断点续传、评估记录、专属题库和 LLM-as-a-Judge 评分。
+- 已建立独立评估题库图空间 `llmkg_evaluation`，将输入边界、设备主体识别与消歧、图谱与模板约束、单设备多故障链式四类题集导入 Nebula。
+- 已增加 DeepSeek 与 SiliconFlow 余额查询能力，前端顶部可显示余额，管理员可手动刷新。
 
 ### 正在推进
 
-- 正在把单设备验证流程扩展为多设备统一入口工作流。
+- 正在把单设备验证流程扩展为更稳定的统一入口工作流。
 - 正在补齐光缆、环网柜等新设备的图谱自动生成脚本与成品资产。
-- 正在进行案例验证、生成稳定性优化和量化评测设计。
+- 正在进行案例验证、生成稳定性优化、量化评测和论文实验结果整理。
 
 ### 当前阶段判断
 
@@ -40,7 +43,7 @@
 
 - 应用入口在 `frontend/src/App.tsx`。
 - 登录态通过 `/api/auth/me`、`/api/auth/login`、`/api/auth/logout` 维护。
-- 登录成功后默认进入 `/plan`，其余工作流页面为 `/trace`、`/quality`、`/template`。
+- 登录成功后默认进入 `/plan`，其余工作流页面为 `/trace`、`/quality`、`/template`、`/experiment`。
 
 ### 2. 预案生成主流程
 
@@ -67,6 +70,7 @@
 - `/trace`：调用 `/api/trace/subgraph`，利用上一步得到的 `question`、`faultScene`、`graphMaterial` 查询 Nebula 子图，展示设备根节点、主故障二级节点、命中节点与关系边。
 - `/quality`：读取已生成章节，调用 `/api/quality/review` 对每章执行格式优化、原文评估和优化后评估，并支持流式返回推理与输出。
 - `/template`：调用 `/api/template/sections`、`/api/template/section/save`、`/api/template/section/reset` 查看和维护模板配置。
+- `/experiment`：调用实验运行、题库、评估和页面快照接口，执行对比实验、保存运行记录并展示评分结果。
 
 ### 4. 代理与后端衔接
 
@@ -78,6 +82,7 @@
 4. 在流式模式下将脚本输出转换为 SSE 事件，推送给前端页面。
 5. 在部署代理中额外提供 `/api/auth/*`、`/api/trace/subgraph`、`/api/quality/review`、`/api/template/*` 等接口。
 6. 根据 `enableCaseSearch` 与 `enableMultiFaultSearch` 参数协同触发案例检索与多故障查询分支。
+7. 为 `/experiment` 提供实验运行、运行记录、评估记录、题库读取、页面快照缓存和余额查询接口。
 
 ### 5. 与历史 FastGPT JSON 的关系
 
@@ -103,6 +108,96 @@
 - `/trace`：图谱溯源页，会基于最近一次生成结果中的设备与故障信息请求 `/api/trace/subgraph`，并用 G6 展示命中故障节点、上下游关系和子图统计信息。
 - `/quality`：格式优化与质量评估页，支持按章节流式执行“格式优化 / 原文评估 / 优化后评估”，也支持批量并发处理；顶部提示词可加载、缓存、编辑和保存。
 - `/template`：模板查看页，展示章节模板配置；管理员可修改 `source_type`、`fixed_text`、`gen_instruction`，也可恢复默认值。
+- `/experiment`：对比实验页，支持输入边界、设备主体识别与消歧、图谱与模板约束、单设备多故障链式四类实验。每类实验包含完整流程对照组和两个消融实验组，可配置实验次数、生成并发数和评估并发数，并按轮次查看产出、评分和原始 JSON。
+
+### 对比实验与评估题库
+
+`/experiment` 是当前论文实验的主要工作台。前端主配置位于 `frontend/src/pages/ExperimentPage.tsx`，展示组件位于 `frontend/src/features/experiment/`，后端运行服务位于 `docker/frontend-proxy/services/experiment_service.py`。
+
+当前已固化四类实验：
+
+- `输入边界实验`：比较完整边界判定、移除边界判定和关键词边界判定在拒答、澄清、忽略注入、放行生成上的差异。
+- `设备主体识别与消歧实验`：比较完整流程、弱主体识别和关键词主体识别在干扰设备、伴随告警、动作对象与故障对象分离等问题上的差异。
+- `图谱与模板约束实验`：比较完整流程、移除图谱和移除模板对图谱事实覆盖、章节结构、闭环完整度的影响。
+- `多故障链式实验`：比较完整流程、单故障普通链路和仅主故障图谱在同一设备内多故障、多异常或链式故障问题上的差异。当前题集不包含跨设备或多设备协同场景。
+
+评估题库使用独立 Nebula space `llmkg_evaluation`，避免污染业务图谱。题库 manifest 位于 `docs/evaluation_question_sets/`：
+
+- `boundary_input_boundary_v1.json`：输入边界实验，8 组 50 题。
+- `disambiguation_device_subject_v1.json`：设备主体识别与消歧实验，7 组 50 题。
+- `graph_template_constraint_v1.json`：图谱与模板约束实验，7 组 50 题。
+- `multi_fault_chain_v1.json`：单设备多故障链式实验，7 组 50 题。
+
+题库导入命令示例：
+
+```bash
+python3 scripts/import_evaluation_question_set.py --manifest docs/evaluation_question_sets/boundary_input_boundary_v1.json
+python3 scripts/import_evaluation_question_set.py --manifest docs/evaluation_question_sets/disambiguation_device_subject_v1.json
+python3 scripts/import_evaluation_question_set.py --manifest docs/evaluation_question_sets/graph_template_constraint_v1.json
+python3 scripts/import_evaluation_question_set.py --manifest docs/evaluation_question_sets/multi_fault_chain_v1.json
+```
+
+题库读取由 `docker/frontend-proxy/services/evaluation_question_service.py` 实现，对外接口为 `GET /api/evaluation/question-suite?suiteId=...`。服务使用 `FETCH` 与 `GO` 查询题集、分组和问题，避免无索引 `MATCH ... WHERE` 在 Nebula 中报 `IndexNotFound`。
+
+### 运行记录、断点续传与页面缓存
+
+实验运行通过 `POST /api/experiment/run` 以 SSE 推送进度。后端会为每次运行生成 `runId`，并把完整产物写入服务器端文件，支持用户关闭页面后继续执行、重新进入后载入记录和断点续传。
+
+默认运行记录目录：
+
+- 容器内：`/app/data/frontend_experiment_runs`
+- 生成记录：`/app/data/frontend_experiment_runs/{planId}/{runId}/experiment_run.json`
+- 评估记录：`/app/data/frontend_experiment_runs/{planId}/{runId}/experiment_evaluation.json`
+
+相关接口：
+
+- `GET /api/experiment/runs?planId=...`：列出某个实验的历史运行。
+- `GET /api/experiment/run?planId=...&runId=...`：读取一次生成记录。
+- `GET /api/experiment/evaluation?planId=...&runId=...`：读取一次评估记录。
+- `POST /api/experiment/evaluation`：保存评估记录。
+
+页面状态还会写入服务器端快照缓存，让用户离开 `/experiment` 后再回来时保留当前实验、标签页、展开状态、精简模式、已载入记录等上下文。
+
+默认页面快照目录：
+
+- 容器内：`/app/data/frontend_experiment_page_cache`
+
+相关接口：
+
+- `GET /api/experiment/page-cache`
+- `POST /api/experiment/page-cache`
+
+### LLM-as-a-Judge 评估
+
+实验评估复用质量评估能力，但每个题集都可以提供专属 `evaluation_prompt`。前端评估时会把当前实验组名称、题目分组、预期行为、用户问题和生成输出传给评估插件，要求按 10 分制输出最终结论，最后一行格式为 `总分：N/10`。
+
+评估分两层：
+
+- 自然语言评估：调用 `/api/quality/review`，以流式事件返回推理片段、评估正文和完成状态。
+- 结构化评估：调用 `/api/quality/structured`，后台把自然语言评估整理为结构化 verdict、总分和分项分数。
+
+这种设计让自然语言评估完成后即可释放主评估并发槽，结构化评估在后台补齐，不阻塞后续评分任务。前端会同时保存自然语言评估、结构化分数、原始 JSON 和题目信息，便于论文实验复核。
+
+### Nebula HTTP 网关
+
+图查询通过 `scripts/nebula_http_gateway.py` 暴露 HTTP 入口。当前网关支持连接池直连 Nebula，并可在失败时回退到 console 模式。真实业务模板压测脚本位于 `scripts/benchmark_nebula_gateway_real_queries.py`，用于验证常见查询的可用性、延迟和错误分类。
+
+网关外部部署 compose 当前位于服务器路径 `/home/ubuntu/nebula/docker-compose.gateway.yaml`，不属于本仓库提交范围；仓库内保留了网关脚本、Dockerfile 和 Nebula 相关初始化资产。
+
+### Provider 余额展示
+
+前端顶部栏可显示 DeepSeek 与 SiliconFlow 余额，管理员可点击刷新。后端接口为 `GET /api/provider/balances`，实现位于 `docker/frontend-proxy/services/provider_balance_service.py`，前端 API 位于 `frontend/src/services/providerBalanceApi.ts`。
+
+余额密钥从本地文件读取，不写入仓库：
+
+- `/home/ubuntu/.fastgpt_keys/deepseek_api_key`
+- `/home/ubuntu/.fastgpt_keys/siliconflow_api_key`
+
+命令行查询脚本：
+
+```bash
+python3 scripts/query_deepseek_balance.py --provider all
+```
 
 ### 当前前端串接的后端能力
 
@@ -110,10 +205,11 @@
 - `docker/frontend-proxy/server.py` 已接通登录鉴权、主流水线、案例检索、图谱溯源、质量评估和模板管理，是当前更完整的部署侧接口实现。
 - 前端已为案例检索预留完整展示区域，可显示知识库名称、查询问题、命中文档卡片、相关性和摘要内容。
 - 前端已支持从最近一次预案结果继续进入图谱溯源和质量评估，不需要用户重复录入问题。
+- 前端已支持对比实验运行、历史记录加载、评估记录加载、服务器端页面快照恢复和顶部模型服务商余额展示。
 
 ### 当前边界与说明
 
-- 目前仓库内已经包含较完整的部署代理实现 `docker/frontend-proxy/server.py`，但其运行仍依赖当前服务器环境中的 FastGPT、Nebula HTTP Gateway、密钥文件和模板图空间等外部运行条件。
+- 目前仓库内已经包含较完整的部署代理实现 `docker/frontend-proxy/server.py`，但其运行仍依赖当前服务器环境中的 FastGPT、Nebula HTTP Gateway、密钥文件、模板图空间和评估题库图空间等外部运行条件。
 - 前端已有管理员/普通用户权限分层，但更完整的历史记录管理、在线协作编辑、移动端适配和复杂执行路径调试视图仍未固化为成熟产品能力。
 - `docs/frontend/README.md` 中“当前前端只交付两大功能”的表述已经落后于代码，现阶段应以 `frontend/src/` 的实际实现和本 README 为准。
 
@@ -142,11 +238,11 @@
 
 ## 当前主要问题
 
-- FastGPT 末端生成节点仍有间歇性空响应，稳定性还需要继续联调。
+- FastGPT 末端生成节点仍可能出现空响应或章节串章，代码侧已增加章节标题守卫与重试，但平台侧提示词仍需持续校准。
 - 二级故障匹配在口语化输入场景下仍存在误判风险。
-- 多设备统一工作流已经起步，但尚未完全固化为最终版本。
-- 量化评测、批量回归和论文实验结果整理仍在推进。
+- 当前多故障链式实验限定为同一设备内多故障/多异常；跨设备多主体协同处置尚未纳入当前题集。
+- 量化评测、批量回归、实验区分度优化和论文实验结果整理仍在推进。
 
 ## 仓库现状总结
 
-这个仓库目前已经不是“前期资料收集”阶段，而是一个已经具备可运行原型的中期项目：数据资产已经成形，图数据库链路已经打通，FastGPT 节点流程已经从单轮检索演进到带缓存和循环的查询编排，下一步重点是多设备统一化、稳定性提升和实验评测固化。
+这个仓库目前已经不是“前期资料收集”阶段，而是一个已经具备可运行原型和论文实验工作台的中期项目：数据资产已经成形，图数据库链路已经打通，FastGPT 节点流程已经从单轮检索演进到带缓存、循环、并行章节生成和多故障分支的查询编排，前端也已经扩展到可运行、可续跑、可保存评分记录的对比实验平台。下一步重点是生成稳定性、实验区分度、跨设备多主体能力和论文结果固化。

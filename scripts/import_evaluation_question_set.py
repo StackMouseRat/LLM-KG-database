@@ -162,6 +162,29 @@ def insert_questions(endpoint: str, space: str, questions: list[dict[str, Any]])
         gql(endpoint, "INSERT EDGE contains_question(relation, sort_order) VALUES " + edge + ";", space)
 
 
+def delete_existing_suite(endpoint: str, space: str, suite_id: str) -> None:
+    group_rows = gql(
+        endpoint,
+        f'GO FROM "{esc(suite_id)}" OVER contains_group YIELD dst(edge) AS group_id;',
+        space,
+    ).get("data", {}).get("rows", [])
+    group_ids = [str(row[0]) for row in group_rows if row]
+
+    question_ids: list[str] = []
+    if group_ids:
+        group_vids = ",".join(f'"{esc(group_id)}"' for group_id in group_ids)
+        question_rows = gql(
+            endpoint,
+            f"GO FROM {group_vids} OVER contains_question YIELD dst(edge) AS question_id;",
+            space,
+        ).get("data", {}).get("rows", [])
+        question_ids = [str(row[0]) for row in question_rows if row]
+
+    vids = [suite_id, *group_ids, *question_ids]
+    if vids:
+        gql(endpoint, "DELETE VERTEX " + ",".join(f'\"{esc(vid)}\"' for vid in vids) + " WITH EDGE;", space)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Import evaluation question set into a dedicated Nebula space.")
     parser.add_argument("--manifest", default=DEFAULT_MANIFEST)
@@ -173,6 +196,7 @@ def main() -> None:
     suite, groups, questions = build_records(manifest)
     create_space(args.endpoint, args.space)
     ensure_schema(args.endpoint, args.space)
+    delete_existing_suite(args.endpoint, args.space, suite["suite_id"])
     insert_suite(args.endpoint, args.space, suite)
     insert_groups(args.endpoint, args.space, suite["suite_id"], groups)
     insert_questions(args.endpoint, args.space, questions)

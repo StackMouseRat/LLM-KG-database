@@ -5,8 +5,10 @@ __pycache__/
 Thumbs.db
 
 .claude/
+.venv-doc-tools/
 
 /有关文档/
+docs/designs/
 
 # Frontend generated artifacts
 frontend/node_modules/

@@ -26,6 +26,7 @@ import {
   addActiveGroup,
   buildExperimentPageSnapshot,
   eventQuestionItem,
+  getEvaluationDisplayScore,
   getMaxEvaluationConcurrency,
   getMaxExperimentConcurrency,
   getSuiteQuestionItems,
@@ -831,11 +832,17 @@ export function ExperimentPage() {
         }));
         void runStructuredEvaluationRequest(evaluationContext, result.comment, result.reasoningText)
           .then((structuredEvaluation) => {
-            const structuredScore = Number(structuredEvaluation?.score);
+            const structuredScore = getEvaluationDisplayScore({
+              groupId: task.group.id,
+              groupLabel: groupTitle.label,
+              status: 'done',
+              score: result.score,
+              structuredEvaluation
+            });
             const structuredPatch: Partial<ExperimentEvaluationScore> = {
               structuredEvaluation,
               structuredError: undefined,
-              score: Number.isFinite(structuredScore) ? Math.max(0, Math.min(10, structuredScore)) : result.score
+              score: typeof structuredScore === 'number' && Number.isFinite(structuredScore) ? structuredScore : result.score
             };
             patchSavedScore(task, structuredPatch);
             updateEvaluationState(planId, (current) => ({

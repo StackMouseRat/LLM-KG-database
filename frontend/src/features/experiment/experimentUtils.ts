@@ -3,6 +3,7 @@ import {
   defaultStageState,
   type ExperimentActiveGroup,
   type ExperimentControlState,
+  type ExperimentEvaluationScore,
   type ExperimentEvaluationState,
   type ExperimentGroupOutput,
   type ExperimentOutputState,
@@ -196,6 +197,16 @@ export function getScoreTagColor(score?: number) {
   return 'red';
 }
 
+export function getEvaluationDisplayScore(score?: ExperimentEvaluationScore) {
+  const structuredScoreText = parseEvaluationScore(String(score?.structuredEvaluation?.score_text || ''));
+  if (typeof structuredScoreText === 'number' && Number.isFinite(structuredScoreText)) return structuredScoreText;
+  const structuredSummaryScore = parseEvaluationScore(`${score?.structuredEvaluation?.summary || ''}\n${score?.structuredEvaluation?.evidence || ''}`);
+  if (typeof structuredSummaryScore === 'number' && Number.isFinite(structuredSummaryScore)) return structuredSummaryScore;
+  const structuredScore = Number(score?.structuredEvaluation?.score);
+  if (Number.isFinite(structuredScore)) return Math.max(0, Math.min(10, structuredScore));
+  return typeof score?.score === 'number' && Number.isFinite(score.score) ? score.score : undefined;
+}
+
 export function formatScore(score?: number | string) {
   const value = Number(score);
   if (!Number.isFinite(value)) return '-';
@@ -269,7 +280,7 @@ export function hasEvaluationRecord(run?: ExperimentRunSummary) {
 export function getAverageScore(evaluationState: ExperimentEvaluationState) {
   const values = Object.values(evaluationState.scores)
     .flatMap((groupMap) => Object.values(groupMap))
-    .map((item) => item.score)
+    .map((item) => getEvaluationDisplayScore(item))
     .filter((score): score is number => typeof score === 'number' && Number.isFinite(score));
   if (!values.length) return undefined;
   return Math.round((values.reduce((sum, score) => sum + score, 0) / values.length) * 10) / 10;
@@ -278,7 +289,7 @@ export function getAverageScore(evaluationState: ExperimentEvaluationState) {
 export function getGroupAverageScores(plan: { processGroups: ExperimentProcessGroup[] }, evaluationState: ExperimentEvaluationState) {
   return plan.processGroups.map((group) => {
     const values = Object.values(evaluationState.scores)
-      .map((groupMap) => groupMap[group.id]?.score)
+      .map((groupMap) => getEvaluationDisplayScore(groupMap[group.id]))
       .filter((score): score is number => typeof score === 'number' && Number.isFinite(score));
     return {
       group,
@@ -288,9 +299,12 @@ export function getGroupAverageScores(plan: { processGroups: ExperimentProcessGr
 }
 
 export function parseEvaluationScore(text: string) {
-  const scoreMatch = text.match(/(\d+(?:\.\d+)?)\s*\/\s*10/) || text.match(/(?:总分|得分|评分|score)\D{0,12}(\d+(?:\.\d+)?)/i);
-  if (!scoreMatch) return undefined;
-  const score = Number(scoreMatch[1]);
+  const finalScoreMatches = [...text.matchAll(/(?:总分|得分|评分|score)\D{0,12}(\d+(?:\.\d+)?)\s*\/\s*10/gi)];
+  const scoreMatches = [...text.matchAll(/(\d+(?:\.\d+)?)\s*\/\s*10/g)];
+  const looseScoreMatches = [...text.matchAll(/(?:总分|得分|评分|score)\D{0,12}(\d+(?:\.\d+)?)/gi)];
+  const match = finalScoreMatches.at(-1) || scoreMatches.at(-1) || looseScoreMatches.at(-1);
+  if (!match) return undefined;
+  const score = Number(match[1]);
   if (!Number.isFinite(score)) return undefined;
   return Math.max(0, Math.min(10, score));
 }
