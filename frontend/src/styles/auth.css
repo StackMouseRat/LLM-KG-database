@@ -1,0 +1,40 @@
+.login-page {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.login-card {
+  width: min(480px, 100%);
+  position: relative;
+}
+
+.login-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(30, 64, 175, 0.08);
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.login-card__title.ant-typography {
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.login-card__desc.ant-typography {
+  color: #475569;
+  margin-bottom: 20px;
+}
+
+.login-card__error.ant-typography {
+  display: block;
+  margin-bottom: 14px;
+}

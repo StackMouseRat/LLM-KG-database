@@ -1,0 +1,50 @@
+.pipeline-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.panel-card {
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.08);
+}
+
+.pipeline-input-card {
+  width: 100%;
+}
+
+.pipeline-input-card .ant-input {
+  min-height: 72px;
+}
+
+.action-row {
+  margin-top: 16px;
+}
+
+.action-toggle.ant-checkbox-wrapper {
+  color: #172033;
+}
+
+.action-toggle.ant-checkbox-wrapper span:last-child {
+  color: inherit;
+}
+
+body.theme-dark .action-toggle.ant-checkbox-wrapper,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-checked,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled {
+  color: #dbeafe !important;
+}
+
+body.theme-dark .action-toggle.ant-checkbox-wrapper span:last-child,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-checked span:last-child,
+body.theme-dark .action-toggle.ant-checkbox-wrapper-disabled span:last-child {
+  color: #dbeafe !important;
+}
+
+.status-box {
+  margin-top: 18px;
+  min-height: 32px;
+}
+
+.pipeline-termination-alert {
+  margin-top: 12px;
+}

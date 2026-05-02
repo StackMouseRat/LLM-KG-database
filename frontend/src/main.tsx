@@ -4,6 +4,9 @@ import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import App from './App';
 import './styles/global.css';
+import './styles/layout.css';
+import './styles/auth.css';
+import './styles/pipeline.css';
 import './styles/experiment.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
