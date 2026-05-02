@@ -22,7 +22,7 @@ from services.auth_service import (
 )
 from services.case_search_service import infer_dataset, infer_dataset_with_context, run_case_search
 from services.evaluation_question_service import get_evaluation_question_suite
-from services.experiment_service import get_experiment_run, list_experiment_runs, load_evaluation_record, save_evaluation_record, stream_experiment_run
+from services.experiment_service import get_experiment_run, interrupt_experiment_run, list_experiment_runs, load_evaluation_record, save_evaluation_record, stream_experiment_run
 from services.pipeline_service import run_pipeline_sync, stream_pipeline
 from services.provider_balance_service import query_provider_balances
 from services.quality_service import run_format_review_sync, run_structured_evaluation_sync, stream_format_review
@@ -560,6 +560,19 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
+    def _handle_experiment_interrupt(self) -> None:
+        try:
+            body = self._read_json_body()
+            plan_id = str(body.get("planId") or "").strip()
+            run_id = str(body.get("runId") or "").strip()
+            mode = str(body.get("mode") or "safe").strip()
+            if not plan_id or not run_id:
+                self._write_bad_request("planId and runId are required")
+                return
+            self._write_json(200, interrupt_experiment_run(plan_id, run_id, mode))
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
     def _handle_experiment_page_cache_get(self) -> None:
         try:
             username = self._authenticated_username()
@@ -694,6 +707,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/api/experiment/evaluation":
             self._handle_experiment_evaluation_save()
+            return
+
+        if self.path == "/api/experiment/interrupt":
+            self._handle_experiment_interrupt()
             return
 
         if self.path == "/api/experiment/page-cache":

@@ -42,12 +42,16 @@ export type ExperimentRunSummary = {
   concurrency: number;
   completedGroups: number;
   totalGroups: number;
+  completedRounds?: number;
+  targetRounds?: number;
+  interruptRequested?: string;
   questions: string[];
   questionItems?: ExperimentQuestionItem[];
   evaluationStatus?: string;
   evaluatedGroups?: number;
   totalEvaluations?: number;
   evaluationUpdatedAt?: string;
+  balanceSnapshots?: Array<Record<string, any>>;
 };
 
 export type ExperimentQuestionItem = {
@@ -121,6 +125,20 @@ export async function saveExperimentEvaluation(planId: string, runId: string, ev
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, runId, evaluationState })
+  });
+  const data = await readJsonSafely(response);
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+  return data;
+}
+
+export async function interruptExperimentRun(planId: string, runId: string, mode: 'safe' | 'force') {
+  const response = await fetch('/api/experiment/interrupt', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, runId, mode })
   });
   const data = await readJsonSafely(response);
   if (!response.ok) {

@@ -5,7 +5,7 @@ export type ExperimentCardView = 'info' | 'control' | 'preview' | 'evaluation';
 export type ExperimentControlStage = 'generation' | 'evaluation';
 
 export type ExperimentStageState = {
-  status: 'idle' | 'running' | 'done' | 'error';
+  status: 'idle' | 'running' | 'done' | 'error' | 'interrupted';
   progress: number;
   message?: string;
 };
@@ -67,6 +67,7 @@ export type ExperimentEvaluationState = {
     groupLabel: string;
   };
   scores: Record<string, Record<string, ExperimentEvaluationScore>>;
+  balanceSnapshots?: Array<Record<string, any>>;
   message?: string;
 };
 

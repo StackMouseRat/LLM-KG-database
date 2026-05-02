@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ALL_MULTI_FAULT_QUESTIONS, ALL_SINGLE_FAULT_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../data/presetQuestions';
 import { ExperimentControlPanel, ExperimentEvaluationPanel, ExperimentFlowDiagram, ExperimentOutputPreview, ExperimentSection } from '../features/experiment/ExperimentPanels';
 import { ExperimentQuestionPopover } from '../features/experiment/ExperimentQuestionPopover';
-import { fetchExperimentPageSnapshot, fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, saveExperimentEvaluation, saveExperimentPageSnapshot, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
+import { fetchExperimentPageSnapshot, fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, interruptExperimentRun, saveExperimentEvaluation, saveExperimentPageSnapshot, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
 import {
   defaultControlState,
   defaultEvaluationState,
@@ -42,6 +42,7 @@ import {
 } from '../features/experiment/experimentUtils';
 import { fetchTemplatePrompts } from '../features/quality/qualityApi';
 import { loadPromptCache, savePromptCache } from '../features/quality/qualityStorage';
+import { fetchProviderBalances } from '../services/providerBalanceApi';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -604,6 +605,10 @@ export function ExperimentPage() {
     const runId = selectedRunIdMap[plan.id];
     if (!runId) return;
     const detail = await fetchExperimentRunDetail(plan.id, runId);
+    setRunRecordMap((prev) => ({
+      ...prev,
+      [plan.id]: (prev[plan.id] || []).map((run) => (run.runId === runId ? { ...run, ...detail.run } : run))
+    }));
     setOutputStateMap((prev) => ({ ...prev, [plan.id]: detail.outputState as ExperimentOutputState }));
     setEvaluationStateMap((prev) => ({ ...prev, [plan.id]: (detail.evaluationState as ExperimentEvaluationState) || defaultEvaluationState }));
     setControlStateMap((prev) => ({
@@ -720,22 +725,28 @@ export function ExperimentPage() {
       return;
     }
 
+    const existingEvaluation = evaluationStateMap[planId] || defaultEvaluationState;
+    const existingScores = existingEvaluation.scores || {};
+    let savedBalanceSnapshots = [...(existingEvaluation.balanceSnapshots || [])];
+    const remainingTasks = tasks.filter((task) => existingScores[String(task.round)]?.[task.group.id]?.status !== 'done');
+    const initialProgress = tasks.length ? Math.round(((tasks.length - remainingTasks.length) / tasks.length) * 100) : 0;
+
     setControlStateMap((prev) => ({
       ...prev,
       [planId]: {
         ...(prev[planId] || defaultControlState),
-        evaluation: { status: 'running', progress: 0 }
+        evaluation: { status: 'running', progress: initialProgress }
       }
     }));
     setEvaluationStateMap((prev) => ({
       ...prev,
-      [planId]: { status: 'running', progress: 0, scores: {} }
+      [planId]: { status: 'running', progress: initialProgress, scores: existingScores, balanceSnapshots: savedBalanceSnapshots }
     }));
 
-    const evaluationConcurrency = Math.min(getControlState(planId).evaluationConcurrency || 1, getMaxEvaluationConcurrency(), tasks.length);
-    let savedScores: ExperimentEvaluationState['scores'] = {};
+    const evaluationConcurrency = Math.min(getControlState(planId).evaluationConcurrency || 1, getMaxEvaluationConcurrency(), Math.max(remainingTasks.length, 1));
+    let savedScores: ExperimentEvaluationState['scores'] = existingScores;
     let nextTaskIndex = 0;
-    let completed = 0;
+    let completed = tasks.length - remainingTasks.length;
 
     const setSavedScore = (task: ExperimentEvaluationTask, score: ExperimentEvaluationScore) => {
       const roundKey = String(task.round);
@@ -762,15 +773,54 @@ export function ExperimentPage() {
     };
 
     const persistEvaluation = (status: ExperimentEvaluationState['status'], progress: number, message?: string) => {
-      const state = { status, progress, scores: savedScores, message };
+      const state = { status, progress, scores: savedScores, balanceSnapshots: savedBalanceSnapshots, message };
       void saveExperimentEvaluation(planId, selectedRunId, state).then(() => refreshExperimentRuns(planId)).catch(() => {});
     };
 
-    persistEvaluation('running', 0);
+    const captureEvaluationBalance = async (round: number, timing: 'round_finished') => {
+      try {
+        const payload = await fetchProviderBalances(true, 20_000);
+        savedBalanceSnapshots = [
+          ...savedBalanceSnapshots,
+          {
+            stage: 'evaluation',
+            round,
+            timing,
+            capturedAt: new Date().toISOString(),
+            updatedAt: payload.updatedAt,
+            providers: payload.providers
+          }
+        ];
+      } catch (error) {
+        savedBalanceSnapshots = [
+          ...savedBalanceSnapshots,
+          {
+            stage: 'evaluation',
+            round,
+            timing,
+            capturedAt: new Date().toISOString(),
+            error: error instanceof Error ? error.message : '余额查询失败',
+            providers: []
+          }
+        ];
+      }
+      persistEvaluation('running', tasks.length ? Math.round((completed / tasks.length) * 100) : 0);
+      setEvaluationStateMap((prev) => ({
+        ...prev,
+        [planId]: {
+          ...(prev[planId] || defaultEvaluationState),
+          balanceSnapshots: savedBalanceSnapshots
+        }
+      }));
+    };
+
+    const finishedBalanceRounds = new Set(savedBalanceSnapshots.filter((item) => item?.stage === 'evaluation' && item?.timing === 'round_finished').map((item) => Number(item.round)));
+
+    persistEvaluation('running', initialProgress);
 
     const runWorker = async () => {
-      while (nextTaskIndex < tasks.length) {
-        const task = tasks[nextTaskIndex];
+      while (nextTaskIndex < remainingTasks.length) {
+        const task = remainingTasks[nextTaskIndex];
         nextTaskIndex += 1;
       const groupTitle = splitGroupName(task.group);
       updateEvaluationState(planId, (current) => ({
@@ -906,6 +956,12 @@ export function ExperimentPage() {
 
       completed += 1;
       const progress = Math.round((completed / tasks.length) * 100);
+      const roundTasks = tasks.filter((item) => item.round === task.round);
+      const roundDone = roundTasks.every((item) => savedScores[String(item.round)]?.[item.group.id]?.status === 'done' || savedScores[String(item.round)]?.[item.group.id]?.status === 'error');
+      if (roundDone && !finishedBalanceRounds.has(task.round)) {
+        finishedBalanceRounds.add(task.round);
+        await captureEvaluationBalance(task.round, 'round_finished');
+      }
       setControlStateMap((prev) => ({
         ...prev,
         [planId]: {
@@ -923,7 +979,53 @@ export function ExperimentPage() {
     }
     };
 
+    if (!remainingTasks.length) {
+      persistEvaluation('done', 100);
+      setControlStateMap((prev) => ({
+        ...prev,
+        [planId]: { ...(prev[planId] || defaultControlState), evaluation: { status: 'done', progress: 100 } }
+      }));
+      setEvaluationStateMap((prev) => ({
+        ...prev,
+        [planId]: { status: 'done', progress: 100, scores: savedScores, balanceSnapshots: savedBalanceSnapshots }
+      }));
+      return;
+    }
+
     await Promise.all(Array.from({ length: evaluationConcurrency }, () => runWorker()));
+  };
+
+  const interruptGeneration = async (plan: ExperimentPlan, mode: 'safe' | 'force') => {
+    const planId = plan.id;
+    const runId = selectedRunIdMap[planId];
+    if (!runId) return;
+    setControlStateMap((prev) => ({
+      ...prev,
+      [planId]: {
+        ...(prev[planId] || defaultControlState),
+        generation: {
+          ...(prev[planId]?.generation || defaultStageState),
+          status: 'running',
+          message: mode === 'safe' ? '已请求安全中断，当前并行组结束后保存断点。' : '已请求强制中断，正在终止当前任务并保存断点。'
+        }
+      }
+    }));
+    try {
+      await interruptExperimentRun(planId, runId, mode);
+      void refreshExperimentRuns(planId);
+    } catch (error) {
+      setControlStateMap((prev) => ({
+        ...prev,
+        [planId]: {
+          ...(prev[planId] || defaultControlState),
+          generation: {
+            ...(prev[planId]?.generation || defaultStageState),
+            status: 'error',
+            message: error instanceof Error ? error.message : '中断请求失败。'
+          }
+        }
+      }));
+    }
   };
 
   const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage, options: { runId?: string } = {}) => {
@@ -977,12 +1079,13 @@ export function ExperimentPage() {
             if (data?.outputState) {
               setOutputStateMap((prev) => ({ ...prev, [planId]: data.outputState as ExperimentOutputState }));
             }
+            const nextStatus = data?.run?.status === 'interrupted' ? 'interrupted' : 'done';
             void refreshExperimentRuns(planId);
             setControlStateMap((prev) => ({
               ...prev,
               [planId]: {
                 ...(prev[planId] || defaultControlState),
-                [stage]: { status: 'done', progress: 100 }
+                [stage]: { status: nextStatus, progress: Number(data?.progress ?? 100), message: nextStatus === 'interrupted' ? '实验已中断，断点已保存。' : undefined }
               }
             }));
             return;
@@ -1288,6 +1391,7 @@ export function ExperimentPage() {
                 onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
                 onLoadRun={() => void loadExperimentRun(plan)}
                 onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
+                onInterruptRun={(mode) => void interruptGeneration(plan, mode)}
               />
               ) : (
                 cardView === 'preview' ? (

@@ -710,7 +710,8 @@ def main() -> None:
     parser.add_argument("--multi-fault", action="store_true")
     args = parser.parse_args()
 
-    basic_key = read_key(args.multi_fault_basic_key_file if args.multi_fault else args.basic_key_file)
+    basic_key = read_key(args.basic_key_file)
+    multi_fault_basic_key = read_key(args.multi_fault_basic_key_file) if args.multi_fault else ""
     multi_fault_graph_query_key = (
         read_key(args.multi_fault_graph_query_key_file) if args.multi_fault else ""
     )
@@ -721,20 +722,52 @@ def main() -> None:
         emit_event(args.stream_events, "basic_info_started", {"question": args.question})
         log_progress(
             args.stream_events,
-            "[1/3] Calling 多故障基本信息获取 plugin..." if args.multi_fault else "[1/3] Calling 基本信息获取 plugin..."
+            "[1/3] Calling 基本信息获取 and 多故障基本信息获取 plugins..." if args.multi_fault else "[1/3] Calling 基本信息获取 plugin..."
         )
-        basic_response, basic_elapsed = call_plugin(
-            endpoint=args.endpoint,
-            api_key=basic_key,
-            variables={"用户问题": args.question},
-            timeout=args.timeout,
-        )
+
+        basic_stage_start = time.time()
+        if args.multi_fault:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                single_basic_future = executor.submit(
+                    call_plugin,
+                    endpoint=args.endpoint,
+                    api_key=basic_key,
+                    variables={"用户问题": args.question},
+                    timeout=args.timeout,
+                )
+                multi_basic_future = executor.submit(
+                    call_plugin,
+                    endpoint=args.endpoint,
+                    api_key=multi_fault_basic_key,
+                    variables={"用户问题": args.question},
+                    timeout=args.timeout,
+                )
+
+                single_basic_response, _ = single_basic_future.result()
+                single_basic_output = extract_plugin_output(single_basic_response)
+                boundary_failure = extract_boundary_failure(single_basic_output)
+                if boundary_failure is not None:
+                    multi_basic_future.cancel()
+                    emit_event(args.stream_events, "pipeline_error", boundary_failure)
+                    log_progress(args.stream_events, boundary_failure["message"])
+                    return
+
+                basic_response, _ = multi_basic_future.result()
+            basic_elapsed = round(time.time() - basic_stage_start, 3)
+        else:
+            basic_response, basic_elapsed = call_plugin(
+                endpoint=args.endpoint,
+                api_key=basic_key,
+                variables={"用户问题": args.question},
+                timeout=args.timeout,
+            )
         basic_output = extract_plugin_output(basic_response)
-        boundary_failure = extract_boundary_failure(basic_output)
-        if boundary_failure is not None:
-            emit_event(args.stream_events, "pipeline_error", boundary_failure)
-            log_progress(args.stream_events, boundary_failure["message"])
-            return
+        if not args.multi_fault:
+            boundary_failure = extract_boundary_failure(basic_output)
+            if boundary_failure is not None:
+                emit_event(args.stream_events, "pipeline_error", boundary_failure)
+                log_progress(args.stream_events, boundary_failure["message"])
+                return
 
         basic_fields = extract_basic_fields(basic_output, args.question)
         if args.multi_fault:

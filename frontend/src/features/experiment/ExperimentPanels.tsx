@@ -43,6 +43,66 @@ const { Paragraph, Text } = Typography;
 
 const experimentProgressByPlan: Partial<Record<string, ExperimentPlanProgress>> = {};
 
+type BalanceCostProvider = {
+  id: string;
+  name: string;
+  totalCost: number;
+  averageRoundCost: number;
+  roundCount: number;
+  currency: string;
+};
+
+function getProviderAmount(provider: Record<string, any>) {
+  const value = Number(provider.balance);
+  return Number.isFinite(value) ? value : null;
+}
+
+function formatCurrencyCost(value: number, currency: string) {
+  const symbol = currency.toUpperCase() === 'CNY' || currency === '¥' ? '¥' : `${currency} `;
+  return `${symbol}${value.toFixed(4)}`;
+}
+
+function buildGenerationBalanceCosts(run?: ExperimentRunSummary): BalanceCostProvider[] {
+  const snapshots = (run?.balanceSnapshots || [])
+    .filter((item) => item?.stage === 'generation' && item?.timing === 'round_finished' && Array.isArray(item.providers))
+    .sort((a, b) => {
+      const aTime = Date.parse(String(a.capturedAt || '')) || Number(a.updatedAt || 0) * 1000;
+      const bTime = Date.parse(String(b.capturedAt || '')) || Number(b.updatedAt || 0) * 1000;
+      return aTime - bTime;
+    });
+  if (snapshots.length < 2) return [];
+  const providerMap = new Map<string, BalanceCostProvider>();
+  const roundCount = new Set(snapshots.map((item) => Number(item.round)).filter((round) => Number.isFinite(round))).size;
+  const providerIds = new Set<string>();
+  snapshots.forEach((snapshot) => {
+    snapshot.providers.forEach((provider: Record<string, any>) => {
+      if (provider?.ok && getProviderAmount(provider) !== null) providerIds.add(String(provider.id || provider.name || 'provider'));
+    });
+  });
+  providerIds.forEach((providerId) => {
+    const series = snapshots
+      .map((snapshot) => {
+        const provider = snapshot.providers.find((item: Record<string, any>) => String(item.id || item.name || 'provider') === providerId);
+        const amount = provider ? getProviderAmount(provider) : null;
+        return provider && amount !== null ? { provider, amount } : null;
+      })
+      .filter(Boolean) as Array<{ provider: Record<string, any>; amount: number }>;
+    if (series.length < 2) return;
+    const totalCost = series[0].amount - series[series.length - 1].amount;
+    if (!Number.isFinite(totalCost) || totalCost < 0) return;
+    const firstProvider = series[0].provider;
+    providerMap.set(providerId, {
+      id: providerId,
+      name: String(firstProvider.name || providerId),
+      totalCost,
+      averageRoundCost: roundCount > 0 ? totalCost / roundCount : 0,
+      roundCount,
+      currency: String(firstProvider.currency || 'CNY')
+    });
+  });
+  return Array.from(providerMap.values());
+}
+
 function getExperimentStepStatus(progress: ExperimentPlanProgress | undefined, groupId: string, stepIndex: number): ExperimentStepStatus {
   const groupProgress = progress?.[groupId];
   if (groupProgress?.failedStepIndex === stepIndex) return 'failed';
@@ -148,7 +208,8 @@ export function ExperimentControlPanel({
   onRunStage,
   onSelectRun,
   onLoadRun,
-  onRefreshRuns
+  onRefreshRuns,
+  onInterruptRun
 }: {
   plan: ExperimentPlan;
   state: ExperimentControlState;
@@ -161,6 +222,7 @@ export function ExperimentControlPanel({
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
   onRefreshRuns: () => void;
+  onInterruptRun: (mode: 'safe' | 'force') => void;
 }) {
   const totalScripts = Math.max(plan.processGroups.length - 1, 0);
   const effectiveEvaluationStage = evaluationState.status !== 'idle' || evaluationState.progress > 0
@@ -170,6 +232,12 @@ export function ExperimentControlPanel({
   const evaluationRunning = effectiveEvaluationStage.status === 'running';
   const maxConcurrency = getMaxExperimentConcurrency(state.runCount, plan.processGroups.length);
   const activeGroups = outputState.activeGroups || [];
+  const selectedRun = runs.find((run) => run.runId === selectedRunId);
+  const completedRounds = selectedRun?.completedRounds ?? 0;
+  const targetRounds = selectedRun?.targetRounds ?? selectedRun?.runCount ?? state.runCount;
+  const canContinue = Boolean(selectedRunId && completedRounds < targetRounds && !generationRunning);
+  const isSafeStopping = generationRunning && Boolean(state.generation.message?.includes('安全中断'));
+  const isForceStopping = generationRunning && Boolean(state.generation.message?.includes('强制中断'));
 
   return (
     <div className="experiment-control-console">
@@ -183,6 +251,10 @@ export function ExperimentControlPanel({
         <Space wrap>
           <Tag color="purple">{plan.title}</Tag>
           <Tag color="blue">实验脚本 {totalScripts} 个</Tag>
+          {selectedRun ? <Tag color={completedRounds === targetRounds ? 'green' : 'gold'}>轮次 {completedRounds}/{targetRounds}</Tag> : null}
+          {canContinue ? <Tag color="orange">可断点续传</Tag> : null}
+          {isSafeStopping ? <Tag color="orange">安全中断中</Tag> : null}
+          {isForceStopping ? <Tag color="red">强制中断中</Tag> : null}
         </Space>
       </div>
 
@@ -216,6 +288,17 @@ export function ExperimentControlPanel({
           />
           <Text type="secondary">最多 {getMaxEvaluationConcurrency()} 个评分</Text>
         </label>
+        <div className="experiment-control-console__thread-pool-card">
+          <div className="experiment-control-console__thread-pool-title">
+            <Text type="secondary">当前线程池</Text>
+            <Tag color={activeGroups.length ? 'blue' : 'default'}>{activeGroups.length}/{state.concurrency}</Tag>
+          </div>
+          <div className="experiment-control-console__active-tags">
+            {activeGroups.length ? activeGroups.map((group) => (
+              <Tag color="blue" key={group.key}>第 {group.round} 轮 · {group.groupLabel}</Tag>
+            )) : <Tag>暂无运行中组</Tag>}
+          </div>
+        </div>
       </div>
 
       <div className="experiment-control-console__record-row">
@@ -238,16 +321,31 @@ export function ExperimentControlPanel({
           <div className="experiment-control-console__stage-header">
             <Text strong>阶段一：生成</Text>
             <Space size={8} wrap>
+              {isSafeStopping ? <Tag color="orange">等待当前 {activeGroups.length} 个流式组结束</Tag> : null}
+              {isForceStopping ? <Tag color="red">正在终止当前流式组</Tag> : null}
               <Button size="small" type="primary" loading={generationRunning} onClick={() => onRunStage('generation')}>
                 新建生成
               </Button>
-              <Button size="small" disabled={!selectedRunId} loading={generationRunning} onClick={() => onRunStage('generation', { runId: selectedRunId })}>
+              <Button size="small" disabled={!canContinue} loading={generationRunning} onClick={() => onRunStage('generation', { runId: selectedRunId })}>
                 继续生成
+              </Button>
+              <Button size="small" disabled={!selectedRunId || !generationRunning} onClick={() => onInterruptRun('safe')}>
+                安全中断
+              </Button>
+              <Button size="small" danger disabled={!selectedRunId || !generationRunning} onClick={() => onInterruptRun('force')}>
+                强制中断
               </Button>
             </Space>
           </div>
           <Progress percent={state.generation.progress} size="small" status={getProgressStatus(state.generation.status)} />
           <Text type="secondary">按并发数运行实验脚本，生成各实验组预案正文。</Text>
+          {isSafeStopping ? (
+            <Text type="warning">安全中断已生效：不再提交新的实验组，等待当前并发池中的流式返回结束后立即停止并保存断点。</Text>
+          ) : null}
+          {isForceStopping ? (
+            <Text type="danger">强制中断已生效：正在终止当前运行中的实验组，并保存可恢复断点。</Text>
+          ) : null}
+          {selectedRun ? <Text type="secondary">已完成 {selectedRun.completedGroups}/{selectedRun.totalGroups} 个组，载入未完成记录后可继续。</Text> : null}
           {state.generation.message ? <Text type="danger">{state.generation.message}</Text> : null}
         </div>
 
@@ -272,14 +370,6 @@ export function ExperimentControlPanel({
         <Text type="secondary">实时进度</Text>
         <div>生成：{getStageStatusText(state.generation.status)} · {state.generation.progress}%</div>
         <div>评估：{getStageStatusText(effectiveEvaluationStage.status)} · {effectiveEvaluationStage.progress}%</div>
-        <div className="experiment-control-console__active-groups">
-          <Text type="secondary">当前并发：{activeGroups.length}/{state.concurrency}</Text>
-          <div className="experiment-control-console__active-tags">
-            {activeGroups.length ? activeGroups.map((group) => (
-              <Tag color="blue" key={group.key}>第 {group.round} 轮 · {group.groupLabel}</Tag>
-            )) : <Tag>暂无运行中组</Tag>}
-          </div>
-        </div>
       </div>
 
       <div className="experiment-control-console__groups">
@@ -323,6 +413,8 @@ export function ExperimentOutputPreview({
 }) {
   const rounds = Object.entries(outputState.rounds).sort(([a], [b]) => Number(a) - Number(b));
   const activeGroups = outputState.activeGroups || [];
+  const selectedRun = runs.find((run) => run.runId === selectedRunId);
+  const generationBalanceCosts = plan.id === 'boundary' ? buildGenerationBalanceCosts(selectedRun) : [];
 
   return (
     <div className="experiment-output-preview">
@@ -352,6 +444,19 @@ export function ExperimentOutputPreview({
         <Button size="small" onClick={onRefreshRuns}>刷新记录</Button>
         <Button size="small" type="primary" disabled={!selectedRunId} onClick={onLoadRun}>载入结果</Button>
       </div>
+      {generationBalanceCosts.length ? (
+        <div className="experiment-output-preview__costs">
+          <Text strong>模型消耗统计</Text>
+          <div className="experiment-output-preview__cost-list">
+            {generationBalanceCosts.map((item) => (
+              <Tag color="cyan" key={item.id}>
+                {item.name}：总消耗 {formatCurrencyCost(item.totalCost, item.currency)}，平均每轮 {formatCurrencyCost(item.averageRoundCost, item.currency)}
+              </Tag>
+            ))}
+          </div>
+          <Text type="secondary">基于已载入实验一结果的轮次完成余额快照计算，共 {generationBalanceCosts[0]?.roundCount || 0} 轮。</Text>
+        </div>
+      ) : null}
       {rounds.length === 0 ? (
         <div className="experiment-output-preview__empty">启动生成后，这里会按轮次展示对照组和实验组输出。</div>
       ) : (

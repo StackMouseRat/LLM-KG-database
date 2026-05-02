@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from services.sse import send_sse
+from services.provider_balance_service import query_provider_balances
 
 
 REPO_ROOT = Path(os.getenv("LLM_KG_REPO_ROOT", "/app"))
@@ -22,6 +23,8 @@ if not REPO_ROOT.exists():
 EXPERIMENT_SCRIPT_DIR = Path(os.getenv("EXPERIMENT_SCRIPT_DIR", str(REPO_ROOT / "scripts" / "experiment_page_variants")))
 EXPERIMENT_RUN_DIR = Path(os.getenv("EXPERIMENT_RUN_DIR", "/app/data/frontend_experiment_runs"))
 MAX_EXPERIMENT_CONCURRENCY = 15
+RUN_CONTROLS: dict[str, dict[str, Any]] = {}
+RUN_CONTROLS_LOCK = threading.Lock()
 
 PLAN_GROUP_SCRIPTS = {
     "boundary": [
@@ -139,6 +142,54 @@ def evaluation_path(plan_id: str, run_id: str) -> Path:
     return run_dir(plan_id, run_id) / "experiment_evaluation.json"
 
 
+def run_control_key(plan_id: str, run_id: str) -> str:
+    return f"{plan_id}:{run_id}"
+
+
+def register_run_control(plan_id: str, run_id: str) -> dict[str, Any]:
+    key = run_control_key(plan_id, run_id)
+    with RUN_CONTROLS_LOCK:
+        control = {"mode": "running", "processes": set(), "updatedAt": now_iso()}
+        RUN_CONTROLS[key] = control
+        return control
+
+
+def get_run_control(plan_id: str, run_id: str) -> dict[str, Any] | None:
+    with RUN_CONTROLS_LOCK:
+        return RUN_CONTROLS.get(run_control_key(plan_id, run_id))
+
+
+def unregister_run_control(plan_id: str, run_id: str) -> None:
+    with RUN_CONTROLS_LOCK:
+        RUN_CONTROLS.pop(run_control_key(plan_id, run_id), None)
+
+
+def interrupt_experiment_run(plan_id: str, run_id: str, mode: str) -> dict[str, Any]:
+    if mode not in {"safe", "force"}:
+        raise RuntimeError("interrupt mode must be safe or force")
+    manifest = load_manifest(plan_id, run_id)
+    manifest["interruptRequested"] = mode
+    manifest["status"] = "stopping" if mode == "safe" else "interrupted"
+    save_manifest(manifest)
+
+    terminated = 0
+    control = get_run_control(plan_id, run_id)
+    if control is not None:
+        with RUN_CONTROLS_LOCK:
+            control["mode"] = mode
+            control["updatedAt"] = now_iso()
+            processes = list(control.get("processes") or [])
+        if mode == "force":
+            for process in processes:
+                try:
+                    if process.poll() is None:
+                        process.terminate()
+                        terminated += 1
+                except Exception:
+                    continue
+    return {"ok": True, "planId": plan_id, "runId": run_id, "mode": mode, "terminated": terminated}
+
+
 def save_manifest(manifest: dict[str, Any]) -> None:
     plan_id = str(manifest.get("planId") or "")
     run_id = str(manifest.get("runId") or "")
@@ -148,6 +199,34 @@ def save_manifest(manifest: dict[str, Any]) -> None:
     tmp_path = path.with_suffix(".json.tmp")
     tmp_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp_path.replace(path)
+
+
+def capture_balance_snapshot(stage: str, round_index: int, timing: str) -> dict[str, Any]:
+    try:
+        payload = query_provider_balances(force=True)
+        return {
+            "stage": stage,
+            "round": round_index,
+            "timing": timing,
+            "capturedAt": now_iso(),
+            "updatedAt": payload.get("updatedAt"),
+            "providers": payload.get("providers") if isinstance(payload.get("providers"), list) else [],
+        }
+    except Exception as exc:
+        return {
+            "stage": stage,
+            "round": round_index,
+            "timing": timing,
+            "capturedAt": now_iso(),
+            "error": str(exc),
+            "providers": [],
+        }
+
+
+def append_balance_snapshot(manifest: dict[str, Any], snapshot: dict[str, Any]) -> None:
+    snapshots = manifest.setdefault("balanceSnapshots", [])
+    if isinstance(snapshots, list):
+        snapshots.append(snapshot)
 
 
 def all_groups_completed(manifest: dict[str, Any]) -> bool:
@@ -222,6 +301,10 @@ def summarize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         "concurrency": int(manifest.get("concurrency") or 0),
         "completedGroups": completed_groups,
         "totalGroups": total_groups,
+        "completedRounds": sum(1 for round_data in rounds.values() if isinstance(round_data, dict) and all(isinstance(item, dict) and item.get("status") in {"done", "terminated"} for item in (round_data.get("groups") or {}).values())),
+        "targetRounds": int(manifest.get("runCount") or 0),
+        "interruptRequested": str(manifest.get("interruptRequested") or ""),
+        "balanceSnapshots": manifest.get("balanceSnapshots") if isinstance(manifest.get("balanceSnapshots"), list) else [],
         "questions": manifest.get("questions") if isinstance(manifest.get("questions"), list) else [],
         "questionItems": manifest.get("questionItems") if isinstance(manifest.get("questionItems"), list) else [],
     }
@@ -352,6 +435,7 @@ def run_one_group(
     output_dir: Path,
     manifest: dict[str, Any],
     manifest_lock: threading.Lock,
+    run_control: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     group_id = str(group["groupId"])
     script = Path(group["script"])
@@ -388,6 +472,10 @@ def run_one_group(
     update_manifest_group({"status": "running", "startedAt": now_iso(), "question": question, "questionItem": question_item, "groupLabel": group.get("label")})
     safe_send("experiment_group_started", {"planId": plan_id, "round": round_index, "runCount": run_count, "groupId": group_id, "groupLabel": group.get("label"), "question": question, "questionItem": question_item})
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, env=os.environ.copy())
+    if run_control is not None:
+        with RUN_CONTROLS_LOCK:
+            processes = run_control.setdefault("processes", set())
+            processes.add(process)
     assert process.stdout is not None
     logs: list[str] = []
     terminal_message = ""
@@ -413,6 +501,15 @@ def run_one_group(
                 safe_send("experiment_group_chunk", {"planId": plan_id, "round": round_index, "groupId": group_id, "text": str(data.get("chunk") or "")})
 
     return_code = process.wait()
+    if run_control is not None:
+        with RUN_CONTROLS_LOCK:
+            processes = run_control.setdefault("processes", set())
+            processes.discard(process)
+    if run_control is not None and run_control.get("mode") == "force" and return_code != 0:
+        message = "实验已强制中断，当前断点已保存。"
+        update_manifest_group({"status": "terminated", "message": message, "finishedAt": now_iso()})
+        safe_send("experiment_group_done", {"planId": plan_id, "round": round_index, "runCount": run_count, "groupId": group_id, "groupLabel": group.get("label"), "question": question, "questionItem": question_item, "outputText": f"【强制中断】{message}", "resultFile": "", "status": "terminated"})
+        return {"groupId": group_id, "status": "terminated", "message": message}
     if return_code != 0:
         message = "\n".join(logs).strip() or f"experiment group exited with code {return_code}"
         update_manifest_group({"status": "error", "message": message, "finishedAt": now_iso()})
@@ -470,7 +567,9 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
     manifest["concurrency"] = concurrency
     manifest["name"] = make_run_name(plan_id, run_count, concurrency)
     manifest["status"] = "running"
+    manifest["interruptRequested"] = ""
     save_manifest(manifest)
+    run_control = register_run_control(plan_id, run_id)
     output_dir = run_dir(plan_id, run_id)
     output_dir.mkdir(parents=True, exist_ok=True)
     send_lock = threading.Lock()
@@ -485,7 +584,7 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         except Exception:
             return
 
-    safe_send("experiment_stage_started", {"planId": plan_id, "runId": run_id, "stage": stage, "runCount": run_count, "concurrency": concurrency, "total": all_total, "outputState": output_state_from_manifest(manifest)})
+    safe_send("experiment_stage_started", {"planId": plan_id, "runId": run_id, "stage": stage, "runCount": run_count, "concurrency": concurrency, "total": all_total, "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
     tasks = []
     for round_index in range(1, run_count + 1):
         round_key = str(round_index)
@@ -513,20 +612,58 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": 0, "total": 0, "progress": 100, "outputState": output_state_from_manifest(manifest)})
         return
 
-    with ThreadPoolExecutor(max_workers=concurrency) as executor:
-        future_map = {
-            executor.submit(run_one_group, handler, send_lock, plan_id=plan_id, group=group, round_index=round_index, run_count=run_count, question=question, question_item=question_item, output_dir=output_dir, manifest=manifest, manifest_lock=manifest_lock): (round_index, group)
-            for round_index, question, question_item, group in tasks
-        }
-        for future in as_completed(future_map):
-            completed += 1
-            try:
-                future.result()
-            except Exception as exc:
-                round_index, group = future_map[future]
-                safe_send("experiment_group_error", {"planId": plan_id, "round": round_index, "groupId": group.get("groupId"), "message": str(exc)})
-            safe_send("experiment_progress", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": completed, "total": total, "progress": round(completed / total * 100)})
+    try:
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            pending_iter = iter(tasks)
+            future_map: dict[Any, tuple[int, dict[str, Any]]] = {}
 
-    manifest["status"] = "done" if all_groups_completed(manifest) else "partial"
-    save_manifest(manifest)
-    safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": completed, "total": total, "progress": 100, "outputState": output_state_from_manifest(manifest)})
+            def submit_next() -> bool:
+                if run_control.get("mode") in {"safe", "force"}:
+                    return False
+                try:
+                    round_index, question, question_item, group = next(pending_iter)
+                except StopIteration:
+                    return False
+                future = executor.submit(run_one_group, handler, send_lock, plan_id=plan_id, group=group, round_index=round_index, run_count=run_count, question=question, question_item=question_item, output_dir=output_dir, manifest=manifest, manifest_lock=manifest_lock, run_control=run_control)
+                future_map[future] = (round_index, group)
+                return True
+
+            for _ in range(concurrency):
+                if not submit_next():
+                    break
+
+            while future_map:
+                for future in as_completed(list(future_map.keys()), timeout=None):
+                    completed += 1
+                    round_index, group = future_map.pop(future)
+                    try:
+                        future.result()
+                    except Exception as exc:
+                        safe_send("experiment_group_error", {"planId": plan_id, "round": round_index, "groupId": group.get("groupId"), "message": str(exc)})
+                    safe_send("experiment_progress", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": completed, "total": total, "progress": round(completed / total * 100), "run": summarize_manifest(manifest)})
+                    round_key = str(round_index)
+                    round_data = manifest.get("rounds", {}).get(round_key) if isinstance(manifest.get("rounds"), dict) else None
+                    groups_done = False
+                    if isinstance(round_data, dict):
+                        groups = round_data.get("groups") if isinstance(round_data.get("groups"), dict) else {}
+                        groups_done = bool(groups) and all(isinstance(item, dict) and item.get("status") in {"done", "terminated"} for item in groups.values())
+                    if groups_done:
+                        with manifest_lock:
+                            captured = manifest.setdefault("balanceRoundFinished", [])
+                            if isinstance(captured, list) and round_index not in captured:
+                                append_balance_snapshot(manifest, capture_balance_snapshot(stage, round_index, "round_finished"))
+                                captured.append(round_index)
+                                save_manifest(manifest)
+                    submit_next()
+                    break
+
+        final_status = "done" if all_groups_completed(manifest) else "partial"
+        if run_control.get("mode") == "safe":
+            final_status = "interrupted"
+        elif run_control.get("mode") == "force":
+            final_status = "interrupted"
+        manifest["status"] = final_status
+        save_manifest(manifest)
+        safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": completed, "total": total, "progress": round(completed / total * 100), "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
+    finally:
+        unregister_run_control(plan_id, run_id)

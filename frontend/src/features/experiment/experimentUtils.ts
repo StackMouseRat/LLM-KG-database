@@ -41,6 +41,7 @@ export function getStageStatusText(status: ExperimentStageState['status']) {
   if (status === 'running') return '运行中';
   if (status === 'done') return '已完成';
   if (status === 'error') return '异常';
+  if (status === 'interrupted') return '已中断';
   return '待启动';
 }
 
