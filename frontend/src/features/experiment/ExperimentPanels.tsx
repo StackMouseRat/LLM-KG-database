@@ -414,7 +414,7 @@ export function ExperimentOutputPreview({
   const rounds = Object.entries(outputState.rounds).sort(([a], [b]) => Number(a) - Number(b));
   const activeGroups = outputState.activeGroups || [];
   const selectedRun = runs.find((run) => run.runId === selectedRunId);
-  const generationBalanceCosts = plan.id === 'boundary' ? buildGenerationBalanceCosts(selectedRun) : [];
+  const generationBalanceCosts = buildGenerationBalanceCosts(selectedRun);
 
   return (
     <div className="experiment-output-preview">
@@ -454,7 +454,7 @@ export function ExperimentOutputPreview({
               </Tag>
             ))}
           </div>
-          <Text type="secondary">基于已载入实验一结果的轮次完成余额快照计算，共 {generationBalanceCosts[0]?.roundCount || 0} 轮。</Text>
+          <Text type="secondary">基于已载入实验结果的轮次完成余额快照计算，共 {generationBalanceCosts[0]?.roundCount || 0} 轮。</Text>
         </div>
       ) : null}
       {rounds.length === 0 ? (

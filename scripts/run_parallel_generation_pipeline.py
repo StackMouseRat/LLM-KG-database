@@ -65,6 +65,7 @@ DEFAULT_OUTPUT_DIR = Path(
         str(REPO_ROOT / "docs" / "project_changes" / "parallel_generation_pipeline_runs"),
     )
 )
+DEFAULT_TIMEOUT = int(os.getenv("PIPELINE_TIMEOUT", "480"))
 EVENT_LOCK = threading.Lock()
 DEFAULT_CHAPTER_HEADING_MAX_ATTEMPTS = 3
 
@@ -703,7 +704,7 @@ def main() -> None:
     parser.add_argument("--multi-fault-graph-query-key-file", type=Path, default=DEFAULT_MULTI_FAULT_GRAPH_QUERY_KEY)
     parser.add_argument("--splitter-key-file", type=Path, default=DEFAULT_SPLITTER_KEY)
     parser.add_argument("--parallel-key-file", type=Path, default=DEFAULT_PARALLEL_KEY)
-    parser.add_argument("--timeout", type=int, default=210)
+    parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT)
     parser.add_argument("--max-workers", type=int, default=6)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--stream-events", action="store_true")
@@ -771,6 +772,22 @@ def main() -> None:
 
         basic_fields = extract_basic_fields(basic_output, args.question)
         if args.multi_fault:
+            emit_event(
+                args.stream_events,
+                "basic_info_done",
+                {
+                    "elapsed_sec": basic_elapsed,
+                    "basicInfo": {
+                        "userQuestion": basic_fields["用户问题"],
+                        "faultScene": basic_fields["故障与场景提取结果"],
+                        "graphMaterial": basic_fields["图谱检索方案素材"],
+                        "kbName": basic_fields["知识库名"],
+                        "boundaryResult": basic_fields["边界判定结果"],
+                        "boundaryMessage": basic_fields["边界判定信息"],
+                    },
+                },
+            )
+            emit_event(args.stream_events, "multi_fault_graph_started", {})
             graph_material = build_multi_fault_graph_material(
                 endpoint=args.endpoint,
                 api_key=multi_fault_graph_query_key,
@@ -781,21 +798,23 @@ def main() -> None:
             )
             if graph_material:
                 basic_fields["图谱检索方案素材"] = graph_material
-        emit_event(
-            args.stream_events,
-            "basic_info_done",
-            {
-                "elapsed_sec": basic_elapsed,
-                "basicInfo": {
-                    "userQuestion": basic_fields["用户问题"],
-                    "faultScene": basic_fields["故障与场景提取结果"],
-                    "graphMaterial": basic_fields["图谱检索方案素材"],
-                    "kbName": basic_fields["知识库名"],
-                    "boundaryResult": basic_fields["边界判定结果"],
-                    "boundaryMessage": basic_fields["边界判定信息"],
+            emit_event(args.stream_events, "multi_fault_graph_done", {"graphMaterial": basic_fields["图谱检索方案素材"]})
+        else:
+            emit_event(
+                args.stream_events,
+                "basic_info_done",
+                {
+                    "elapsed_sec": basic_elapsed,
+                    "basicInfo": {
+                        "userQuestion": basic_fields["用户问题"],
+                        "faultScene": basic_fields["故障与场景提取结果"],
+                        "graphMaterial": basic_fields["图谱检索方案素材"],
+                        "kbName": basic_fields["知识库名"],
+                        "boundaryResult": basic_fields["边界判定结果"],
+                        "boundaryMessage": basic_fields["边界判定信息"],
+                    },
                 },
-            },
-        )
+            )
 
         emit_event(args.stream_events, "template_split_started", {})
         log_progress(args.stream_events, "[2/3] Calling 模板切片 plugin...")
@@ -944,7 +963,8 @@ def main() -> None:
         log_progress(args.stream_events, f"Saved results to: {out_dir}")
     except Exception as exc:
         emit_event(args.stream_events, "pipeline_error", {"message": str(exc)})
-        raise
+        log_progress(args.stream_events, f"Pipeline failed: {exc}")
+        return
 
 
 if __name__ == "__main__":

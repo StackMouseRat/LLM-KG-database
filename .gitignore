@@ -17,3 +17,7 @@ frontend/.vite/
 frontend/.tmp/
 frontend/node_modules/.tmp/
 docs/project_changes/frontend_pipeline_runs/
+docs/project_changes/frontend_experiment_runs/*
+!docs/project_changes/frontend_experiment_runs/.gitkeep
+docs/project_changes/frontend_experiment_page_cache/*
+!docs/project_changes/frontend_experiment_page_cache/.gitkeep

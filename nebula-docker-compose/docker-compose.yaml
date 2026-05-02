@@ -372,6 +372,8 @@ services:
       - ../scripts/run_parallel_generation_pipeline.py:/app/scripts/run_parallel_generation_pipeline.py:ro
       - ../scripts/experiment_page_variants:/app/scripts/experiment_page_variants:ro
       - ../docs/project_changes/frontend_pipeline_runs:/app/data/frontend_pipeline_runs
+      - ../docs/project_changes/frontend_experiment_runs:/app/data/frontend_experiment_runs
+      - ../docs/project_changes/frontend_experiment_page_cache:/app/data/frontend_experiment_page_cache
       - ${FASTGPT_KEYS_DIR:-/home/ubuntu/.fastgpt_keys}:/run/fastgpt_keys:ro
     ports:
       - "8788:8788"

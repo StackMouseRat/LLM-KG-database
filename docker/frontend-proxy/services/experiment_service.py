@@ -22,6 +22,7 @@ if not REPO_ROOT.exists():
     REPO_ROOT = Path("/home/ubuntu/LLM-KG-database")
 EXPERIMENT_SCRIPT_DIR = Path(os.getenv("EXPERIMENT_SCRIPT_DIR", str(REPO_ROOT / "scripts" / "experiment_page_variants")))
 EXPERIMENT_RUN_DIR = Path(os.getenv("EXPERIMENT_RUN_DIR", "/app/data/frontend_experiment_runs"))
+EXPERIMENT_PIPELINE_TIMEOUT = int(os.getenv("EXPERIMENT_PIPELINE_TIMEOUT", os.getenv("PIPELINE_TIMEOUT", "480")))
 MAX_EXPERIMENT_CONCURRENCY = 15
 RUN_CONTROLS: dict[str, dict[str, Any]] = {}
 RUN_CONTROLS_LOCK = threading.Lock()
@@ -448,6 +449,8 @@ def run_one_group(
         question,
         "--output-dir",
         str(group_output_dir),
+        "--timeout",
+        str(EXPERIMENT_PIPELINE_TIMEOUT),
         "--stream-events",
         *list(group.get("extraArgs") or []),
     ]

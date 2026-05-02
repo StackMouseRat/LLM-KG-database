@@ -55,7 +55,7 @@ def parse_args(variant_id: str) -> argparse.Namespace:
     parser.add_argument("--multi-fault-graph-query-key-file", type=Path, default=pipeline.DEFAULT_MULTI_FAULT_GRAPH_QUERY_KEY)
     parser.add_argument("--splitter-key-file", type=Path, default=pipeline.DEFAULT_SPLITTER_KEY)
     parser.add_argument("--parallel-key-file", type=Path, default=pipeline.DEFAULT_PARALLEL_KEY)
-    parser.add_argument("--timeout", type=int, default=210)
+    parser.add_argument("--timeout", type=int, default=pipeline.DEFAULT_TIMEOUT)
     parser.add_argument("--max-workers", type=int, default=6)
     parser.add_argument("--output-dir", type=Path, default=pipeline.DEFAULT_OUTPUT_DIR / "experiment_page_variants" / variant_id)
     parser.add_argument("--stream-events", action="store_true")
@@ -367,56 +367,61 @@ def main(variant_id: str) -> None:
     question = args.question
     started = time.time()
 
-    if variant_id == "boundary_no_boundary":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, ignore_boundary=True)
-    elif variant_id == "boundary_keyword_boundary":
-        keyword_failure = keyword_boundary(question)
-        if keyword_failure is not None:
-            pipeline.emit_event(args.stream_events, "pipeline_error", keyword_failure)
-            print(json.dumps(keyword_failure, ensure_ascii=False, indent=2))
-            return
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, ignore_boundary=True)
-        basic_fields["边界判定结果"] = "ok"
-        basic_fields["边界判定信息"] = ""
-    elif variant_id == "disambiguation_drop_subject":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
-        matched = keyword_subject(question)
-        apply_weak_subject_graph(
-            args,
-            basic_fields,
-            question,
-            device_name=None,
-            kb_name=matched[1] if matched else basic_fields.get("知识库名", ""),
-        )
-    elif variant_id == "disambiguation_keyword_subject":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
-        matched = keyword_subject(question)
-        if matched:
-            device_name, kb_name = matched
-            apply_weak_subject_graph(args, basic_fields, question, device_name=device_name, kb_name=kb_name)
-    elif variant_id == "graph_template_no_graph":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
-        basic_fields["图谱检索方案素材"] = ""
-    elif variant_id == "graph_template_no_template":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
-    elif variant_id == "multi_fault_single_fault":
-        basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, use_multi_fault=False)
-    elif variant_id == "multi_fault_no_per_fault_graph":
-        basic_response, basic_elapsed, basic_fields, basic_output = call_basic(args, question, use_multi_fault=True)
-        main_fault_material, device_space = build_main_fault_graph_material(args, basic_fields, basic_output, question)
-        basic_fields["图谱检索方案素材"] = main_fault_material
-        basic_fields["知识库名"] = device_space or basic_fields["知识库名"]
-    else:
-        raise ValueError(f"Unknown variant: {variant_id}")
+    try:
+        if variant_id == "boundary_no_boundary":
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, ignore_boundary=True)
+        elif variant_id == "boundary_keyword_boundary":
+            keyword_failure = keyword_boundary(question)
+            if keyword_failure is not None:
+                pipeline.emit_event(args.stream_events, "pipeline_error", keyword_failure)
+                print(json.dumps(keyword_failure, ensure_ascii=False, indent=2))
+                return
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, ignore_boundary=True)
+            basic_fields["边界判定结果"] = "ok"
+            basic_fields["边界判定信息"] = ""
+        elif variant_id == "disambiguation_drop_subject":
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
+            matched = keyword_subject(question)
+            apply_weak_subject_graph(
+                args,
+                basic_fields,
+                question,
+                device_name=None,
+                kb_name=matched[1] if matched else basic_fields.get("知识库名", ""),
+            )
+        elif variant_id == "disambiguation_keyword_subject":
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
+            matched = keyword_subject(question)
+            if matched:
+                device_name, kb_name = matched
+                apply_weak_subject_graph(args, basic_fields, question, device_name=device_name, kb_name=kb_name)
+        elif variant_id == "graph_template_no_graph":
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
+            basic_fields["图谱检索方案素材"] = ""
+        elif variant_id == "graph_template_no_template":
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question)
+        elif variant_id == "multi_fault_single_fault":
+            basic_response, basic_elapsed, basic_fields, _ = call_basic(args, question, use_multi_fault=False)
+        elif variant_id == "multi_fault_no_per_fault_graph":
+            basic_response, basic_elapsed, basic_fields, basic_output = call_basic(args, question, use_multi_fault=True)
+            main_fault_material, device_space = build_main_fault_graph_material(args, basic_fields, basic_output, question)
+            basic_fields["图谱检索方案素材"] = main_fault_material
+            basic_fields["知识库名"] = device_space or basic_fields["知识库名"]
+        else:
+            raise ValueError(f"Unknown variant: {variant_id}")
 
-    splitter_response, splitter_elapsed, split_result, chapters = call_template_split(args)
-    if variant_id == "graph_template_no_template":
-        chapters = blank_chapter_templates(chapters)
+        splitter_response, splitter_elapsed, split_result, chapters = call_template_split(args)
+        if variant_id == "graph_template_no_template":
+            chapters = blank_chapter_templates(chapters)
 
-    generations = generate_chapters(args, basic_fields, chapters)
-    out_dir = args.output_dir / datetime.now().strftime("%Y%m%d_%H%M%S")
-    pipeline.write_outputs(out_dir, question, basic_response, basic_elapsed, basic_fields, splitter_response, splitter_elapsed, split_result, generations)
-    result = {"variant": variant_id, "elapsed_sec": round(time.time() - started, 3), "output_dir": str(out_dir)}
-    pipeline.emit_event(args.stream_events, "variant_done", result)
-    if not args.stream_events:
-        print(json.dumps(result, ensure_ascii=False))
+        generations = generate_chapters(args, basic_fields, chapters)
+        out_dir = args.output_dir / datetime.now().strftime("%Y%m%d_%H%M%S")
+        pipeline.write_outputs(out_dir, question, basic_response, basic_elapsed, basic_fields, splitter_response, splitter_elapsed, split_result, generations)
+        result = {"variant": variant_id, "elapsed_sec": round(time.time() - started, 3), "output_dir": str(out_dir)}
+        pipeline.emit_event(args.stream_events, "variant_done", result)
+        if not args.stream_events:
+            print(json.dumps(result, ensure_ascii=False))
+    except Exception as exc:
+        pipeline.emit_event(args.stream_events, "pipeline_error", {"message": str(exc)})
+        if not args.stream_events:
+            print(json.dumps({"variant": variant_id, "error": str(exc)}, ensure_ascii=False))

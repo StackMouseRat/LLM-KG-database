@@ -187,6 +187,14 @@ export async function runPipelineStream(
       handlers.onStage?.('basic_info', payloadData);
       return;
     }
+    if (eventName === 'multi_fault_graph_started') {
+      handlers.onStage?.('multi_fault_graph', payloadData);
+      return;
+    }
+    if (eventName === 'multi_fault_graph_done') {
+      handlers.onStage?.('multi_fault_graph', payloadData);
+      return;
+    }
     if (eventName === 'template_split_started') {
       handlers.onStage?.('template_split', payloadData);
       return;

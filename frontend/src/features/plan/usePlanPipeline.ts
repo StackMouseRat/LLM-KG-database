@@ -118,6 +118,22 @@ export function usePlanPipeline(options: UsePlanPipelineOptions = {}) {
                 });
               }
             }
+            if (nextStage === 'multi_fault_graph') {
+              setStage('basic_info');
+              setNodeStageLabel('正在逐故障检索图谱');
+              if (detail?.graphMaterial) {
+                setPipeline((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    basicInfo: {
+                      ...prev.basicInfo,
+                      graphMaterial: String(detail.graphMaterial || prev.basicInfo.graphMaterial || '')
+                    }
+                  };
+                });
+              }
+            }
             if (nextStage === 'template_split') {
               setStage('template_split');
               setNodeStageLabel('正在切分模板');
