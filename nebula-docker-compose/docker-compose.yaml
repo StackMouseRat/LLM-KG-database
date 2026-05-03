@@ -360,6 +360,8 @@ services:
       PIPELINE_SCRIPT: /app/scripts/run_parallel_generation_pipeline.py
       PIPELINE_RUN_DIR: /app/data/frontend_pipeline_runs
       PIPELINE_DEFAULT_OUTPUT_DIR: /app/data/frontend_pipeline_runs
+      PIPELINE_GENERATION_CACHE_DIR: /app/data/frontend_generation_cache
+      GENERATION_CACHE_DIR: /app/data/frontend_generation_cache
       PIPELINE_BASE_URL: "${PIPELINE_BASE_URL:-http://host.docker.internal:3000/api/v1/chat/completions}"
       PIPELINE_BASIC_KEY_FILE: /run/fastgpt_keys/basic_info_api_key
       PIPELINE_SPLITTER_KEY_FILE: /run/fastgpt_keys/template_publish_test_api_key
@@ -374,6 +376,7 @@ services:
       - ../docs/project_changes/frontend_pipeline_runs:/app/data/frontend_pipeline_runs
       - ../docs/project_changes/frontend_experiment_runs:/app/data/frontend_experiment_runs
       - ../docs/project_changes/frontend_experiment_page_cache:/app/data/frontend_experiment_page_cache
+      - ../docs/project_changes/frontend_generation_cache:/app/data/frontend_generation_cache
       - ${FASTGPT_KEYS_DIR:-/home/ubuntu/.fastgpt_keys}:/run/fastgpt_keys:ro
     ports:
       - "8788:8788"

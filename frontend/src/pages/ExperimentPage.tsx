@@ -51,6 +51,8 @@ const DISAMBIGUATION_QUESTION_SUITE_ID = 'disambiguation_device_subject_v1';
 const GRAPH_TEMPLATE_QUESTION_SUITE_ID = 'graph_template_constraint_v1';
 const MULTI_FAULT_QUESTION_SUITE_ID = 'multi_fault_chain_v1';
 
+const BOUNDARY_EVALUATION_CONSISTENCY_RULE = '额外一致性约束：分项标题中的分数必须与分项原因一致；若原因写明“判定方向错误”“本项不得分”“边界控制失败”“未执行正确判定”等否定结论，该分项分数必须给低分或0分，不得写满分。总分必须等于各分项分数之和，不得用实验组设定意图替代正确边界行为评分。';
+
 const node = (
   plugin: string,
   input: string,
@@ -239,7 +241,7 @@ const experimentPlans: ExperimentPlan[] = [
       },
     ],
     questionSuiteId: MULTI_FAULT_QUESTION_SUITE_ID,
-    inputs: ['某110kV断路器保护发令后拒分，机构箱无动作声，储能电机反复启动且控制回路接地告警，请生成完整预案。', '某电缆中间接头局放升高后温度快速上升，护层接地电流异常并出现焦糊味，请生成应急方案。', '某主变轻瓦斯动作后油位下降，油色谱异常且冷却器不能自动投入，请生成处置方案。'],
+    inputs: ['某110kV断路器保护发令后拒分，机构箱无动作声，储能电机反复启动且控制回路接地告警，请生成完整预案。', '某电缆中间接头局放升高后温度快速上升，护层接地电流异常并出现焦糊味，请生成应急方案。', '某主变发生变压器瓦斯保护动作异常故障后，现场进一步发现变压器绕组短路与断线故障和变压器铁心多点接地故障，请生成处置方案。'],
     expectedInput: '同一设备中出现多个故障点、多个异常或先后诱发关系的问题。',
     expectedOutput: ['输出应识别同一设备内多个故障。', '输出应区分主故障、伴随故障和受影响功能。', '实验组用于观察同设备次生故障遗漏和逐故障素材缺失。'],
     metrics: ['故障拆解率', '主次识别正确率', '逐故障图谱覆盖率', '融合处置完整度']
@@ -394,6 +396,9 @@ async function streamExperimentRun(
     stage: ExperimentControlStage;
     runCount: number;
     concurrency: number;
+    generationCacheEnabled: boolean;
+    generationCacheMode: ExperimentControlState['generationCacheMode'];
+    rerunRound?: number;
     questions: string[];
     questionItems: ExperimentQuestionItem[];
     runId?: string;
@@ -495,7 +500,7 @@ export function ExperimentPage() {
       .then((snapshot) => {
         if (cancelled || !snapshot || typeof snapshot !== 'object') return;
         const pageSnapshot = snapshot as ExperimentPageSnapshot;
-        setCardViewMap(pageSnapshot.cardViewMap || {});
+        setCardViewMap({});
         setControlStateMap(sanitizeControlStateMap(pageSnapshot.controlStateMap || {}));
         setOutputStateMap(pageSnapshot.outputStateMap || {});
         setEvaluationStateMap(sanitizeEvaluationStateMap(pageSnapshot.evaluationStateMap || {}));
@@ -517,7 +522,7 @@ export function ExperimentPage() {
     if (snapshotSaveTimerRef.current) window.clearTimeout(snapshotSaveTimerRef.current);
     snapshotSaveTimerRef.current = window.setTimeout(() => {
       const snapshot = buildExperimentPageSnapshot({
-        cardViewMap,
+        cardViewMap: {},
         controlStateMap,
         outputStateMap,
         evaluationStateMap,
@@ -579,7 +584,10 @@ export function ExperimentPage() {
   };
 
   const getPlanEvaluationPrompt = (plan: ExperimentPlan) => {
-    if (plan.questionSuiteId) return questionSuiteMap[plan.id]?.evaluationPrompt || '';
+    if (plan.questionSuiteId) {
+      const prompt = questionSuiteMap[plan.id]?.evaluationPrompt || '';
+      return plan.id === 'boundary' && prompt ? `${prompt}\n${BOUNDARY_EVALUATION_CONSISTENCY_RULE}` : prompt;
+    }
     return evaluationPrompt;
   };
 
@@ -625,7 +633,7 @@ export function ExperimentPage() {
     }));
   };
 
-  const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency'>>) => {
+  const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode'>>) => {
     const groupCount = experimentPlans.find((plan) => plan.id === planId)?.processGroups.length || 1;
     setControlStateMap((prev) => ({
       ...prev,
@@ -640,7 +648,9 @@ export function ExperimentPage() {
           ...next,
           runCount: Math.max(next.runCount, 1),
           concurrency: Math.min(Math.max(next.concurrency, 1), maxConcurrency),
-          evaluationConcurrency: Math.min(Math.max(next.evaluationConcurrency, 1), getMaxEvaluationConcurrency())
+          evaluationConcurrency: Math.min(Math.max(next.evaluationConcurrency, 1), getMaxEvaluationConcurrency()),
+          generationCacheEnabled: next.generationCacheEnabled !== false,
+          generationCacheMode: next.generationCacheMode || 'readwrite'
         };
       })()
     }));
@@ -660,7 +670,7 @@ export function ExperimentPage() {
     }));
   };
 
-  const runEvaluationStage = async (plan: ExperimentPlan) => {
+  const runEvaluationStage = async (plan: ExperimentPlan, options: { round?: number; force?: boolean } = {}) => {
     const planId = plan.id;
     const selectedRunId = selectedRunIdMap[planId];
     const failEvaluation = (message: string) => {
@@ -711,7 +721,7 @@ export function ExperimentPage() {
         round: Number(round),
         group,
         output: groupMap[group.id]
-      })).filter((item): item is ExperimentEvaluationTask => Boolean(item.round && item.output?.outputText))
+      })).filter((item): item is ExperimentEvaluationTask => Boolean(item.round && item.output?.outputText && (!options.round || item.round === options.round)))
     );
 
     if (!tasks.length) {
@@ -727,8 +737,10 @@ export function ExperimentPage() {
 
     const existingEvaluation = evaluationStateMap[planId] || defaultEvaluationState;
     const existingScores = existingEvaluation.scores || {};
-    let savedBalanceSnapshots = [...(existingEvaluation.balanceSnapshots || [])];
-    const remainingTasks = tasks.filter((task) => existingScores[String(task.round)]?.[task.group.id]?.status !== 'done');
+    let savedBalanceSnapshots = options.round
+      ? [...(existingEvaluation.balanceSnapshots || []).filter((item) => !(item?.stage === 'evaluation' && Number(item.round) === options.round))]
+      : [...(existingEvaluation.balanceSnapshots || [])];
+    const remainingTasks = tasks.filter((task) => options.force || existingScores[String(task.round)]?.[task.group.id]?.status !== 'done');
     const initialProgress = tasks.length ? Math.round(((tasks.length - remainingTasks.length) / tasks.length) * 100) : 0;
 
     setControlStateMap((prev) => ({
@@ -1028,7 +1040,7 @@ export function ExperimentPage() {
     }
   };
 
-  const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage, options: { runId?: string } = {}) => {
+  const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage, options: { runId?: string; rerunRound?: number } = {}) => {
     const planId = plan.id;
     if (stage === 'evaluation') {
       await runEvaluationStage(plan);
@@ -1053,6 +1065,9 @@ export function ExperimentPage() {
     if (stage === 'generation' && !options.runId) {
       setOutputStateMap((prev) => ({ ...prev, [planId]: defaultOutputState }));
     }
+    if (stage === 'generation' && options.rerunRound) {
+      updateOutputState(planId, (current) => ({ ...current, activeRound: options.rerunRound }));
+    }
 
     try {
       await streamExperimentRun(
@@ -1061,6 +1076,9 @@ export function ExperimentPage() {
           stage,
           runCount: currentControl.runCount,
           concurrency: effectiveConcurrency,
+          generationCacheEnabled: currentControl.generationCacheEnabled !== false,
+          generationCacheMode: currentControl.generationCacheEnabled === false ? 'off' : currentControl.generationCacheMode || 'readwrite',
+          rerunRound: options.rerunRound,
           questions: getPlanInputs(plan),
           questionItems: getPlanQuestionItems(plan),
           runId: options.runId
@@ -1211,7 +1229,9 @@ export function ExperimentPage() {
                       questionItem: questionItem || existing?.questionItem,
                       outputText: String(data.outputText || ''),
                       streamingText: existing?.streamingText || '',
-                      status: data?.status === 'terminated' ? 'terminated' : 'done'
+                      status: data?.status === 'terminated' ? 'terminated' : 'done',
+                      cacheStats: data?.cacheStats && typeof data.cacheStats === 'object' ? data.cacheStats : existing?.cacheStats,
+                      chapterCache: Array.isArray(data?.chapterCache) ? data.chapterCache : existing?.chapterCache
                     }
                   }
                 },
@@ -1400,9 +1420,11 @@ export function ExperimentPage() {
                     outputState={outputStateMap[plan.id] || defaultOutputState}
                     runs={runRecordMap[plan.id] || []}
                     selectedRunId={selectedRunIdMap[plan.id]}
+                    generationRunning={getControlState(plan.id).generation.status === 'running'}
                     onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
                     onLoadRun={() => void loadExperimentRun(plan)}
                     onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
+                    onRerunRound={(round) => void runControlStage(plan, 'generation', { runId: selectedRunIdMap[plan.id], rerunRound: round })}
                   />
                 ) : (
                   <ExperimentEvaluationPanel
@@ -1421,6 +1443,7 @@ export function ExperimentPage() {
                     onLoadRun={() => void loadExperimentRun(plan)}
                     onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
                     onRunEvaluation={() => void runControlStage(plan, 'evaluation')}
+                    onRerunRound={(round) => void runEvaluationStage(plan, { round, force: true })}
                     onToggleCompactMode={(value) => setEvaluationCompactModeMap((prev) => ({ ...prev, [plan.id]: value }))}
                   />
                 )

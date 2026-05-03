@@ -8,6 +8,87 @@
 - 重点不是单一 Web 应用，而是“数据资产 + 图谱资产 + 查询链路 + 工作流配置”的一体化工程。
 - 当前主要依赖 `NebulaGraph + HTTP 网关 + FastGPT` 完成图查询和回答生成。
 
+## 后续 Session 快速上下文
+
+本节用于给新的开发/论文整理 session 快速接手当前仓库状态，避免重新从零梳理。
+
+### 当前项目一句话状态
+
+项目已经形成“电气设备故障知识图谱 + 大模型信息抽取 + 图谱/模板约束预案生成 + 前端原型 + 对比实验 + LLM-as-Judge 评估 + 传统指标 baseline”的完整论文实验链路。当前重点不是重新搭建主流程，而是继续整理实验结果、增强评估说服力、修正论文表述和固化可复现实验材料。
+
+### 当前最重要的代码入口
+
+- 主生成流水线：`scripts/run_parallel_generation_pipeline.py`
+- Nebula HTTP 网关：`scripts/nebula_http_gateway.py`
+- 部署侧前端代理：`docker/frontend-proxy/server.py`
+- 实验运行服务：`docker/frontend-proxy/services/experiment_service.py`
+- 质量评估服务：`docker/frontend-proxy/services/quality_service.py`
+- 评估题库服务：`docker/frontend-proxy/services/evaluation_question_service.py`
+- 前端入口：`frontend/src/App.tsx`
+- 预案生成页面：`frontend/src/pages/PlanPage.tsx`
+- 对比实验页面：`frontend/src/pages/ExperimentPage.tsx`
+- 实验组件与工具：`frontend/src/features/experiment/`
+
+### 当前论文与实验相关重点文件
+
+- 论文草稿已处理文件：`docs/designs/论文草稿0502可修改_2009.docx`
+- 论文草稿修改前备份：`docs/designs/论文草稿0502可修改_2009.before_5_2_3_replace.bak.docx`
+- BLEU/ROUGE 轻量 baseline 说明：`docs/experiments/bleu_rouge_lite_vs_llm_judge.md`
+- 传统指标与 LLM-as-Judge 对比审计说明：`docs/experiments/metric_vs_llm_judge_audit.md`
+- 首批指标结果：`tmp/metrics/first_batch_metrics_rouge_chrf_bertscore.json`
+- 传统指标失效审计结果：`tmp/metrics/metric_vs_llm_judge_audit.json`
+
+### 当前已有 baseline 与评估结论
+
+仓库当前已有传统自动指标 baseline 与 LLM-as-Judge 对照结果：
+
+- `scripts/metrics_lite_compare.py`：轻量 BLEU-1/2/3/4、ROUGE-L 与 LLM-as-Judge 相关性对比。
+- `scripts/metrics_first_batch_compare.py`：首批 ROUGE-L、chrF++、可选 BERTScore 批量对比。
+- `scripts/audit_metric_vs_llm_judge.py`：审计传统指标与 LLM-as-Judge 的相关性、排序反转和高指标低评分案例。
+
+当前 180 组样本的核心结果：
+
+| 指标 | Pearson | Spearman |
+| --- | ---: | ---: |
+| ROUGE-L vs LLM-as-Judge | 0.4923 | 0.4179 |
+| chrF++ vs LLM-as-Judge | 0.5044 | 0.3472 |
+| BERTScore F1 vs LLM-as-Judge | 0.5695 | 0.4214 |
+
+结论：传统指标只能作为辅助 baseline。它们能衡量文本重叠或语义相似，但难以充分判断故障主体、处置链完整性、图谱覆盖、模板约束、恢复验证和安全风险等专业质量维度。多故障实验中，BERTScore F1 与 LLM-as-Judge 在两个运行上出现负相关，说明 LLM-as-Judge 更适合作为本文主评价方法。
+
+### 当前四类对比实验
+
+- 输入边界实验：`control`、`exp-no-boundary`、`exp-keyword-boundary`
+- 设备主体识别与消歧实验：`control`、`exp-drop-subject-judgement`、`exp-keyword-subject-judgement`
+- 图谱与模板约束实验：`control`、`exp-no-graph`、`exp-no-template`
+- 单设备多故障链式实验：`control`、`exp-single-fault`、`exp-detect-no-per-fault-graph`
+
+当前多故障题集限定为同一设备内多故障/多异常，不是跨设备协同处置。
+
+### 当前运行记录位置
+
+实验服务默认把运行记录写到容器路径：
+
+- `/app/data/frontend_experiment_runs/{planId}/{runId}/experiment_run.json`
+- `/app/data/frontend_experiment_runs/{planId}/{runId}/experiment_evaluation.json`
+
+本地仓库当前没有可直接用 `metrics_lite_compare.py` 单轮复跑的 `experiment_run.json` / `experiment_evaluation.json` 目录；已有指标分析主要基于 `tmp/metrics/first_batch_metrics_rouge_chrf_bertscore.json`。
+
+### Office 文档处理注意事项
+
+- 可用工具为小写命令：`/home/ubuntu/.local/bin/officecli`
+- Linux 命令大小写敏感，不要写成 `officeCLI` 或 `office-cli`。
+- 读取 `.docx` 不能用普通文本读取工具直接读二进制。
+- 修改论文 docx 前应先备份，避免破坏公式、图片、标题层级和第 6 章边界。
+- `docs/designs/论文草稿0502可修改_2009.docx` 中第 5.2.3 到 5.2.4 已经替换过实验验证内容，图号从 `图 5-6` 到 `图 5-11`，表号从 `表 5-3` 到 `表 5-6`。
+
+### 新 Session 协作建议
+
+- 如果目标是论文写作，优先读取本 README、`docs/experiments/metric_vs_llm_judge_audit.md` 和相关 docx 定位结果，不要重新全量读取大型 docx JSON。
+- 如果目标是 baseline 评估，优先使用 `tmp/metrics/first_batch_metrics_rouge_chrf_bertscore.json` 和 `scripts/audit_metric_vs_llm_judge.py`。
+- 如果目标是前端/实验功能修复，优先查看 `frontend/src/pages/ExperimentPage.tsx`、`frontend/src/features/experiment/` 和 `docker/frontend-proxy/services/experiment_service.py`。
+- 如果一个 session 已经读取了大 JSON、大 docx 结构或大量工具输出，建议生成 handoff 摘要后开启新 session，避免上下文过长导致响应变慢。
+
 ## 当前进度
 
 ### 已完成

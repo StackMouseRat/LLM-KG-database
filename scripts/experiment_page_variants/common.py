@@ -58,8 +58,13 @@ def parse_args(variant_id: str) -> argparse.Namespace:
     parser.add_argument("--timeout", type=int, default=pipeline.DEFAULT_TIMEOUT)
     parser.add_argument("--max-workers", type=int, default=6)
     parser.add_argument("--output-dir", type=Path, default=pipeline.DEFAULT_OUTPUT_DIR / "experiment_page_variants" / variant_id)
+    parser.add_argument("--generation-cache-dir", type=Path, default=pipeline.DEFAULT_GENERATION_CACHE_DIR)
+    parser.add_argument("--generation-cache-mode", choices=["off", "read", "readwrite", "refresh"], default=pipeline.DEFAULT_GENERATION_CACHE_MODE)
+    parser.add_argument("--disable-generation-cache", action="store_true")
     parser.add_argument("--stream-events", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.generation_cache_mode = "off" if args.disable_generation_cache else pipeline.normalize_cache_mode(args.generation_cache_mode)
+    return args
 
 
 def keyword_boundary(question: str) -> dict[str, str] | None:
@@ -305,6 +310,8 @@ def generate_chapters(args: argparse.Namespace, basic_fields: dict[str, str], ch
                 basic_fields,
                 chapter,
                 args.stream_events,
+                args.generation_cache_dir,
+                args.generation_cache_mode,
             ): chapter
             for chapter in chapters
         }
@@ -416,8 +423,9 @@ def main(variant_id: str) -> None:
 
         generations = generate_chapters(args, basic_fields, chapters)
         out_dir = args.output_dir / datetime.now().strftime("%Y%m%d_%H%M%S")
-        pipeline.write_outputs(out_dir, question, basic_response, basic_elapsed, basic_fields, splitter_response, splitter_elapsed, split_result, generations)
-        result = {"variant": variant_id, "elapsed_sec": round(time.time() - started, 3), "output_dir": str(out_dir)}
+        cache_stats = pipeline.build_cache_stats(generations)
+        pipeline.write_outputs(out_dir, question, basic_response, basic_elapsed, basic_fields, splitter_response, splitter_elapsed, split_result, generations, cache_stats=cache_stats)
+        result = {"variant": variant_id, "elapsed_sec": round(time.time() - started, 3), "output_dir": str(out_dir), "cacheStats": cache_stats}
         pipeline.emit_event(args.stream_events, "variant_done", result)
         if not args.stream_events:
             print(json.dumps(result, ensure_ascii=False))

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -66,6 +67,13 @@ DEFAULT_OUTPUT_DIR = Path(
     )
 )
 DEFAULT_TIMEOUT = int(os.getenv("PIPELINE_TIMEOUT", "480"))
+DEFAULT_GENERATION_CACHE_DIR = Path(
+    os.getenv(
+        "PIPELINE_GENERATION_CACHE_DIR",
+        str(REPO_ROOT / "docs" / "project_changes" / "frontend_generation_cache"),
+    )
+)
+DEFAULT_GENERATION_CACHE_MODE = os.getenv("PIPELINE_GENERATION_CACHE_MODE", "readwrite")
 EVENT_LOCK = threading.Lock()
 DEFAULT_CHAPTER_HEADING_MAX_ATTEMPTS = 3
 
@@ -522,6 +530,71 @@ def build_generation_graph_material(graph_material_text: str) -> str:
     return "\n".join(lines).strip()
 
 
+def stable_json_hash(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def normalize_cache_mode(mode: str) -> str:
+    value = str(mode or DEFAULT_GENERATION_CACHE_MODE or "readwrite").strip().lower()
+    return value if value in {"off", "read", "readwrite", "refresh"} else "readwrite"
+
+
+def build_generation_cache_key(variables: dict[str, str], chapter: dict[str, Any]) -> str:
+    return stable_json_hash({
+        "cacheSchema": "parallel-generation-chapter-v1",
+        "generator": "parallel_generation_plugin",
+        "question": variables.get("用户问题", ""),
+        "faultScene": variables.get("故障与场景提取结果", ""),
+        "graphMaterial": variables.get("图谱检索方案素材", ""),
+        "chapterNo": chapter.get("chapter_no", ""),
+        "title": chapter.get("title", ""),
+        "sectionCount": chapter.get("section_count", ""),
+        "template": variables.get("模板", ""),
+    })
+
+
+def generation_cache_path(cache_dir: Path, cache_key: str) -> Path:
+    safe_key = "".join(ch for ch in cache_key if ch.isalnum())
+    return cache_dir / safe_key[:2] / f"{safe_key}.json"
+
+
+def load_generation_cache(cache_dir: Path, cache_key: str) -> dict[str, Any] | None:
+    path = generation_cache_path(cache_dir, cache_key)
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if data.get("cacheKey") != cache_key or not str(data.get("outputText") or "").strip():
+        return None
+    return data
+
+
+def save_generation_cache(cache_dir: Path, cache_key: str, payload: dict[str, Any]) -> None:
+    path = generation_cache_path(cache_dir, cache_key)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps({"cacheKey": cache_key, **payload}, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path.replace(path)
+
+
+def build_cache_stats(generations: list[dict[str, Any]]) -> dict[str, Any]:
+    hits = sum(1 for item in generations if item.get("cache_hit"))
+    misses = sum(1 for item in generations if item.get("cache_hit") is False)
+    total = hits + misses
+    return {
+        "parallelGeneration": {
+            "hits": hits,
+            "misses": misses,
+            "total": total,
+            "hitRate": round(hits / total, 4) if total else 0,
+            "savedCalls": hits,
+        }
+    }
+
+
 def generate_one_chapter(
     endpoint: str,
     api_key: str,
@@ -529,6 +602,8 @@ def generate_one_chapter(
     shared_fields: dict[str, str],
     chapter: dict[str, Any],
     stream_events: bool,
+    cache_dir: Path = DEFAULT_GENERATION_CACHE_DIR,
+    cache_mode: str = DEFAULT_GENERATION_CACHE_MODE,
 ) -> dict[str, Any]:
     variables = {
         "用户问题": shared_fields["用户问题"],
@@ -536,6 +611,36 @@ def generate_one_chapter(
         "图谱检索方案素材": build_generation_graph_material(shared_fields["图谱检索方案素材"]),
         "模板": chapter["template_text"],
     }
+    normalized_cache_mode = normalize_cache_mode(cache_mode)
+    cache_key = build_generation_cache_key(variables, chapter)
+    if normalized_cache_mode in {"read", "readwrite"}:
+        cached = load_generation_cache(cache_dir, cache_key)
+        if cached is not None:
+            output_text = str(cached.get("outputText") or "")
+            emit_event(
+                stream_events,
+                "chapter_cache_hit",
+                {"chapterNo": chapter["chapter_no"], "title": chapter["title"], "cacheKey": cache_key},
+            )
+            return {
+                "chapter_no": chapter["chapter_no"],
+                "title": chapter["title"],
+                "section_count": chapter["section_count"],
+                "template_text": chapter["template_text"],
+                "elapsed_sec": 0,
+                "response": cached.get("response") or {},
+                "output_text": output_text,
+                "attempt_count": int(cached.get("attemptCount") or 1),
+                "cache_hit": True,
+                "cache_key": cache_key,
+                "cache_mode": normalized_cache_mode,
+            }
+
+    emit_event(
+        stream_events,
+        "chapter_cache_miss",
+        {"chapterNo": chapter["chapter_no"], "title": chapter["title"], "cacheKey": cache_key, "cacheMode": normalized_cache_mode},
+    )
 
     attempts: list[dict[str, Any]] = []
     try:
@@ -574,7 +679,7 @@ def generate_one_chapter(
             "output_text": output_text,
         })
         if not heading_error:
-            return {
+            result = {
                 "chapter_no": chapter["chapter_no"],
                 "title": chapter["title"],
                 "section_count": chapter["section_count"],
@@ -583,7 +688,22 @@ def generate_one_chapter(
                 "response": response,
                 "output_text": output_text,
                 "attempt_count": attempt,
+                "cache_hit": False,
+                "cache_key": cache_key,
+                "cache_mode": normalized_cache_mode,
             }
+            if normalized_cache_mode in {"readwrite", "refresh"} and output_text:
+                save_generation_cache(cache_dir, cache_key, {
+                    "createdAt": datetime.now().isoformat(timespec="seconds"),
+                    "chapterNo": chapter["chapter_no"],
+                    "title": chapter["title"],
+                    "sectionCount": chapter["section_count"],
+                    "templateText": chapter["template_text"],
+                    "outputText": output_text,
+                    "attemptCount": attempt,
+                    "response": response,
+                })
+            return result
 
         emit_event(
             stream_events,
@@ -611,6 +731,9 @@ def generate_one_chapter(
         "error": last_attempt["heading_error"],
         "attempt_count": len(attempts),
         "attempts": attempts,
+        "cache_hit": False,
+        "cache_key": cache_key,
+        "cache_mode": normalized_cache_mode,
     }
 
 
@@ -624,6 +747,7 @@ def write_outputs(
     splitter_elapsed: float,
     split_result: dict[str, Any],
     generations: list[dict[str, Any]],
+    cache_stats: dict[str, Any] | None = None,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -640,6 +764,7 @@ def write_outputs(
             "response": splitter_response,
         },
         "parallel_generations": generations,
+        "cacheStats": cache_stats or build_cache_stats(generations),
     }
     (out_dir / "pipeline_result.json").write_text(
         json.dumps(result_json, ensure_ascii=False, indent=2),
@@ -678,6 +803,10 @@ def write_outputs(
         ])
         if item.get("attempt_count"):
             lines.append(f"- attempt_count: {item['attempt_count']}")
+        if "cache_hit" in item:
+            lines.append(f"- cache_hit: {str(bool(item.get('cache_hit'))).lower()}")
+        if item.get("cache_key"):
+            lines.append(f"- cache_key: {item['cache_key']}")
         if item.get("error"):
             lines.append(f"- error: {item['error']}")
         lines.extend([
@@ -707,9 +836,13 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT)
     parser.add_argument("--max-workers", type=int, default=6)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--generation-cache-dir", type=Path, default=DEFAULT_GENERATION_CACHE_DIR)
+    parser.add_argument("--generation-cache-mode", choices=["off", "read", "readwrite", "refresh"], default=DEFAULT_GENERATION_CACHE_MODE)
+    parser.add_argument("--disable-generation-cache", action="store_true")
     parser.add_argument("--stream-events", action="store_true")
     parser.add_argument("--multi-fault", action="store_true")
     args = parser.parse_args()
+    generation_cache_mode = "off" if args.disable_generation_cache else normalize_cache_mode(args.generation_cache_mode)
 
     basic_key = read_key(args.basic_key_file)
     multi_fault_basic_key = read_key(args.multi_fault_basic_key_file) if args.multi_fault else ""
@@ -876,6 +1009,8 @@ def main() -> None:
                     basic_fields,
                     chapter,
                     args.stream_events,
+                    args.generation_cache_dir,
+                    generation_cache_mode,
                 )
                 future_map[future] = chapter
 
@@ -907,6 +1042,9 @@ def main() -> None:
                         "outputText": result["output_text"],
                         "status": "done" if result["output_text"] else "error",
                         "error": result.get("error", ""),
+                        "cacheHit": bool(result.get("cache_hit")),
+                        "cacheKey": result.get("cache_key", ""),
+                        "cacheMode": result.get("cache_mode", generation_cache_mode),
                     },
                 )
                 log_progress(
@@ -915,6 +1053,7 @@ def main() -> None:
                 )
 
         generations.sort(key=lambda x: chapter_sort_key(x["chapter_no"]))
+        cache_stats = build_cache_stats(generations)
 
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         out_dir = args.output_dir / ts
@@ -928,6 +1067,7 @@ def main() -> None:
             splitter_elapsed=splitter_elapsed,
             split_result=split_result,
             generations=generations,
+            cache_stats=cache_stats,
         )
 
         final_result = {
@@ -955,9 +1095,13 @@ def main() -> None:
                     "elapsedSec": result["elapsed_sec"],
                     "status": "done" if result["output_text"] else "error",
                     "error": result.get("error", ""),
+                    "cacheHit": bool(result.get("cache_hit")),
+                    "cacheKey": result.get("cache_key", ""),
+                    "cacheMode": result.get("cache_mode", generation_cache_mode),
                 }
                 for result in generations
             ],
+            "cacheStats": cache_stats,
         }
         emit_event(args.stream_events, "pipeline_done", final_result)
         log_progress(args.stream_events, f"Saved results to: {out_dir}")

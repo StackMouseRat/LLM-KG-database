@@ -1,5 +1,6 @@
 import type { ExperimentQuestionItem, ExperimentQuestionSuite, ExperimentRunSummary } from './experimentApi';
 import {
+  defaultControlState,
   defaultStageState,
   type ExperimentActiveGroup,
   type ExperimentControlState,
@@ -116,7 +117,10 @@ export function sanitizeControlStateMap(map: Record<string, ExperimentControlSta
   return Object.fromEntries(Object.entries(map).map(([planId, state]) => [
     planId,
     {
+      ...defaultControlState,
       ...state,
+      generationCacheEnabled: state.generationCacheEnabled !== false,
+      generationCacheMode: state.generationCacheMode || 'readwrite',
       generation: sanitizeStageState(state.generation),
       evaluation: sanitizeStageState(state.evaluation)
     }
@@ -199,12 +203,10 @@ export function getScoreTagColor(score?: number) {
 }
 
 export function getEvaluationDisplayScore(score?: ExperimentEvaluationScore) {
-  const structuredScoreText = parseEvaluationScore(String(score?.structuredEvaluation?.score_text || ''));
-  if (typeof structuredScoreText === 'number' && Number.isFinite(structuredScoreText)) return structuredScoreText;
-  const structuredSummaryScore = parseEvaluationScore(`${score?.structuredEvaluation?.summary || ''}\n${score?.structuredEvaluation?.evidence || ''}`);
-  if (typeof structuredSummaryScore === 'number' && Number.isFinite(structuredSummaryScore)) return structuredSummaryScore;
   const structuredScore = Number(score?.structuredEvaluation?.score);
   if (Number.isFinite(structuredScore)) return Math.max(0, Math.min(10, structuredScore));
+  const structuredScoreText = parseEvaluationScore(String(score?.structuredEvaluation?.score_text || ''));
+  if (typeof structuredScoreText === 'number' && Number.isFinite(structuredScoreText)) return structuredScoreText;
   return typeof score?.score === 'number' && Number.isFinite(score.score) ? score.score : undefined;
 }
 
@@ -232,7 +234,21 @@ export function isValidStructuredEvaluation(value?: Record<string, any>, sourceT
   const score = Number(value.score);
   if (!Number.isFinite(score) && !value.score_text) return false;
   if (hasInlineSubscores(sourceText) && !getStructuredSubscores(value).length) return false;
+  if (hasContradictoryStructuredSubscore(value)) return false;
   return true;
+}
+
+function hasContradictoryStructuredSubscore(value: Record<string, any>) {
+  return getStructuredSubscores(value).some((item) => {
+    const score = Number(item.score);
+    const maxScore = Number(item.max_score ?? item.maxScore ?? 10);
+    if (!Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) return false;
+    const name = String(item.name || item.label || '');
+    if (!/(?:边界判定|链路阻断|边界提示|抗误判)/.test(name)) return false;
+    const reason = String(item.reason || item.summary || '');
+    const hasFailReason = /(?:不得分|判定方向错误|边界控制失败|未执行正确判定|未正确识别边界)/.test(reason);
+    return hasFailReason && score / maxScore >= 0.8;
+  });
 }
 
 const beijingTimeFormatter = new Intl.DateTimeFormat('zh-CN', {

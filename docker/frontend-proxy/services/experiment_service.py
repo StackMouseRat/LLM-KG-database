@@ -22,6 +22,7 @@ if not REPO_ROOT.exists():
     REPO_ROOT = Path("/home/ubuntu/LLM-KG-database")
 EXPERIMENT_SCRIPT_DIR = Path(os.getenv("EXPERIMENT_SCRIPT_DIR", str(REPO_ROOT / "scripts" / "experiment_page_variants")))
 EXPERIMENT_RUN_DIR = Path(os.getenv("EXPERIMENT_RUN_DIR", "/app/data/frontend_experiment_runs"))
+GENERATION_CACHE_DIR = Path(os.getenv("GENERATION_CACHE_DIR", "/app/data/frontend_generation_cache"))
 EXPERIMENT_PIPELINE_TIMEOUT = int(os.getenv("EXPERIMENT_PIPELINE_TIMEOUT", os.getenv("PIPELINE_TIMEOUT", "480")))
 MAX_EXPERIMENT_CONCURRENCY = 15
 RUN_CONTROLS: dict[str, dict[str, Any]] = {}
@@ -349,6 +350,8 @@ def output_state_from_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
                 "outputText": str(group_output.get("outputText") or group_output.get("message") or ""),
                 "streamingText": "",
                 "status": str(group_output.get("status") or "error"),
+                "cacheStats": group_output.get("cacheStats") if isinstance(group_output.get("cacheStats"), dict) else {},
+                "chapterCache": group_output.get("chapterCache") if isinstance(group_output.get("chapterCache"), list) else [],
             }
     round_question_items = {
         str(round_key): round_data.get("questionItem")
@@ -437,6 +440,7 @@ def run_one_group(
     manifest: dict[str, Any],
     manifest_lock: threading.Lock,
     run_control: dict[str, Any] | None = None,
+    generation_cache_mode: str = "readwrite",
 ) -> dict[str, Any]:
     group_id = str(group["groupId"])
     script = Path(group["script"])
@@ -451,6 +455,10 @@ def run_one_group(
         str(group_output_dir),
         "--timeout",
         str(EXPERIMENT_PIPELINE_TIMEOUT),
+        "--generation-cache-dir",
+        str(GENERATION_CACHE_DIR),
+        "--generation-cache-mode",
+        generation_cache_mode,
         "--stream-events",
         *list(group.get("extraArgs") or []),
     ]
@@ -522,6 +530,19 @@ def run_one_group(
     result_file = find_result_file(group_output_dir)
     result = json.loads(result_file.read_text(encoding="utf-8")) if result_file else {}
     output_text = combine_output_text(result)
+    cache_stats = result.get("cacheStats") if isinstance(result.get("cacheStats"), dict) else {}
+    parallel_generations = result.get("parallel_generations") if isinstance(result.get("parallel_generations"), list) else []
+    chapter_cache_items = [
+        {
+            "chapterNo": str(item.get("chapter_no") or ""),
+            "title": str(item.get("title") or ""),
+            "cacheHit": bool(item.get("cache_hit")),
+            "cacheKey": str(item.get("cache_key") or ""),
+            "cacheMode": str(item.get("cache_mode") or generation_cache_mode),
+        }
+        for item in parallel_generations
+        if isinstance(item, dict) and "cache_hit" in item
+    ]
     status = "done"
     if not output_text and terminal_message:
         output_text = f"【流程终止】{terminal_message}"
@@ -529,8 +550,8 @@ def run_one_group(
     elif not output_text and not result_file:
         output_text = "【无生成结果】脚本未产出 pipeline_result.json。"
         status = "terminated"
-    payload = {"planId": plan_id, "round": round_index, "runCount": run_count, "groupId": group_id, "groupLabel": group.get("label"), "question": question, "questionItem": question_item, "outputText": output_text, "resultFile": str(result_file) if result_file else "", "status": status}
-    update_manifest_group({"status": status, "questionItem": question_item, "outputText": output_text, "resultFile": str(result_file) if result_file else "", "finishedAt": now_iso()})
+    payload = {"planId": plan_id, "round": round_index, "runCount": run_count, "groupId": group_id, "groupLabel": group.get("label"), "question": question, "questionItem": question_item, "outputText": output_text, "resultFile": str(result_file) if result_file else "", "status": status, "cacheStats": cache_stats, "chapterCache": chapter_cache_items}
+    update_manifest_group({"status": status, "questionItem": question_item, "outputText": output_text, "resultFile": str(result_file) if result_file else "", "cacheStats": cache_stats, "chapterCache": chapter_cache_items, "finishedAt": now_iso()})
     safe_send("experiment_group_done", payload)
     return {"groupId": group_id, "status": "done", **payload}
 
@@ -554,7 +575,13 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         return
 
     requested_run_count = max(1, int(body.get("runCount") or 1))
+    generation_cache_enabled = body.get("generationCacheEnabled") is not False
+    requested_cache_mode = str(body.get("generationCacheMode") or "readwrite").strip().lower()
+    generation_cache_mode = requested_cache_mode if requested_cache_mode in {"off", "read", "readwrite", "refresh"} else "readwrite"
+    if not generation_cache_enabled:
+        generation_cache_mode = "off"
     run_id = str(body.get("runId") or "").strip()
+    rerun_round = int(body.get("rerunRound") or 0)
     if run_id:
         manifest = load_manifest(plan_id, run_id)
         run_count = int(manifest.get("runCount") or requested_run_count)
@@ -571,13 +598,28 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
     manifest["name"] = make_run_name(plan_id, run_count, concurrency)
     manifest["status"] = "running"
     manifest["interruptRequested"] = ""
+    manifest["generationCache"] = {"enabled": generation_cache_mode != "off", "mode": generation_cache_mode}
+    if rerun_round > 0:
+        round_key = str(rerun_round)
+        round_data = manifest.get("rounds", {}).get(round_key) if isinstance(manifest.get("rounds"), dict) else None
+        if not isinstance(round_data, dict):
+            send_sse(handler, "experiment_error", {"message": f"round not found: {rerun_round}"})
+            return
+        groups_map = round_data.get("groups") if isinstance(round_data.get("groups"), dict) else {}
+        for group in groups:
+            group_id = str(group["groupId"])
+            group_data = groups_map.setdefault(group_id, {"groupId": group_id, "groupLabel": group.get("label")})
+            group_data.update({"status": "pending", "outputText": "", "streamingText": "", "resultFile": "", "message": "", "cacheStats": {}, "chapterCache": []})
+        manifest["balanceSnapshots"] = [item for item in manifest.get("balanceSnapshots", []) if not (isinstance(item, dict) and item.get("stage") == "generation" and int(item.get("round") or 0) == rerun_round)]
+        manifest["balanceRoundFinished"] = [item for item in manifest.get("balanceRoundFinished", []) if int(item or 0) != rerun_round]
     save_manifest(manifest)
     run_control = register_run_control(plan_id, run_id)
     output_dir = run_dir(plan_id, run_id)
     output_dir.mkdir(parents=True, exist_ok=True)
     send_lock = threading.Lock()
     manifest_lock = threading.Lock()
-    all_total = run_count * len(groups)
+    active_rounds = [rerun_round] if rerun_round > 0 else list(range(1, run_count + 1))
+    all_total = len(active_rounds) * len(groups)
     completed = 0
 
     def safe_send(event: str, data: object) -> None:
@@ -589,7 +631,7 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
 
     safe_send("experiment_stage_started", {"planId": plan_id, "runId": run_id, "stage": stage, "runCount": run_count, "concurrency": concurrency, "total": all_total, "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
     tasks = []
-    for round_index in range(1, run_count + 1):
+    for round_index in active_rounds:
         round_key = str(round_index)
         fallback_question_item = question_items[(round_index - 1) % len(question_items)]
         round_data = manifest.setdefault("rounds", {}).setdefault(round_key, {"question": fallback_question_item.get("questionText", ""), "questionItem": fallback_question_item, "groups": {}})
@@ -627,7 +669,7 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
                     round_index, question, question_item, group = next(pending_iter)
                 except StopIteration:
                     return False
-                future = executor.submit(run_one_group, handler, send_lock, plan_id=plan_id, group=group, round_index=round_index, run_count=run_count, question=question, question_item=question_item, output_dir=output_dir, manifest=manifest, manifest_lock=manifest_lock, run_control=run_control)
+                future = executor.submit(run_one_group, handler, send_lock, plan_id=plan_id, group=group, round_index=round_index, run_count=run_count, question=question, question_item=question_item, output_dir=output_dir, manifest=manifest, manifest_lock=manifest_lock, run_control=run_control, generation_cache_mode=generation_cache_mode)
                 future_map[future] = (round_index, group)
                 return True
 

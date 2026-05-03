@@ -1,4 +1,4 @@
-import { Button, Collapse, InputNumber, Progress, Select, Space, Tag, Typography } from 'antd';
+import { Button, Collapse, InputNumber, Progress, Select, Space, Switch, Tag, Typography } from 'antd';
 import { useState, type ReactNode } from 'react';
 import type { ExperimentRunSummary } from './experimentApi';
 import {
@@ -217,7 +217,7 @@ export function ExperimentControlPanel({
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
   outputState: ExperimentOutputState;
-  onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency'>>) => void;
+  onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode'>>) => void;
   onRunStage: (stage: ExperimentControlStage, options?: { runId?: string }) => void;
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
@@ -287,6 +287,29 @@ export function ExperimentControlPanel({
             onChange={(value) => onUpdateConfig({ evaluationConcurrency: Math.min(Number(value || 1), getMaxEvaluationConcurrency()) })}
           />
           <Text type="secondary">最多 {getMaxEvaluationConcurrency()} 个评分</Text>
+        </label>
+        <label>
+          <Text type="secondary">生成缓存</Text>
+          <Switch
+            size="small"
+            checked={state.generationCacheEnabled !== false}
+            onChange={(checked) => onUpdateConfig({ generationCacheEnabled: checked, generationCacheMode: checked ? state.generationCacheMode || 'readwrite' : 'off' })}
+          />
+          <Text type="secondary">命中时跳过并行生成调用</Text>
+        </label>
+        <label>
+          <Text type="secondary">缓存模式</Text>
+          <Select
+            size="small"
+            disabled={state.generationCacheEnabled === false}
+            value={state.generationCacheEnabled === false ? 'off' : state.generationCacheMode || 'readwrite'}
+            onChange={(value) => onUpdateConfig({ generationCacheMode: value as ExperimentControlState['generationCacheMode'] })}
+            options={[
+              { value: 'readwrite', label: '读写缓存' },
+              { value: 'read', label: '只读缓存' },
+              { value: 'refresh', label: '刷新缓存' }
+            ]}
+          />
         </label>
         <div className="experiment-control-console__thread-pool-card">
           <div className="experiment-control-console__thread-pool-title">
@@ -399,22 +422,46 @@ export function ExperimentOutputPreview({
   outputState,
   runs,
   selectedRunId,
+  generationRunning,
   onSelectRun,
   onLoadRun,
-  onRefreshRuns
+  onRefreshRuns,
+  onRerunRound
 }: {
   plan: ExperimentPlan;
   outputState: ExperimentOutputState;
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
+  generationRunning: boolean;
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
   onRefreshRuns: () => void;
+  onRerunRound: (round: number) => void;
 }) {
   const rounds = Object.entries(outputState.rounds).sort(([a], [b]) => Number(a) - Number(b));
   const activeGroups = outputState.activeGroups || [];
   const selectedRun = runs.find((run) => run.runId === selectedRunId);
   const generationBalanceCosts = buildGenerationBalanceCosts(selectedRun);
+
+  const renderCacheTags = (groupOutput: any) => {
+    const stats = groupOutput?.cacheStats?.parallelGeneration;
+    const chapterCache = Array.isArray(groupOutput?.chapterCache) ? groupOutput.chapterCache : [];
+    if (!stats && !chapterCache.length) return null;
+    const hits = Number(stats?.hits ?? chapterCache.filter((item: any) => item?.cacheHit).length);
+    const total = Number(stats?.total ?? chapterCache.length);
+    return (
+      <Space size={4} wrap>
+        <Tag color={total > 0 && hits === total ? 'green' : hits > 0 ? 'gold' : 'default'}>
+          缓存 {hits}/{total}
+        </Tag>
+        {chapterCache.map((item: any) => (
+          <Tag color={item?.cacheHit ? 'green' : 'default'} key={`${item?.chapterNo || ''}:${item?.cacheKey || item?.title || ''}`}>
+            第{item?.chapterNo || '?'}章{item?.cacheHit ? '命中' : '未命中'}
+          </Tag>
+        ))}
+      </Space>
+    );
+  };
 
   return (
     <div className="experiment-output-preview">
@@ -467,6 +514,9 @@ export function ExperimentOutputPreview({
             <div className="experiment-output-preview__round-title">
               第 {round} 轮
               {questionItemLabel(questionItem) ? <Tag color="geekblue">{questionItemLabel(questionItem)}</Tag> : null}
+              <Button size="small" disabled={!selectedRunId || generationRunning} loading={generationRunning && (outputState.activeRound === Number(round) || activeGroups.some((item) => item.round === Number(round)))} onClick={() => onRerunRound(Number(round))}>
+                重跑本轮
+              </Button>
             </div>
             <div className="experiment-output-preview__round-info">
               <span>本轮问题：{outputState.roundQuestions[round] || Object.values(groupMap)[0]?.question || '暂无问题。'}</span>
@@ -484,6 +534,7 @@ export function ExperimentOutputPreview({
                       <Tag color={groupOutput?.status === 'done' ? 'green' : groupOutput?.status === 'terminated' ? 'orange' : groupOutput?.status === 'error' ? 'red' : groupOutput?.status === 'running' ? 'blue' : 'default'}>
                         {groupOutput?.status === 'done' ? '已完成' : groupOutput?.status === 'terminated' ? '已终止' : groupOutput?.status === 'error' ? '异常' : groupOutput?.status === 'running' ? '流式生成中' : '待生成'}
                       </Tag>
+                      {renderCacheTags(groupOutput)}
                     </div>
                     <div className="experiment-output-preview__question">{groupOutput?.question || '等待本组开始生成。'}</div>
                     <pre className="experiment-output-preview__text">
@@ -517,6 +568,7 @@ export function ExperimentEvaluationPanel({
   onLoadRun,
   onRefreshRuns,
   onRunEvaluation,
+  onRerunRound,
   onToggleCompactMode
 }: {
   plan: ExperimentPlan;
@@ -534,6 +586,7 @@ export function ExperimentEvaluationPanel({
   onLoadRun: () => void;
   onRefreshRuns: () => void;
   onRunEvaluation: () => void;
+  onRerunRound: (round: number) => void;
   onToggleCompactMode: (value: boolean) => void;
 }) {
   const rounds = Object.entries(evaluationState.scores).sort(([a], [b]) => Number(a) - Number(b));
@@ -541,13 +594,14 @@ export function ExperimentEvaluationPanel({
   const evaluationRuns = runs.filter(hasEvaluationRecord);
   const selectedEvaluationRunId = hasEvaluationRecord(runs.find((run) => run.runId === selectedRunId)) ? selectedRunId : undefined;
   const [expandedRoundMap, setExpandedRoundMap] = useState<Record<string, boolean>>({});
-  const isRoundExpanded = (round: string) => expandedRoundMap[round] ?? true;
+  const [promptExpanded, setPromptExpanded] = useState(false);
+  const isRoundExpanded = (round: string) => expandedRoundMap[round] ?? false;
   const allRoundsExpanded = Boolean(rounds.length) && rounds.every(([round]) => isRoundExpanded(round));
   const setAllRoundsExpanded = (expanded: boolean) => {
-    setExpandedRoundMap(Object.fromEntries(rounds.map(([round]) => [round, expanded])));
+    setExpandedRoundMap(expanded ? Object.fromEntries(rounds.map(([round]) => [round, true])) : {});
   };
   const toggleRoundExpanded = (round: string) => {
-    setExpandedRoundMap((prev) => ({ ...prev, [round]: !(prev[round] ?? true) }));
+    setExpandedRoundMap((prev) => ({ ...prev, [round]: !(prev[round] ?? false) }));
   };
 
   return (
@@ -599,10 +653,15 @@ export function ExperimentEvaluationPanel({
         <div className="experiment-evaluation-panel__header">
           <Text strong>本实验评估提示词</Text>
           <Tag color="cyan">{promptSource}</Tag>
+          <Button size="small" onClick={() => setPromptExpanded((value) => !value)}>
+            {promptExpanded ? '收回提示词' : '查看提示词'}
+          </Button>
         </div>
-        <Paragraph className="experiment-evaluation-panel__prompt-text">
-          {evaluationPrompt || '正在加载本实验评估提示词...'}
-        </Paragraph>
+        {promptExpanded ? (
+          <Paragraph className="experiment-evaluation-panel__prompt-text">
+            {evaluationPrompt || '正在加载本实验评估提示词...'}
+          </Paragraph>
+        ) : null}
       </div>
 
       <div className="experiment-evaluation-panel__progress">
@@ -647,6 +706,9 @@ export function ExperimentEvaluationPanel({
                 <div className="experiment-evaluation-panel__compact-title">
                   <strong>第 {round} 轮</strong>
                   {groupLabel ? <Tag color="geekblue">{groupLabel}</Tag> : null}
+                  <Button size="small" disabled={!selectedRunId || evaluationRunning} loading={evaluationRunning && evaluationState.current?.round === Number(round)} onClick={() => onRerunRound(Number(round))}>
+                    重跑本轮
+                  </Button>
                 </div>
                 <div className="experiment-evaluation-panel__compact-groups">
                   {plan.processGroups.map((group) => {
@@ -682,6 +744,9 @@ export function ExperimentEvaluationPanel({
               <Button size="small" onClick={() => toggleRoundExpanded(round)}>
                 {roundExpanded ? '收回本轮' : '展开本轮'}
               </Button>
+              <Button size="small" disabled={!selectedRunId || evaluationRunning} loading={evaluationRunning && evaluationState.current?.round === Number(round)} onClick={() => onRerunRound(Number(round))}>
+                重跑本轮
+              </Button>
             </div>
             <div className="experiment-output-preview__round-info">
               <span>本轮问题：{questionText}</span>
@@ -702,6 +767,11 @@ export function ExperimentEvaluationPanel({
                         {score?.status === 'done' ? `${formatScore(displayScore)}/10` : score?.status === 'error' ? '异常' : score?.status === 'running' ? '评估中' : '待评估'}
                       </Tag>
                     </div>
+                    {!roundExpanded ? (
+                      <div className="experiment-evaluation-panel__score-summary-text">
+                        {score?.structuredEvaluation?.summary ? String(score.structuredEvaluation.summary) : score?.comment ? String(score.comment).slice(0, 120) : '展开本轮查看详细评估。'}
+                      </div>
+                    ) : null}
                     {roundExpanded ? (
                     <>
                     <div className="experiment-evaluation-panel__structured">

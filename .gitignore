@@ -21,3 +21,5 @@ docs/project_changes/frontend_experiment_runs/*
 !docs/project_changes/frontend_experiment_runs/.gitkeep
 docs/project_changes/frontend_experiment_page_cache/*
 !docs/project_changes/frontend_experiment_page_cache/.gitkeep
+docs/project_changes/frontend_generation_cache/*
+!docs/project_changes/frontend_generation_cache/.gitkeep

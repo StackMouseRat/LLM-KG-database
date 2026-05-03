@@ -14,6 +14,8 @@ export type ExperimentControlState = {
   runCount: number;
   concurrency: number;
   evaluationConcurrency: number;
+  generationCacheEnabled: boolean;
+  generationCacheMode: 'readwrite' | 'read' | 'refresh' | 'off';
   generation: ExperimentStageState;
   evaluation: ExperimentStageState;
 };
@@ -26,6 +28,8 @@ export type ExperimentGroupOutput = {
   outputText: string;
   streamingText: string;
   status: 'running' | 'done' | 'terminated' | 'error';
+  cacheStats?: Record<string, any>;
+  chapterCache?: Array<Record<string, any>>;
 };
 
 export type ExperimentActiveGroup = {
@@ -138,6 +142,8 @@ export const defaultControlState: ExperimentControlState = {
   runCount: 4,
   concurrency: 2,
   evaluationConcurrency: 2,
+  generationCacheEnabled: true,
+  generationCacheMode: 'readwrite',
   generation: defaultStageState,
   evaluation: defaultStageState
 };
