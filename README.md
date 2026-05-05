@@ -45,6 +45,7 @@
 - `scripts/metrics_lite_compare.py`：轻量 BLEU-1/2/3/4、ROUGE-L 与 LLM-as-Judge 相关性对比。
 - `scripts/metrics_first_batch_compare.py`：首批 ROUGE-L、chrF++、可选 BERTScore 批量对比。
 - `scripts/audit_metric_vs_llm_judge.py`：审计传统指标与 LLM-as-Judge 的相关性、排序反转和高指标低评分案例。
+- `scripts/analyze_llm_judge_subscore_correlations.py`：按实验评估记录中的 `structuredEvaluation.subscores` 计算子维度描述统计，以及 Pearson / Spearman 相关矩阵，支持分 `plan_id`、`group_id` 和 `group_label` 输出。
 
 当前 180 组样本的核心结果：
 
@@ -72,7 +73,26 @@
 - `/app/data/frontend_experiment_runs/{planId}/{runId}/experiment_run.json`
 - `/app/data/frontend_experiment_runs/{planId}/{runId}/experiment_evaluation.json`
 
-本地仓库当前没有可直接用 `metrics_lite_compare.py` 单轮复跑的 `experiment_run.json` / `experiment_evaluation.json` 目录；已有指标分析主要基于 `tmp/metrics/first_batch_metrics_rouge_chrf_bertscore.json`。
+对应的宿主机挂载目录已在仓库中保留：
+
+- `docs/project_changes/frontend_experiment_runs/boundary/`
+- `docs/project_changes/frontend_experiment_runs/disambiguation/`
+- `docs/project_changes/frontend_experiment_runs/graphTemplate/`
+- `docs/project_changes/frontend_experiment_runs/multiFault/`
+
+其中具体运行目录示例：
+
+- `docs/project_changes/frontend_experiment_runs/graphTemplate/graphTemplate_1777793822792_1c4b91/experiment_evaluation.json`
+
+若要做子维度相关性分析，可直接对这些 `experiment_evaluation.json` 运行：
+
+```bash
+python3 scripts/analyze_llm_judge_subscore_correlations.py \
+  --input docs/project_changes/frontend_experiment_runs/graphTemplate/graphTemplate_1777793822792_1c4b91/experiment_evaluation.json \
+  --out-dir tmp/subscore_correlation/graphTemplate
+```
+
+注意：四类实验的 `subscores.name` 维度定义不完全相同，更适合按 `planId` 分开分析，而不是把四类题集直接合并成单一相关矩阵。
 
 ### Office 文档处理注意事项
 
@@ -81,6 +101,10 @@
 - 读取 `.docx` 不能用普通文本读取工具直接读二进制。
 - 修改论文 docx 前应先备份，避免破坏公式、图片、标题层级和第 6 章边界。
 - `docs/designs/论文草稿0502可修改_2009.docx` 中第 5.2.3 到 5.2.4 已经替换过实验验证内容，图号从 `图 5-6` 到 `图 5-11`，表号从 `表 5-3` 到 `表 5-6`。
+- 对复杂 `.docx` 不要用 `python-docx` 直接大范围重写整篇段落，容易破坏 `w:drawing` 锚点、交叉引用域和部分对象关系。若只需调整正文少量段落或参考文献，优先采用 XML 级别的最小修改脚本。
+- 当前与论文 Word 处理相关的脚本包括：
+  - `scripts/rebuild_0505_from_0107_xml.py`：基于原始 `0107` 版本重建正文引用和参考文献，同时保留图表对象。
+  - `scripts/normalize_cross_refs_1421.py`：基于 `0505可修改_1421_交叉引用尝试版.docx` 规范化连续/非连续参考文献交叉引用格式。
 
 ### 新 Session 协作建议
 
@@ -258,6 +282,14 @@ python3 scripts/import_evaluation_question_set.py --manifest docs/evaluation_que
 - 结构化评估：调用 `/api/quality/structured`，后台把自然语言评估整理为结构化 verdict、总分和分项分数。
 
 这种设计让自然语言评估完成后即可释放主评估并发槽，结构化评估在后台补齐，不阻塞后续评分任务。前端会同时保存自然语言评估、结构化分数、原始 JSON 和题目信息，便于论文实验复核。
+
+如果需要进一步分析 LLM-as-a-Judge 的内部评分结构，可以直接读取 `experiment_evaluation.json` 中的 `structuredEvaluation.subscores` 字段。当前已经提供 `scripts/analyze_llm_judge_subscore_correlations.py`，可输出：
+
+- 各子维度描述统计
+- 全样本 Pearson / Spearman 相关矩阵
+- 按实验类型、实验组分层的相关矩阵 JSON
+
+这类分析可用于解释“结构规范性 / 知识相关性 / 措施完整性 / 内容可追溯性”等维度之间是共同波动还是相对独立。
 
 ### Nebula HTTP 网关
 
