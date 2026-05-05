@@ -466,11 +466,14 @@ def list_experiment_runs(plan_id: str) -> list[dict[str, Any]]:
 def get_experiment_run(plan_id: str, run_id: str) -> dict[str, Any]:
     manifest = load_manifest(plan_id, run_id)
     evaluation = load_evaluation_record(plan_id, run_id)
+    pairwise_evaluation = load_pairwise_evaluation_record(plan_id, run_id)
     return {
         "run": summarize_manifest(manifest),
         "outputState": output_state_from_manifest(manifest),
         "evaluationState": evaluation.get("evaluationState") or default_evaluation_state(),
         "evaluationRecord": evaluation,
+        "pairwiseEvaluationState": pairwise_evaluation.get("pairwiseEvaluationState") or default_pairwise_evaluation_state(),
+        "pairwiseEvaluationRecord": pairwise_evaluation,
         "manifest": manifest,
     }
 

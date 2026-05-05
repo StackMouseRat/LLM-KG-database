@@ -29,6 +29,42 @@
 - 对比实验页面：`frontend/src/pages/ExperimentPage.tsx`
 - 实验组件与工具：`frontend/src/features/experiment/`
 
+### 前端代理调试鉴权
+
+当前 `frontend-proxy` 支持一个仅用于本地调试和自动化验证的调试鉴权入口，定义在：
+
+- `docker/frontend-proxy/server.py`
+
+相关环境变量：
+
+- `APP_DEBUG_AUTH_TOKEN`
+- `APP_DEBUG_AUTH_USER`
+
+当前 `docker-compose` 默认值位于：
+
+- `nebula-docker-compose/docker-compose.yaml`
+
+默认配置为：
+
+- `APP_DEBUG_AUTH_TOKEN=opencode-debug-token`
+- `APP_DEBUG_AUTH_USER=admin`
+
+当请求头中携带：
+
+- `X-Debug-Auth: <APP_DEBUG_AUTH_TOKEN>`
+
+时，`frontend-proxy` 会直接把该请求视为 `APP_DEBUG_AUTH_USER` 对应用户的已登录请求，不再依赖浏览器 cookie 登录态。该机制主要用于：
+
+1. 本地脚本验证 `/api/experiment/*`、`/api/template/*` 等受保护接口。
+2. 自动化测试或调试阶段绕过前端登录页。
+3. 服务端接口联调时快速模拟管理员身份。
+
+注意：
+
+1. 该调试鉴权只在设置了 `APP_DEBUG_AUTH_TOKEN` 且请求头值完全匹配时生效。
+2. 它仍会根据 `APP_DEBUG_AUTH_USER` 的用户组决定是否有管理员权限。
+3. 生产或公开环境不应使用弱口令式默认 token，应改为部署时显式覆盖。
+
 ### 当前论文与实验相关重点文件
 
 - 论文草稿已处理文件：`docs/designs/论文草稿0502可修改_2009.docx`
