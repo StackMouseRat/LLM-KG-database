@@ -172,6 +172,10 @@ def evaluation_path(plan_id: str, run_id: str) -> Path:
     return run_dir(plan_id, run_id) / "experiment_evaluation.json"
 
 
+def pairwise_evaluation_path(plan_id: str, run_id: str) -> Path:
+    return run_dir(plan_id, run_id) / "experiment_pairwise_evaluation.json"
+
+
 def run_control_key(plan_id: str, run_id: str) -> str:
     return f"{plan_id}:{run_id}"
 
@@ -280,6 +284,18 @@ def default_evaluation_state() -> dict[str, Any]:
     return {"status": "idle", "progress": 0, "scores": {}}
 
 
+def default_pairwise_evaluation_state() -> dict[str, Any]:
+    return {
+        "status": "idle",
+        "progress": 0,
+        "concurrency": 3,
+        "activeTasks": [],
+        "results": {},
+        "errors": {},
+        "summaryStats": {},
+    }
+
+
 def load_evaluation_record(plan_id: str, run_id: str) -> dict[str, Any]:
     path = evaluation_path(plan_id, run_id)
     if not path.exists():
@@ -289,6 +305,19 @@ def load_evaluation_record(plan_id: str, run_id: str) -> dict[str, Any]:
             "createdAt": "",
             "updatedAt": "",
             "evaluationState": default_evaluation_state(),
+        }
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_pairwise_evaluation_record(plan_id: str, run_id: str) -> dict[str, Any]:
+    path = pairwise_evaluation_path(plan_id, run_id)
+    if not path.exists():
+        return {
+            "planId": plan_id,
+            "runId": run_id,
+            "createdAt": "",
+            "updatedAt": "",
+            "pairwiseEvaluationState": default_pairwise_evaluation_state(),
         }
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -305,6 +334,25 @@ def save_evaluation_record(plan_id: str, run_id: str, evaluation_state: dict[str
         "evaluationState": evaluation_state if isinstance(evaluation_state, dict) else default_evaluation_state(),
     }
     path = evaluation_path(plan_id, run_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path.replace(path)
+    return record
+
+
+def save_pairwise_evaluation_record(plan_id: str, run_id: str, pairwise_evaluation_state: dict[str, Any]) -> dict[str, Any]:
+    load_manifest(plan_id, run_id)
+    existing = load_pairwise_evaluation_record(plan_id, run_id)
+    now = now_iso()
+    record = {
+        "planId": plan_id,
+        "runId": run_id,
+        "createdAt": existing.get("createdAt") or now,
+        "updatedAt": now,
+        "pairwiseEvaluationState": pairwise_evaluation_state if isinstance(pairwise_evaluation_state, dict) else default_pairwise_evaluation_state(),
+    }
+    path = pairwise_evaluation_path(plan_id, run_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(".json.tmp")
     tmp_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -352,6 +400,19 @@ def summarize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         summary["evaluatedGroups"] = 0
         summary["totalEvaluations"] = 0
         summary["evaluationUpdatedAt"] = ""
+    try:
+        pairwise = load_pairwise_evaluation_record(str(summary["planId"]), str(summary["runId"]))
+        pairwise_state = pairwise.get("pairwiseEvaluationState") if isinstance(pairwise.get("pairwiseEvaluationState"), dict) else {}
+        results = pairwise_state.get("results") if isinstance(pairwise_state.get("results"), dict) else {}
+        summary["pairwiseEvaluationStatus"] = str(pairwise_state.get("status") or "idle")
+        summary["pairwiseEvaluatedRounds"] = sum(1 for item in results.values() if isinstance(item, dict) and item.get("status") == "done")
+        summary["pairwiseTotalRounds"] = len(results)
+        summary["pairwiseEvaluationUpdatedAt"] = str(pairwise.get("updatedAt") or "")
+    except Exception:
+        summary["pairwiseEvaluationStatus"] = "idle"
+        summary["pairwiseEvaluatedRounds"] = 0
+        summary["pairwiseTotalRounds"] = 0
+        summary["pairwiseEvaluationUpdatedAt"] = ""
     return summary
 
 
@@ -634,11 +695,6 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         send_sse(handler, "experiment_error", {"message": f"unknown experiment plan: {plan_id}"})
         return
 
-    question_items = normalize_question_items(body)
-    if not question_items:
-        send_sse(handler, "experiment_error", {"message": "questions is required"})
-        return
-
     requested_run_count = max(1, int(body.get("runCount") or 1))
     generation_cache_enabled = body.get("generationCacheEnabled") is not False
     requested_cache_mode = str(body.get("generationCacheMode") or "readwrite").strip().lower()
@@ -647,6 +703,11 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         generation_cache_mode = "off"
     run_id = str(body.get("runId") or "").strip()
     rerun_round = int(body.get("rerunRound") or 0)
+    question_items = normalize_question_items(body)
+    if not question_items:
+        send_sse(handler, "experiment_error", {"message": "questions is required"})
+        return
+
     append_mode = bool(body.get("appendMode")) and bool(run_id) and rerun_round <= 0
     active_rounds: list[int] | None = None
     if run_id:

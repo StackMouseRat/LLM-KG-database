@@ -51,6 +51,10 @@ export type ExperimentRunSummary = {
   evaluatedGroups?: number;
   totalEvaluations?: number;
   evaluationUpdatedAt?: string;
+  pairwiseEvaluationStatus?: string;
+  pairwiseEvaluatedRounds?: number;
+  pairwiseTotalRounds?: number;
+  pairwiseEvaluationUpdatedAt?: string;
   balanceSnapshots?: Array<Record<string, any>>;
 };
 
@@ -125,6 +129,31 @@ export async function saveExperimentEvaluation(planId: string, runId: string, ev
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, runId, evaluationState })
+  });
+  const data = await readJsonSafely(response);
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+  return data;
+}
+
+export async function fetchExperimentPairwiseEvaluation(planId: string, runId: string) {
+  const response = await fetch(`/api/experiment/pairwise-evaluation?planId=${encodeURIComponent(planId)}&runId=${encodeURIComponent(runId)}`, {
+    credentials: 'include'
+  });
+  const data = await readJsonSafely(response);
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+  return data;
+}
+
+export async function saveExperimentPairwiseEvaluation(planId: string, runId: string, pairwiseEvaluationState: Record<string, any>) {
+  const response = await fetch('/api/experiment/pairwise-evaluation', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, runId, pairwiseEvaluationState })
   });
   const data = await readJsonSafely(response);
   if (!response.ok) {

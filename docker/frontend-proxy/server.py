@@ -22,7 +22,7 @@ from services.auth_service import (
 )
 from services.case_search_service import infer_dataset, infer_dataset_with_context, run_case_search
 from services.evaluation_question_service import get_evaluation_question_suite
-from services.experiment_service import get_experiment_run, interrupt_experiment_run, list_experiment_runs, load_evaluation_record, save_evaluation_record, stream_experiment_run
+from services.experiment_service import get_experiment_run, interrupt_experiment_run, list_experiment_runs, load_evaluation_record, load_pairwise_evaluation_record, save_evaluation_record, save_pairwise_evaluation_record, stream_experiment_run
 from services.pipeline_service import run_pipeline_sync, stream_pipeline
 from services.provider_balance_service import query_provider_balances
 from services.quality_service import run_format_review_sync, run_structured_evaluation_sync, stream_format_review
@@ -585,6 +585,32 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._write_json(500, {"message": str(exc)})
 
+    def _handle_experiment_pairwise_evaluation_get(self) -> None:
+        try:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            plan_id = str((params.get("planId") or [""])[0]).strip()
+            run_id = str((params.get("runId") or [""])[0]).strip()
+            if not plan_id or not run_id:
+                self._write_bad_request("planId and runId are required")
+                return
+            self._write_json(200, load_pairwise_evaluation_record(plan_id, run_id))
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
+    def _handle_experiment_pairwise_evaluation_save(self) -> None:
+        try:
+            body = self._read_json_body()
+            plan_id = str(body.get("planId") or "").strip()
+            run_id = str(body.get("runId") or "").strip()
+            pairwise_evaluation_state = body.get("pairwiseEvaluationState") if isinstance(body.get("pairwiseEvaluationState"), dict) else {}
+            if not plan_id or not run_id:
+                self._write_bad_request("planId and runId are required")
+                return
+            self._write_json(200, save_pairwise_evaluation_record(plan_id, run_id, pairwise_evaluation_state))
+        except Exception as exc:
+            self._write_json(500, {"message": str(exc)})
+
     def _handle_experiment_interrupt(self) -> None:
         try:
             body = self._read_json_body()
@@ -688,6 +714,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_experiment_evaluation_get()
             return
 
+        if path == "/api/experiment/pairwise-evaluation":
+            self._handle_experiment_pairwise_evaluation_get()
+            return
+
         if path == "/api/experiment/page-cache":
             self._handle_experiment_page_cache_get()
             return
@@ -732,6 +762,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/api/experiment/evaluation":
             self._handle_experiment_evaluation_save()
+            return
+
+        if self.path == "/api/experiment/pairwise-evaluation":
+            self._handle_experiment_pairwise_evaluation_save()
             return
 
         if self.path == "/api/experiment/interrupt":
