@@ -2,13 +2,14 @@ import { Button, Card, Popover, Segmented, Space, Tag, Typography } from 'antd';
 import { ExperimentOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState } from 'react';
 import { ALL_MULTI_FAULT_QUESTIONS, ALL_SINGLE_FAULT_QUESTIONS, EXPERIMENT_QUESTION_GROUPS } from '../data/presetQuestions';
-import { ExperimentControlPanel, ExperimentEvaluationPanel, ExperimentFlowDiagram, ExperimentOutputPreview, ExperimentSection } from '../features/experiment/ExperimentPanels';
+import { ExperimentControlPanel, ExperimentEvaluationPanel, ExperimentFlowDiagram, ExperimentOutputPreview, ExperimentPairwiseSummary, ExperimentSection } from '../features/experiment/ExperimentPanels';
 import { ExperimentQuestionPopover } from '../features/experiment/ExperimentQuestionPopover';
-import { fetchExperimentPageSnapshot, fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, interruptExperimentRun, saveExperimentEvaluation, saveExperimentPageSnapshot, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
+import { fetchExperimentPageSnapshot, fetchExperimentQuestionSuite, fetchExperimentRunDetail, fetchExperimentRuns, interruptExperimentRun, runExperimentPairwiseEvaluation, saveExperimentEvaluation, saveExperimentPageSnapshot, type ExperimentQuestionItem, type ExperimentQuestionSuite, type ExperimentRunSummary } from '../features/experiment/experimentApi';
 import {
   defaultControlState,
   defaultEvaluationState,
   defaultOutputState,
+  defaultPairwiseEvaluationState,
   defaultStageState,
   type ExperimentCardView,
   type ExperimentControlStage,
@@ -18,6 +19,7 @@ import {
   type ExperimentEvaluationTask,
   type ExperimentFlowNode,
   type ExperimentOutputState,
+  type ExperimentPairwiseEvaluationState,
   type ExperimentPageSnapshot,
   type ExperimentPlan,
   type ExperimentProcessGroup
@@ -30,9 +32,11 @@ import {
   getMaxEvaluationConcurrency,
   getMaxExperimentConcurrency,
   getSuiteQuestionItems,
+  hasPairwiseEvaluationRecord,
   isValidStructuredEvaluation,
   mergeRoundQuestionItem,
   parseEvaluationScore,
+  sanitizePairwiseEvaluationStateMap,
   pickRandomQuestionItems,
   questionItemLabel,
   removeActiveGroup,
@@ -52,6 +56,7 @@ const GRAPH_TEMPLATE_QUESTION_SUITE_ID = 'graph_template_constraint_v1';
 const MULTI_FAULT_QUESTION_SUITE_ID = 'multi_fault_chain_v1';
 
 const BOUNDARY_EVALUATION_CONSISTENCY_RULE = '额外一致性约束：分项标题中的分数必须与分项原因一致；若原因写明“判定方向错误”“本项不得分”“边界控制失败”“未执行正确判定”等否定结论，该分项分数必须给低分或0分，不得写满分。总分必须等于各分项分数之和，不得用实验组设定意图替代正确边界行为评分。';
+const MAX_STREAMING_PREVIEW_CHARS = 2000;
 
 const node = (
   plugin: string,
@@ -472,6 +477,7 @@ export function ExperimentPage() {
   const [controlStateMap, setControlStateMap] = useState<Record<string, ExperimentControlState>>({});
   const [outputStateMap, setOutputStateMap] = useState<Record<string, ExperimentOutputState>>({});
   const [evaluationStateMap, setEvaluationStateMap] = useState<Record<string, ExperimentEvaluationState>>({});
+  const [pairwiseEvaluationStateMap, setPairwiseEvaluationStateMap] = useState<Record<string, ExperimentPairwiseEvaluationState>>({});
   const [questionSuiteMap, setQuestionSuiteMap] = useState<Record<string, ExperimentQuestionSuite>>({});
   const [questionSuiteErrorMap, setQuestionSuiteErrorMap] = useState<Record<string, string>>({});
   const [sampledQuestionMap, setSampledQuestionMap] = useState<Record<string, ExperimentQuestionItem[]>>({});
@@ -505,6 +511,7 @@ export function ExperimentPage() {
         setControlStateMap(sanitizeControlStateMap(pageSnapshot.controlStateMap || {}));
         setOutputStateMap(pageSnapshot.outputStateMap || {});
         setEvaluationStateMap(sanitizeEvaluationStateMap(pageSnapshot.evaluationStateMap || {}));
+        setPairwiseEvaluationStateMap(sanitizePairwiseEvaluationStateMap(pageSnapshot.pairwiseEvaluationStateMap || {}));
         setSampledQuestionMap(pageSnapshot.sampledQuestionMap || {});
         setSelectedRunIdMap(pageSnapshot.selectedRunIdMap || {});
         setEvaluationCompactModeMap(pageSnapshot.evaluationCompactModeMap || {});
@@ -523,17 +530,15 @@ export function ExperimentPage() {
     if (snapshotSaveTimerRef.current) window.clearTimeout(snapshotSaveTimerRef.current);
     snapshotSaveTimerRef.current = window.setTimeout(() => {
       const snapshot = buildExperimentPageSnapshot({
-        cardViewMap: {},
+        cardViewMap,
         controlStateMap,
-        outputStateMap,
-        evaluationStateMap,
         sampledQuestionMap,
         selectedRunIdMap,
         evaluationCompactModeMap
       });
       void saveExperimentPageSnapshot(snapshot).catch(() => {});
     }, 800);
-  }, [cardViewMap, controlStateMap, outputStateMap, evaluationStateMap, sampledQuestionMap, selectedRunIdMap, evaluationCompactModeMap]);
+  }, [cardViewMap, controlStateMap, sampledQuestionMap, selectedRunIdMap, evaluationCompactModeMap]);
 
   useEffect(() => () => {
     Object.values(controlTimerMap.current).forEach((timerId) => window.clearInterval(timerId));
@@ -575,6 +580,7 @@ export function ExperimentPage() {
   }, []);
 
   const getControlState = (planId: string) => controlStateMap[planId] || defaultControlState;
+  const getPairwiseEvaluationState = (planId: string) => pairwiseEvaluationStateMap[planId] || defaultPairwiseEvaluationState;
 
   const getPlanInputs = (plan: ExperimentPlan) => sampledQuestionMap[plan.id]?.length ? sampledQuestionMap[plan.id].map((item) => item.questionText) : plan.inputs;
 
@@ -620,6 +626,7 @@ export function ExperimentPage() {
     }));
     setOutputStateMap((prev) => ({ ...prev, [plan.id]: detail.outputState as ExperimentOutputState }));
     setEvaluationStateMap((prev) => ({ ...prev, [plan.id]: (detail.evaluationState as ExperimentEvaluationState) || defaultEvaluationState }));
+    setPairwiseEvaluationStateMap((prev) => ({ ...prev, [plan.id]: (detail.pairwiseEvaluationState as ExperimentPairwiseEvaluationState) || defaultPairwiseEvaluationState }));
     setControlStateMap((prev) => ({
       ...prev,
         [plan.id]: {
@@ -629,6 +636,9 @@ export function ExperimentPage() {
         generation: { status: detail.run.status === 'done' ? 'done' : 'idle', progress: detail.run.totalGroups ? Math.round((detail.run.completedGroups / detail.run.totalGroups) * 100) : 0 },
         evaluation: detail.evaluationState
           ? { status: detail.evaluationState.status === 'done' ? 'done' : detail.evaluationState.status === 'error' ? 'error' : 'idle', progress: Number(detail.evaluationState.progress || 0), message: detail.evaluationState.message }
+          : defaultStageState,
+        pairwiseEvaluation: detail.pairwiseEvaluationState
+          ? { status: detail.pairwiseEvaluationState.status === 'done' ? 'done' : detail.pairwiseEvaluationState.status === 'error' ? 'error' : detail.pairwiseEvaluationState.status === 'partial' ? 'error' : detail.pairwiseEvaluationState.status === 'running' ? 'running' : 'idle', progress: Number(detail.pairwiseEvaluationState.progress || 0) }
           : defaultStageState
       }
     }));
@@ -652,6 +662,7 @@ export function ExperimentPage() {
           evaluationConcurrency: Math.min(Math.max(next.evaluationConcurrency, 1), getMaxEvaluationConcurrency()),
           generationCacheEnabled: next.generationCacheEnabled !== false,
           generationCacheMode: next.generationCacheMode || 'readwrite',
+          pairwiseEvaluationConcurrency: Math.max(Number(next.pairwiseEvaluationConcurrency || defaultControlState.pairwiseEvaluationConcurrency), 1),
           appendMode: Boolean(next.appendMode)
         };
       })()
@@ -670,6 +681,51 @@ export function ExperimentPage() {
       ...prev,
       [planId]: updater(prev[planId] || defaultEvaluationState)
     }));
+  };
+
+  const updatePairwiseEvaluationState = (planId: string, updater: (current: ExperimentPairwiseEvaluationState) => ExperimentPairwiseEvaluationState) => {
+    setPairwiseEvaluationStateMap((prev) => ({
+      ...prev,
+      [planId]: updater(prev[planId] || defaultPairwiseEvaluationState)
+    }));
+  };
+
+  const runPairwiseEvaluationStage = async (plan: ExperimentPlan, options: { resume?: boolean } = {}) => {
+    const planId = plan.id;
+    const selectedRunId = selectedRunIdMap[planId];
+    if (!selectedRunId) return;
+    setControlStateMap((prev) => ({
+      ...prev,
+      [planId]: {
+        ...(prev[planId] || defaultControlState),
+        pairwiseEvaluation: { status: 'running', progress: 0 }
+      }
+    }));
+    await runExperimentPairwiseEvaluation(planId, selectedRunId, {
+      concurrency: getControlState(planId).pairwiseEvaluationConcurrency || 3,
+      resume: options.resume !== false
+    });
+    const poll = async () => {
+      const detail = await fetchExperimentRunDetail(planId, selectedRunId);
+      const pairwiseState = (detail.pairwiseEvaluationState as ExperimentPairwiseEvaluationState) || defaultPairwiseEvaluationState;
+      setPairwiseEvaluationStateMap((prev) => ({ ...prev, [planId]: pairwiseState }));
+      setControlStateMap((prev) => ({
+        ...prev,
+        [planId]: {
+          ...(prev[planId] || defaultControlState),
+          pairwiseEvaluation: {
+            status: pairwiseState.status === 'done' ? 'done' : pairwiseState.status === 'running' ? 'running' : pairwiseState.status === 'partial' ? 'error' : 'idle',
+            progress: Number(pairwiseState.progress || 0)
+          }
+        }
+      }));
+      if (pairwiseState.status === 'running') {
+        window.setTimeout(() => { void poll(); }, 3000);
+      } else {
+        void refreshExperimentRuns(planId);
+      }
+    };
+    void poll();
   };
 
   const runEvaluationStage = async (plan: ExperimentPlan, options: { round?: number; force?: boolean } = {}) => {
@@ -1203,7 +1259,7 @@ export function ExperimentPage() {
                     ...current.rounds[roundKey],
                     [groupId]: {
                       ...existing,
-                      streamingText: `${existing.streamingText}${String(data.text || '')}`,
+                      streamingText: `${existing.streamingText}${String(data.text || '')}`.slice(-MAX_STREAMING_PREVIEW_CHARS),
                       status: 'running'
                     }
                   }
@@ -1240,7 +1296,7 @@ export function ExperimentPage() {
                       question: String(data.question || existing?.question || ''),
                       questionItem: questionItem || existing?.questionItem,
                       outputText: String(data.outputText || ''),
-                      streamingText: existing?.streamingText || '',
+                      streamingText: '',
                       status: data?.status === 'terminated' ? 'terminated' : 'done',
                       cacheStats: data?.cacheStats && typeof data.cacheStats === 'object' ? data.cacheStats : existing?.cacheStats,
                       chapterCache: Array.isArray(data?.chapterCache) ? data.chapterCache : existing?.chapterCache
@@ -1277,7 +1333,7 @@ export function ExperimentPage() {
                       groupLabel: existing?.groupLabel || groupId,
                       question: existing?.question || '',
                       outputText: String(data.message || '实验组执行失败'),
-                      streamingText: existing?.streamingText || '',
+                      streamingText: '',
                       status: 'error'
                     }
                   }
@@ -1415,11 +1471,13 @@ export function ExperimentPage() {
                 plan={plan}
                 state={getControlState(plan.id)}
                 evaluationState={evaluationStateMap[plan.id] || defaultEvaluationState}
+                pairwiseEvaluationState={getPairwiseEvaluationState(plan.id)}
                 runs={runRecordMap[plan.id] || []}
                 selectedRunId={selectedRunIdMap[plan.id]}
                 outputState={outputStateMap[plan.id] || defaultOutputState}
                 onUpdateConfig={(patch) => updateControlConfig(plan.id, patch)}
                 onRunStage={(stage, options) => void runControlStage(plan, stage, options)}
+                onRunPairwiseEvaluation={(options) => void runPairwiseEvaluationStage(plan, options)}
                 onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
                 onLoadRun={() => void loadExperimentRun(plan)}
                 onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
@@ -1445,6 +1503,7 @@ export function ExperimentPage() {
                     promptSource={getPlanEvaluationPromptSource(plan)}
                     outputState={outputStateMap[plan.id] || defaultOutputState}
                     evaluationState={evaluationStateMap[plan.id] || defaultEvaluationState}
+                    pairwiseEvaluationState={getPairwiseEvaluationState(plan.id)}
                     runs={runRecordMap[plan.id] || []}
                     selectedRunId={selectedRunIdMap[plan.id]}
                     evaluationRunning={getControlState(plan.id).evaluation.status === 'running'}
@@ -1461,6 +1520,7 @@ export function ExperimentPage() {
                 )
               )
             )}
+            {cardView === 'evaluation' ? <ExperimentPairwiseSummary plan={plan} pairwiseEvaluationState={getPairwiseEvaluationState(plan.id)} /> : null}
           </Card>
           );
         })}

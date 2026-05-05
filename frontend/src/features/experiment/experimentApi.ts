@@ -77,6 +77,8 @@ export type ExperimentRunDetail = {
   };
   evaluationState?: Record<string, any>;
   evaluationRecord?: Record<string, any>;
+  pairwiseEvaluationState?: Record<string, any>;
+  pairwiseEvaluationRecord?: Record<string, any>;
   manifest: Record<string, any>;
 };
 
@@ -154,6 +156,26 @@ export async function saveExperimentPairwiseEvaluation(planId: string, runId: st
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, runId, pairwiseEvaluationState })
+  });
+  const data = await readJsonSafely(response);
+  if (!response.ok) {
+    throw new Error(data?.message || `请求失败：${response.status}`);
+  }
+  return data;
+}
+
+export async function runExperimentPairwiseEvaluation(planId: string, runId: string, options?: { concurrency?: number; resume?: boolean; timeout?: number }) {
+  const response = await fetch('/api/experiment/pairwise-evaluation/run', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      planId,
+      runId,
+      concurrency: options?.concurrency ?? 3,
+      resume: options?.resume !== false,
+      timeout: options?.timeout ?? 300
+    })
   });
   const data = await readJsonSafely(response);
   if (!response.ok) {

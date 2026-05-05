@@ -1,6 +1,7 @@
 import type { ExperimentQuestionItem, ExperimentQuestionSuite, ExperimentRunSummary } from './experimentApi';
 import {
   defaultControlState,
+  defaultPairwiseEvaluationState,
   defaultStageState,
   type ExperimentActiveGroup,
   type ExperimentControlState,
@@ -8,6 +9,7 @@ import {
   type ExperimentEvaluationState,
   type ExperimentGroupOutput,
   type ExperimentOutputState,
+  type ExperimentPairwiseEvaluationState,
   type ExperimentPageSnapshot,
   type ExperimentProcessGroup,
   type ExperimentStageState
@@ -121,9 +123,11 @@ export function sanitizeControlStateMap(map: Record<string, ExperimentControlSta
       ...state,
       generationCacheEnabled: state.generationCacheEnabled !== false,
       generationCacheMode: state.generationCacheMode || 'readwrite',
+      pairwiseEvaluationConcurrency: Math.max(Number(state.pairwiseEvaluationConcurrency || defaultControlState.pairwiseEvaluationConcurrency), 1),
       appendMode: Boolean(state.appendMode),
       generation: sanitizeStageState(state.generation),
-      evaluation: sanitizeStageState(state.evaluation)
+      evaluation: sanitizeStageState(state.evaluation),
+      pairwiseEvaluation: sanitizeStageState(state.pairwiseEvaluation)
     }
   ]));
 }
@@ -150,12 +154,37 @@ export function buildExperimentPageSnapshot(snapshot: ExperimentPageSnapshot): E
   return {
     cardViewMap: snapshot.cardViewMap || {},
     controlStateMap: sanitizeControlStateMap(snapshot.controlStateMap || {}),
-    outputStateMap: snapshot.outputStateMap || {},
-    evaluationStateMap: sanitizeEvaluationStateMap(snapshot.evaluationStateMap || {}),
+    outputStateMap: {},
+    evaluationStateMap: {},
+    pairwiseEvaluationStateMap: {},
     sampledQuestionMap: snapshot.sampledQuestionMap || {},
     selectedRunIdMap: snapshot.selectedRunIdMap || {},
     evaluationCompactModeMap: snapshot.evaluationCompactModeMap || {}
   };
+}
+
+export function sanitizePairwiseEvaluationStateMap(map: Record<string, ExperimentPairwiseEvaluationState>) {
+  return Object.fromEntries(Object.entries(map).map(([planId, state]) => [
+    planId,
+    {
+      ...defaultPairwiseEvaluationState,
+      ...state,
+      status: state.status === 'running' ? 'idle' : state.status,
+      activeTasks: [],
+      results: state.results || {},
+      errors: state.errors || {},
+      summaryStats: state.summaryStats || {},
+      concurrency: Math.max(Number(state.concurrency || defaultPairwiseEvaluationState.concurrency), 1)
+    }
+  ]));
+}
+
+export function pairwiseRankingLabel(ranking?: string[]) {
+  return Array.isArray(ranking) && ranking.length ? ranking.join(' > ') : '';
+}
+
+export function hasPairwiseEvaluationRecord(run?: ExperimentRunSummary) {
+  return Boolean(run?.pairwiseEvaluationUpdatedAt || run?.pairwiseTotalRounds || run?.pairwiseEvaluationStatus && run.pairwiseEvaluationStatus !== 'idle');
 }
 
 export function activeGroupKey(round: number, groupId: string) {

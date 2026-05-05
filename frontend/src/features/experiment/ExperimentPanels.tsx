@@ -8,6 +8,7 @@ import {
   type ExperimentEvaluationState,
   type ExperimentGroupProgress,
   type ExperimentOutputState,
+  type ExperimentPairwiseEvaluationState,
   type ExperimentPlan,
   type ExperimentPlanProgress,
   type ExperimentProcessGroup,
@@ -27,6 +28,7 @@ import {
   getMaxExperimentConcurrency,
   getProgressStatus,
   getRuntimeChanges,
+  hasPairwiseEvaluationRecord,
   getScoreTagColor,
   getStageStatusText,
   getStructuredSubscores,
@@ -201,11 +203,13 @@ export function ExperimentControlPanel({
   plan,
   state,
   evaluationState,
+  pairwiseEvaluationState,
   runs,
   selectedRunId,
   outputState,
   onUpdateConfig,
   onRunStage,
+  onRunPairwiseEvaluation,
   onSelectRun,
   onLoadRun,
   onRefreshRuns,
@@ -214,11 +218,13 @@ export function ExperimentControlPanel({
   plan: ExperimentPlan;
   state: ExperimentControlState;
   evaluationState: ExperimentEvaluationState;
+  pairwiseEvaluationState: ExperimentPairwiseEvaluationState;
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
   outputState: ExperimentOutputState;
   onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode' | 'appendMode'>>) => void;
   onRunStage: (stage: ExperimentControlStage, options?: { runId?: string; appendMode?: boolean }) => void;
+  onRunPairwiseEvaluation: (options?: { resume?: boolean }) => void;
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
   onRefreshRuns: () => void;
@@ -232,6 +238,7 @@ export function ExperimentControlPanel({
   const evaluationRunning = effectiveEvaluationStage.status === 'running';
   const maxConcurrency = getMaxExperimentConcurrency(state.runCount, plan.processGroups.length);
   const activeGroups = outputState.activeGroups || [];
+  const pairwiseActiveTasks = pairwiseEvaluationState.activeTasks || [];
   const selectedRun = runs.find((run) => run.runId === selectedRunId);
   const completedRounds = selectedRun?.completedRounds ?? 0;
   const targetRounds = selectedRun?.targetRounds ?? selectedRun?.runCount ?? state.runCount;
@@ -288,6 +295,16 @@ export function ExperimentControlPanel({
             onChange={(value) => onUpdateConfig({ evaluationConcurrency: Math.min(Number(value || 1), getMaxEvaluationConcurrency()) })}
           />
           <Text type="secondary">最多 {getMaxEvaluationConcurrency()} 个评分</Text>
+        </label>
+        <label>
+          <Text type="secondary">对比评估并发数</Text>
+          <InputNumber
+            min={1}
+            max={10}
+            value={state.pairwiseEvaluationConcurrency}
+            onChange={(value) => onUpdateConfig({ pairwiseEvaluationConcurrency: Math.max(Number(value || 1), 1) } as any)}
+          />
+          <Text type="secondary">按轮次并发，默认 3</Text>
         </label>
         <label>
           <Text type="secondary">生成缓存</Text>
@@ -400,12 +417,33 @@ export function ExperimentControlPanel({
           )}
           {effectiveEvaluationStage.message ? <Text type="danger">{effectiveEvaluationStage.message}</Text> : null}
         </div>
+
+        <div className="experiment-control-console__stage">
+          <div className="experiment-control-console__stage-header">
+            <Text strong>阶段三：对比评估</Text>
+            <Space size={8} wrap>
+              <Button size="small" type="primary" disabled={!selectedRunId} loading={state.pairwiseEvaluation.status === 'running'} onClick={() => onRunPairwiseEvaluation({ resume: true })}>
+                继续对比评估
+              </Button>
+              <Button size="small" disabled={!selectedRunId} loading={state.pairwiseEvaluation.status === 'running'} onClick={() => onRunPairwiseEvaluation({ resume: false })}>
+                重跑对比评估
+              </Button>
+            </Space>
+          </div>
+          <Progress percent={pairwiseEvaluationState.progress} size="small" status={getProgressStatus(pairwiseEvaluationState.status === 'error' ? 'error' : pairwiseEvaluationState.status === 'done' ? 'done' : pairwiseEvaluationState.status === 'running' ? 'running' : 'idle')} />
+          {pairwiseActiveTasks.length ? (
+            <Text type="secondary">当前运行轮次：{pairwiseActiveTasks.map((item) => `第 ${item.round} 轮`).join('、')}</Text>
+          ) : (
+            <Text type="secondary">从第一个未完成对比评估的轮次开始执行。</Text>
+          )}
+        </div>
       </div>
 
       <div className="experiment-control-console__log">
         <Text type="secondary">实时进度</Text>
         <div>生成：{getStageStatusText(state.generation.status)} · {state.generation.progress}%</div>
         <div>评估：{getStageStatusText(effectiveEvaluationStage.status)} · {effectiveEvaluationStage.progress}%</div>
+        <div>对比评估：{getStageStatusText(state.pairwiseEvaluation.status)} · {pairwiseEvaluationState.progress}%</div>
       </div>
 
       <div className="experiment-control-console__groups">
@@ -452,6 +490,7 @@ export function ExperimentOutputPreview({
   onRerunRound: (round: number) => void;
 }) {
   const rounds = Object.entries(outputState.rounds).sort(([a], [b]) => Number(a) - Number(b));
+  const visibleRounds = rounds.slice(-4);
   const activeGroups = outputState.activeGroups || [];
   const selectedRun = runs.find((run) => run.runId === selectedRunId);
   const generationBalanceCosts = buildGenerationBalanceCosts(selectedRun);
@@ -520,7 +559,7 @@ export function ExperimentOutputPreview({
       {rounds.length === 0 ? (
         <div className="experiment-output-preview__empty">启动生成后，这里会按轮次展示对照组和实验组输出。</div>
       ) : (
-        rounds.map(([round, groupMap]) => {
+        visibleRounds.map(([round, groupMap]) => {
           const questionItem = outputState.roundQuestionItems?.[round] || Object.values(groupMap)[0]?.questionItem;
           return (
           <div className="experiment-output-preview__round" key={round}>
@@ -561,6 +600,9 @@ export function ExperimentOutputPreview({
         );
         })
       )}
+      {rounds.length > visibleRounds.length ? (
+        <div className="experiment-output-preview__empty">为避免浏览器内存持续增长，当前仅展示最近 {visibleRounds.length} 轮；较早轮次请通过载入结果后分批查看。</div>
+      ) : null}
     </div>
   );
 }
@@ -571,6 +613,7 @@ export function ExperimentEvaluationPanel({
   promptSource,
   outputState,
   evaluationState,
+  pairwiseEvaluationState,
   runs,
   selectedRunId,
   evaluationRunning,
@@ -589,6 +632,7 @@ export function ExperimentEvaluationPanel({
   promptSource: string;
   outputState: ExperimentOutputState;
   evaluationState: ExperimentEvaluationState;
+  pairwiseEvaluationState: ExperimentPairwiseEvaluationState;
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
   evaluationRunning: boolean;
@@ -754,6 +798,7 @@ export function ExperimentEvaluationPanel({
           const questionText = outputState.roundQuestions[round] || Object.values(outputGroupMap)[0]?.question || '暂无问题。';
           const groupLabel = questionItemLabel(questionItem);
           const roundExpanded = isRoundExpanded(round);
+          const pairwiseResult = pairwiseEvaluationState.results?.[round];
           return (
           <div className="experiment-evaluation-panel__round" key={round}>
             <div className="experiment-output-preview__round-title">
@@ -770,6 +815,20 @@ export function ExperimentEvaluationPanel({
               <span>本轮问题：{questionText}</span>
               {questionItem?.expectedBehavior ? <Tag color="purple">预期边界行为：{expectedBehaviorLabel(questionItem.expectedBehavior)}</Tag> : null}
             </div>
+            {pairwiseResult ? (
+              <div className="experiment-evaluation-panel__structured">
+                <Text type="secondary">对比评估</Text>
+                <div className="experiment-evaluation-panel__score-summary-text">
+                  排名：{Array.isArray(pairwiseResult.overallRanking) && pairwiseResult.overallRanking.length ? pairwiseResult.overallRanking.join(' > ') : '暂无'}
+                </div>
+                <div className="experiment-evaluation-panel__score-summary-text">
+                  相对分数：{pairwiseResult.relativeScores ? Object.entries(pairwiseResult.relativeScores).map(([groupId, value]) => `${groupId} ${value}`).join(' · ') : '暂无'}
+                </div>
+                {Array.isArray(pairwiseResult.mainFindings) && pairwiseResult.mainFindings.length ? (
+                  <div className="experiment-evaluation-panel__score-summary-text">{String(pairwiseResult.mainFindings[0])}</div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="experiment-evaluation-panel__score-grid">
               {plan.processGroups.map((group) => {
                 const score = groupMap[group.id];
@@ -879,6 +938,33 @@ export function ExperimentEvaluationPanel({
         );
         })
       )}
+    </div>
+  );
+}
+
+export function ExperimentPairwiseSummary({
+  plan,
+  pairwiseEvaluationState
+}: {
+  plan: ExperimentPlan;
+  pairwiseEvaluationState: ExperimentPairwiseEvaluationState;
+}) {
+  const stats = pairwiseEvaluationState.summaryStats || {};
+  return (
+    <div className="experiment-evaluation-panel__progress">
+      <div className="experiment-evaluation-panel__header">
+        <Text strong>对比评估排名分布</Text>
+        {plan.processGroups.map((group) => {
+          const title = splitGroupName(group);
+          const item = stats[group.id];
+          if (!item) return null;
+          return (
+            <Tag color="blue" key={group.id}>
+              {title.label} 第1 {item.rank1} 次({item.rank1Pct}%) · 第2 {item.rank2} 次({item.rank2Pct}%) · 第3 {item.rank3} 次({item.rank3Pct}%)
+            </Tag>
+          );
+        })}
+      </div>
     </div>
   );
 }

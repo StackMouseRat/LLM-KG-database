@@ -14,11 +14,13 @@ export type ExperimentControlState = {
   runCount: number;
   concurrency: number;
   evaluationConcurrency: number;
+  pairwiseEvaluationConcurrency: number;
   generationCacheEnabled: boolean;
   generationCacheMode: 'readwrite' | 'read' | 'refresh' | 'off';
   appendMode: boolean;
   generation: ExperimentStageState;
   evaluation: ExperimentStageState;
+  pairwiseEvaluation: ExperimentStageState;
 };
 
 export type ExperimentGroupOutput = {
@@ -76,6 +78,42 @@ export type ExperimentEvaluationState = {
   message?: string;
 };
 
+export type ExperimentPairwiseActiveTask = {
+  round: number;
+  status?: string;
+  startedAt?: string;
+};
+
+export type ExperimentPairwiseRoundResult = {
+  status?: 'pending' | 'running' | 'done' | 'error';
+  round?: number;
+  question?: string;
+  overallRanking?: string[];
+  relativeScores?: Record<string, number>;
+  mainFindings?: string[];
+  summary?: string;
+  elapsedSec?: number;
+  evaluatedAt?: string;
+  evaluation?: Record<string, any>;
+};
+
+export type ExperimentPairwiseEvaluationState = {
+  status: 'idle' | 'running' | 'done' | 'error' | 'partial';
+  progress: number;
+  concurrency: number;
+  activeTasks: ExperimentPairwiseActiveTask[];
+  results: Record<string, ExperimentPairwiseRoundResult>;
+  errors: Record<string, { message?: string; updatedAt?: string }>;
+  summaryStats: Record<string, {
+    rank1: number;
+    rank2: number;
+    rank3: number;
+    rank1Pct: number;
+    rank2Pct: number;
+    rank3Pct: number;
+  }>;
+};
+
 export type ExperimentGroupProgress = {
   activeStepIndex?: number;
   completedStepIndexes?: number[];
@@ -129,6 +167,7 @@ export type ExperimentPageSnapshot = {
   controlStateMap?: Record<string, ExperimentControlState>;
   outputStateMap?: Record<string, ExperimentOutputState>;
   evaluationStateMap?: Record<string, ExperimentEvaluationState>;
+  pairwiseEvaluationStateMap?: Record<string, ExperimentPairwiseEvaluationState>;
   sampledQuestionMap?: Record<string, ExperimentQuestionItem[]>;
   selectedRunIdMap?: Record<string, string>;
   evaluationCompactModeMap?: Record<string, boolean>;
@@ -143,11 +182,13 @@ export const defaultControlState: ExperimentControlState = {
   runCount: 4,
   concurrency: 2,
   evaluationConcurrency: 2,
+  pairwiseEvaluationConcurrency: 3,
   generationCacheEnabled: true,
   generationCacheMode: 'readwrite',
   appendMode: false,
   generation: defaultStageState,
-  evaluation: defaultStageState
+  evaluation: defaultStageState,
+  pairwiseEvaluation: defaultStageState
 };
 
 export const defaultOutputState: ExperimentOutputState = {
@@ -161,6 +202,16 @@ export const defaultEvaluationState: ExperimentEvaluationState = {
   status: 'idle',
   progress: 0,
   scores: {}
+};
+
+export const defaultPairwiseEvaluationState: ExperimentPairwiseEvaluationState = {
+  status: 'idle',
+  progress: 0,
+  concurrency: 3,
+  activeTasks: [],
+  results: {},
+  errors: {},
+  summaryStats: {}
 };
 
 export const experimentStepStatusText: Record<ExperimentStepStatus, string> = {
