@@ -517,7 +517,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="docker.io/vesoft/nebula-console:v3.6.0",
         help="Nebula console image used to execute nGQL",
     )
-    parser.add_argument("--nebula-host", default="graphd")
+    # In this repository's Nebula deployment, graphd services are exposed as
+    # graphd1/graphd2 on the compose network. Default to graphd1 to avoid DNS
+    # lookup failures when the legacy alias "graphd" is absent.
+    parser.add_argument("--nebula-host", default=os.getenv("NEBULA_HOST", "graphd1"))
     parser.add_argument("--nebula-port", type=int, default=9669)
     parser.add_argument("--nebula-user", default="root")
     parser.add_argument("--nebula-password", default="nebula")

@@ -331,7 +331,7 @@ services:
       - -c
       - |
         for i in `seq 1 60`;do
-          var=`nebula-console -addr graphd -port 9669 -u root -p nebula -e 'ADD HOSTS "storaged0":9779,"storaged1":9779,"storaged2":9779'`;
+          var=`nebula-console -addr graphd1 -port 9669 -u root -p nebula -e 'ADD HOSTS "storaged0":9779,"storaged1":9779,"storaged2":9779'`;
           if [[ $$? == 0 ]];then
             break;
           fi;
@@ -340,7 +340,7 @@ services:
         done && tail -f /dev/null;
 
     depends_on:
-      - graphd
+      - graphd1
     networks:
       - nebula-net
 
