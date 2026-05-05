@@ -356,6 +356,8 @@ services:
       APP_LOGIN_PASSWORD: "${APP_LOGIN_PASSWORD}"
       APP_LOGIN_COOKIE_NAME: "${APP_LOGIN_COOKIE_NAME:-llmkg_session}"
       APP_LOGIN_SESSION_TTL: "${APP_LOGIN_SESSION_TTL:-86400}"
+      APP_DEBUG_AUTH_TOKEN: "${APP_DEBUG_AUTH_TOKEN:-opencode-debug-token}"
+      APP_DEBUG_AUTH_USER: "${APP_DEBUG_AUTH_USER:-admin}"
       LLM_KG_REPO_ROOT: /app
       PIPELINE_SCRIPT: /app/scripts/run_parallel_generation_pipeline.py
       PIPELINE_RUN_DIR: /app/data/frontend_pipeline_runs

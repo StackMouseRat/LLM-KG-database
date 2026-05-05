@@ -121,6 +121,7 @@ export function sanitizeControlStateMap(map: Record<string, ExperimentControlSta
       ...state,
       generationCacheEnabled: state.generationCacheEnabled !== false,
       generationCacheMode: state.generationCacheMode || 'readwrite',
+      appendMode: Boolean(state.appendMode),
       generation: sanitizeStageState(state.generation),
       evaluation: sanitizeStageState(state.evaluation)
     }

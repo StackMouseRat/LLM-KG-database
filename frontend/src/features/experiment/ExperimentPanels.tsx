@@ -217,8 +217,8 @@ export function ExperimentControlPanel({
   runs: ExperimentRunSummary[];
   selectedRunId?: string;
   outputState: ExperimentOutputState;
-  onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode'>>) => void;
-  onRunStage: (stage: ExperimentControlStage, options?: { runId?: string }) => void;
+  onUpdateConfig: (patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode' | 'appendMode'>>) => void;
+  onRunStage: (stage: ExperimentControlStage, options?: { runId?: string; appendMode?: boolean }) => void;
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
   onRefreshRuns: () => void;
@@ -236,6 +236,7 @@ export function ExperimentControlPanel({
   const completedRounds = selectedRun?.completedRounds ?? 0;
   const targetRounds = selectedRun?.targetRounds ?? selectedRun?.runCount ?? state.runCount;
   const canContinue = Boolean(selectedRunId && completedRounds < targetRounds && !generationRunning);
+  const canAppend = Boolean(selectedRunId && state.appendMode && !generationRunning);
   const isSafeStopping = generationRunning && Boolean(state.generation.message?.includes('安全中断'));
   const isForceStopping = generationRunning && Boolean(state.generation.message?.includes('强制中断'));
 
@@ -260,7 +261,7 @@ export function ExperimentControlPanel({
 
       <div className="experiment-control-console__config">
         <label>
-          <Text type="secondary">实验次数</Text>
+          <Text type="secondary">{state.appendMode ? '本次追加轮数' : '实验次数'}</Text>
           <InputNumber
             min={1}
             max={50}
@@ -296,6 +297,15 @@ export function ExperimentControlPanel({
             onChange={(checked) => onUpdateConfig({ generationCacheEnabled: checked, generationCacheMode: checked ? state.generationCacheMode || 'readwrite' : 'off' })}
           />
           <Text type="secondary">命中时跳过并行生成调用</Text>
+        </label>
+        <label>
+          <Text type="secondary">增量模式</Text>
+          <Switch
+            size="small"
+            checked={Boolean(state.appendMode)}
+            onChange={(checked) => onUpdateConfig({ appendMode: checked, runCount: checked ? 4 : state.runCount })}
+          />
+          <Text type="secondary">追加到已载入结果</Text>
         </label>
         <label>
           <Text type="secondary">缓存模式</Text>
@@ -346,11 +356,14 @@ export function ExperimentControlPanel({
             <Space size={8} wrap>
               {isSafeStopping ? <Tag color="orange">等待当前 {activeGroups.length} 个流式组结束</Tag> : null}
               {isForceStopping ? <Tag color="red">正在终止当前流式组</Tag> : null}
-              <Button size="small" type="primary" loading={generationRunning} onClick={() => onRunStage('generation')}>
-                新建生成
+              <Button size="small" type="primary" loading={generationRunning} disabled={state.appendMode && !selectedRunId} onClick={() => state.appendMode && selectedRunId ? onRunStage('generation', { runId: selectedRunId, appendMode: true }) : onRunStage('generation')}>
+                {state.appendMode ? '增量生成' : '新建生成'}
               </Button>
               <Button size="small" disabled={!canContinue} loading={generationRunning} onClick={() => onRunStage('generation', { runId: selectedRunId })}>
                 继续生成
+              </Button>
+              <Button size="small" loading={generationRunning} onClick={() => onRunStage('generation')}>
+                新建一组记录
               </Button>
               <Button size="small" disabled={!selectedRunId || !generationRunning} onClick={() => onInterruptRun('safe')}>
                 安全中断
@@ -585,7 +598,7 @@ export function ExperimentEvaluationPanel({
   onSelectRun: (runId: string) => void;
   onLoadRun: () => void;
   onRefreshRuns: () => void;
-  onRunEvaluation: () => void;
+  onRunEvaluation: (options?: { force?: boolean }) => void;
   onRerunRound: (round: number) => void;
   onToggleCompactMode: (value: boolean) => void;
 }) {
@@ -633,7 +646,12 @@ export function ExperimentEvaluationPanel({
             }))}
             notFoundContent="暂无评估记录"
           />
-          <Button size="small" type="primary" disabled={!selectedRunId} loading={evaluationRunning} onClick={onRunEvaluation}>启动评估</Button>
+          <Button size="small" type="primary" disabled={!selectedRunId} loading={evaluationRunning} onClick={() => onRunEvaluation()}>
+            继续评估（仅未评部分）
+          </Button>
+          <Button size="small" disabled={!selectedRunId} loading={evaluationRunning} onClick={() => onRunEvaluation({ force: true })}>
+            重评全部
+          </Button>
           <Button size="small" onClick={onRefreshRuns}>刷新记录</Button>
           <Button size="small" disabled={!selectedRunId} onClick={onLoadRun}>载入结果</Button>
           <label className="experiment-evaluation-panel__concurrency">
@@ -694,7 +712,7 @@ export function ExperimentEvaluationPanel({
       </div>
 
       {rounds.length === 0 ? (
-        <div className="experiment-output-preview__empty">点击“启动评估”后，这里会展示每一轮、每一组的得分。</div>
+        <div className="experiment-output-preview__empty">点击“继续评估（仅未评部分）”或“重评全部”后，这里会展示每一轮、每一组的得分。</div>
       ) : compactMode ? (
         <div className="experiment-evaluation-panel__compact-list">
           {rounds.map(([round, groupMap]) => {

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import shutil
 import subprocess
 import sys
 import threading
@@ -120,16 +121,43 @@ def normalize_question_items(body: dict[str, Any]) -> list[dict[str, str]]:
     ]
 
 
-def sample_run_questions(question_items: list[dict[str, str]], run_count: int) -> list[dict[str, str]]:
+def sample_run_questions(question_items: list[dict[str, str]], run_count: int, excluded_question_ids: set[str] | None = None, excluded_question_texts: set[str] | None = None) -> list[dict[str, str]]:
     pool = [item for item in question_items if str(item.get("questionText") or "").strip()]
     if not pool:
         return []
+    excluded_question_ids = excluded_question_ids or set()
+    excluded_question_texts = excluded_question_texts or set()
+    if excluded_question_ids or excluded_question_texts:
+        filtered_pool = [
+            item for item in pool
+            if str(item.get("questionId") or "") not in excluded_question_ids
+            and str(item.get("questionText") or "") not in excluded_question_texts
+        ]
+        if filtered_pool:
+            pool = filtered_pool
     selected: list[dict[str, str]] = []
     while len(selected) < run_count:
         batch = pool[:]
         random.shuffle(batch)
         selected.extend(batch[: run_count - len(selected)])
     return selected[:run_count]
+
+
+def used_question_sets(manifest: dict[str, Any]) -> tuple[set[str], set[str]]:
+    used_ids: set[str] = set()
+    used_texts: set[str] = set()
+    rounds = manifest.get("rounds") if isinstance(manifest.get("rounds"), dict) else {}
+    for round_data in rounds.values():
+        if not isinstance(round_data, dict):
+            continue
+        question_item = round_data.get("questionItem") if isinstance(round_data.get("questionItem"), dict) else {}
+        question_id = str(question_item.get("questionId") or "")
+        question_text = str(question_item.get("questionText") or round_data.get("question") or "")
+        if question_id:
+            used_ids.add(question_id)
+        if question_text:
+            used_texts.add(question_text)
+    return used_ids, used_texts
 
 
 def run_dir(plan_id: str, run_id: str) -> Path:
@@ -426,6 +454,43 @@ def create_manifest(plan_id: str, run_id: str, run_count: int, concurrency: int,
     }
 
 
+def append_manifest_rounds(manifest: dict[str, Any], append_count: int, question_items: list[dict[str, str]], groups: list[dict[str, Any]], *, avoid_existing: bool) -> list[int]:
+    current_run_count = int(manifest.get("runCount") or 0)
+    start_round = current_run_count + 1
+    end_round = current_run_count + append_count
+    excluded_ids, excluded_texts = used_question_sets(manifest) if avoid_existing else (set(), set())
+    selected_questions = sample_run_questions(question_items, append_count, excluded_ids, excluded_texts)
+    rounds = manifest.setdefault("rounds", {})
+    if not isinstance(rounds, dict):
+        rounds = {}
+        manifest["rounds"] = rounds
+    for offset, round_index in enumerate(range(start_round, end_round + 1)):
+        question_item = selected_questions[offset]
+        question = str(question_item.get("questionText") or "")
+        rounds[str(round_index)] = {
+            "question": question,
+            "questionItem": question_item,
+            "groups": {
+                str(group["groupId"]): {
+                    "groupId": str(group["groupId"]),
+                    "groupLabel": str(group.get("label") or ""),
+                    "question": question,
+                    "questionItem": question_item,
+                    "status": "pending",
+                    "outputText": "",
+                    "resultFile": "",
+                }
+                for group in groups
+            },
+        }
+    existing_questions = manifest.get("questions") if isinstance(manifest.get("questions"), list) else []
+    existing_items = manifest.get("questionItems") if isinstance(manifest.get("questionItems"), list) else []
+    manifest["runCount"] = end_round
+    manifest["questions"] = [*existing_questions, *[str(item.get("questionText") or "") for item in selected_questions]]
+    manifest["questionItems"] = [*existing_items, *selected_questions]
+    return list(range(start_round, end_round + 1))
+
+
 def run_one_group(
     handler: BaseHTTPRequestHandler,
     send_lock: threading.Lock,
@@ -582,11 +647,32 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         generation_cache_mode = "off"
     run_id = str(body.get("runId") or "").strip()
     rerun_round = int(body.get("rerunRound") or 0)
+    append_mode = bool(body.get("appendMode")) and bool(run_id) and rerun_round <= 0
+    active_rounds: list[int] | None = None
     if run_id:
         manifest = load_manifest(plan_id, run_id)
-        run_count = int(manifest.get("runCount") or requested_run_count)
         saved_items = manifest.get("questionItems") if isinstance(manifest.get("questionItems"), list) else []
-        question_items = [item for item in saved_items if isinstance(item, dict) and str(item.get("questionText") or "").strip()] or question_items
+        if not append_mode:
+            question_items = [item for item in saved_items if isinstance(item, dict) and str(item.get("questionText") or "").strip()] or question_items
+        current_run_count = int(manifest.get("runCount") or 0)
+        if append_mode:
+            total_run_count = current_run_count + requested_run_count
+            if total_run_count <= 50:
+                active_rounds = append_manifest_rounds(manifest, requested_run_count, question_items, groups, avoid_existing=True)
+                run_count = int(manifest.get("runCount") or total_run_count)
+            else:
+                run_count = min(total_run_count, 50)
+                manifest = create_manifest(plan_id, run_id, run_count, clamp_concurrency(int(body.get("concurrency") or 1), run_count, len(groups)), question_items, groups)
+                manifest["appendReset"] = {"reason": "total rounds exceeded 50", "previousRunCount": current_run_count, "requestedRunCount": requested_run_count}
+                active_rounds = list(range(1, run_count + 1))
+                generation_cache_mode = "refresh"
+                output_dir_to_reset = run_dir(plan_id, run_id)
+                if output_dir_to_reset.exists():
+                    for child in output_dir_to_reset.glob("round_*"):
+                        if child.is_dir():
+                            shutil.rmtree(child, ignore_errors=True)
+        else:
+            run_count = int(manifest.get("runCount") or requested_run_count)
     else:
         run_id = make_run_id(plan_id)
         run_count = requested_run_count
@@ -616,9 +702,26 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
     run_control = register_run_control(plan_id, run_id)
     output_dir = run_dir(plan_id, run_id)
     output_dir.mkdir(parents=True, exist_ok=True)
+    print(
+        json.dumps(
+            {
+                "event": "experiment_run_started",
+                "planId": plan_id,
+                "runId": run_id,
+                "appendMode": append_mode,
+                "rerunRound": rerun_round,
+                "requestedRunCount": requested_run_count,
+                "effectiveRunCount": run_count,
+                "activeRounds": active_rounds,
+                "cacheMode": generation_cache_mode,
+            },
+            ensure_ascii=False,
+        ),
+        flush=True,
+    )
     send_lock = threading.Lock()
     manifest_lock = threading.Lock()
-    active_rounds = [rerun_round] if rerun_round > 0 else list(range(1, run_count + 1))
+    active_rounds = [rerun_round] if rerun_round > 0 else (active_rounds or list(range(1, run_count + 1)))
     all_total = len(active_rounds) * len(groups)
     completed = 0
 
@@ -629,7 +732,7 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         except Exception:
             return
 
-    safe_send("experiment_stage_started", {"planId": plan_id, "runId": run_id, "stage": stage, "runCount": run_count, "concurrency": concurrency, "total": all_total, "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
+    safe_send("experiment_stage_started", {"planId": plan_id, "runId": run_id, "stage": stage, "appendMode": append_mode, "activeRounds": active_rounds, "runCount": run_count, "concurrency": concurrency, "total": all_total, "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
     tasks = []
     for round_index in active_rounds:
         round_key = str(round_index)
@@ -654,7 +757,7 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
         manifest["status"] = "done"
         save_manifest(manifest)
         safe_send("experiment_progress", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": 0, "total": 0, "progress": 100})
-        safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": 0, "total": 0, "progress": 100, "outputState": output_state_from_manifest(manifest)})
+        safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "appendMode": append_mode, "activeRounds": active_rounds, "completed": 0, "total": 0, "progress": 100, "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
         return
 
     try:
@@ -709,6 +812,6 @@ def stream_experiment_run(handler: BaseHTTPRequestHandler, body: dict[str, Any])
             final_status = "interrupted"
         manifest["status"] = final_status
         save_manifest(manifest)
-        safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "completed": completed, "total": total, "progress": round(completed / total * 100), "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
+        safe_send("experiment_stage_done", {"planId": plan_id, "runId": run_id, "stage": stage, "appendMode": append_mode, "activeRounds": active_rounds, "completed": completed, "total": total, "progress": round(completed / total * 100), "run": summarize_manifest(manifest), "outputState": output_state_from_manifest(manifest)})
     finally:
         unregister_run_control(plan_id, run_id)

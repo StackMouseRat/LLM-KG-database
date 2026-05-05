@@ -16,6 +16,7 @@ export type ExperimentControlState = {
   evaluationConcurrency: number;
   generationCacheEnabled: boolean;
   generationCacheMode: 'readwrite' | 'read' | 'refresh' | 'off';
+  appendMode: boolean;
   generation: ExperimentStageState;
   evaluation: ExperimentStageState;
 };
@@ -144,6 +145,7 @@ export const defaultControlState: ExperimentControlState = {
   evaluationConcurrency: 2,
   generationCacheEnabled: true,
   generationCacheMode: 'readwrite',
+  appendMode: false,
   generation: defaultStageState,
   evaluation: defaultStageState
 };

@@ -398,6 +398,7 @@ async function streamExperimentRun(
     concurrency: number;
     generationCacheEnabled: boolean;
     generationCacheMode: ExperimentControlState['generationCacheMode'];
+    appendMode?: boolean;
     rerunRound?: number;
     questions: string[];
     questionItems: ExperimentQuestionItem[];
@@ -621,10 +622,10 @@ export function ExperimentPage() {
     setEvaluationStateMap((prev) => ({ ...prev, [plan.id]: (detail.evaluationState as ExperimentEvaluationState) || defaultEvaluationState }));
     setControlStateMap((prev) => ({
       ...prev,
-      [plan.id]: {
-        ...(prev[plan.id] || defaultControlState),
-        runCount: detail.run.runCount || defaultControlState.runCount,
-        concurrency: Math.min(detail.run.concurrency || defaultControlState.concurrency, getMaxExperimentConcurrency(detail.run.runCount || defaultControlState.runCount, plan.processGroups.length)),
+        [plan.id]: {
+          ...(prev[plan.id] || defaultControlState),
+          runCount: (prev[plan.id] || defaultControlState).appendMode ? (prev[plan.id] || defaultControlState).runCount : detail.run.runCount || defaultControlState.runCount,
+          concurrency: Math.min(detail.run.concurrency || defaultControlState.concurrency, getMaxExperimentConcurrency(((prev[plan.id] || defaultControlState).appendMode ? (prev[plan.id] || defaultControlState).runCount : detail.run.runCount || defaultControlState.runCount), plan.processGroups.length)),
         generation: { status: detail.run.status === 'done' ? 'done' : 'idle', progress: detail.run.totalGroups ? Math.round((detail.run.completedGroups / detail.run.totalGroups) * 100) : 0 },
         evaluation: detail.evaluationState
           ? { status: detail.evaluationState.status === 'done' ? 'done' : detail.evaluationState.status === 'error' ? 'error' : 'idle', progress: Number(detail.evaluationState.progress || 0), message: detail.evaluationState.message }
@@ -633,7 +634,7 @@ export function ExperimentPage() {
     }));
   };
 
-  const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode'>>) => {
+  const updateControlConfig = (planId: string, patch: Partial<Pick<ExperimentControlState, 'runCount' | 'concurrency' | 'evaluationConcurrency' | 'generationCacheEnabled' | 'generationCacheMode' | 'appendMode'>>) => {
     const groupCount = experimentPlans.find((plan) => plan.id === planId)?.processGroups.length || 1;
     setControlStateMap((prev) => ({
       ...prev,
@@ -650,7 +651,8 @@ export function ExperimentPage() {
           concurrency: Math.min(Math.max(next.concurrency, 1), maxConcurrency),
           evaluationConcurrency: Math.min(Math.max(next.evaluationConcurrency, 1), getMaxEvaluationConcurrency()),
           generationCacheEnabled: next.generationCacheEnabled !== false,
-          generationCacheMode: next.generationCacheMode || 'readwrite'
+          generationCacheMode: next.generationCacheMode || 'readwrite',
+          appendMode: Boolean(next.appendMode)
         };
       })()
     }));
@@ -1040,7 +1042,7 @@ export function ExperimentPage() {
     }
   };
 
-  const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage, options: { runId?: string; rerunRound?: number } = {}) => {
+  const runControlStage = async (plan: ExperimentPlan, stage: ExperimentControlStage, options: { runId?: string; rerunRound?: number; appendMode?: boolean } = {}) => {
     const planId = plan.id;
     if (stage === 'evaluation') {
       await runEvaluationStage(plan);
@@ -1078,6 +1080,7 @@ export function ExperimentPage() {
           concurrency: effectiveConcurrency,
           generationCacheEnabled: currentControl.generationCacheEnabled !== false,
           generationCacheMode: currentControl.generationCacheEnabled === false ? 'off' : currentControl.generationCacheMode || 'readwrite',
+          appendMode: Boolean(options.appendMode),
           rerunRound: options.rerunRound,
           questions: getPlanInputs(plan),
           questionItems: getPlanQuestionItems(plan),
@@ -1097,6 +1100,14 @@ export function ExperimentPage() {
             if (data?.outputState) {
               setOutputStateMap((prev) => ({ ...prev, [planId]: data.outputState as ExperimentOutputState }));
             }
+            if (data?.run?.runId) {
+              setRunRecordMap((prev) => ({
+                ...prev,
+                [planId]: (prev[planId] || []).some((run) => run.runId === data.run.runId)
+                  ? (prev[planId] || []).map((run) => (run.runId === data.run.runId ? { ...run, ...data.run } : run))
+                  : [data.run as ExperimentRunSummary, ...(prev[planId] || [])]
+              }));
+            }
             const nextStatus = data?.run?.status === 'interrupted' ? 'interrupted' : 'done';
             void refreshExperimentRuns(planId);
             setControlStateMap((prev) => ({
@@ -1112,7 +1123,8 @@ export function ExperimentPage() {
           if (eventName === 'experiment_progress') {
             const completed = Number(data?.completed || 0);
             const groupCount = plan.processGroups.length;
-            const activeRound = groupCount > 0 ? Math.min(currentControl.runCount, Math.max(1, Math.ceil((completed + 1) / groupCount))) : undefined;
+            const eventRunCount = Number(data?.run?.runCount || data?.runCount || currentControl.runCount);
+            const activeRound = groupCount > 0 ? Math.min(eventRunCount, Math.max(1, Math.ceil((completed + 1) / groupCount))) : undefined;
             setControlStateMap((prev) => ({
               ...prev,
               [planId]: {
@@ -1442,7 +1454,7 @@ export function ExperimentPage() {
                     onSelectRun={(runId) => setSelectedRunIdMap((prev) => ({ ...prev, [plan.id]: runId }))}
                     onLoadRun={() => void loadExperimentRun(plan)}
                     onRefreshRuns={() => void refreshExperimentRuns(plan.id)}
-                    onRunEvaluation={() => void runControlStage(plan, 'evaluation')}
+                    onRunEvaluation={(options) => void runEvaluationStage(plan, { force: Boolean(options?.force) })}
                     onRerunRound={(round) => void runEvaluationStage(plan, { round, force: true })}
                     onToggleCompactMode={(value) => setEvaluationCompactModeMap((prev) => ({ ...prev, [plan.id]: value }))}
                   />
